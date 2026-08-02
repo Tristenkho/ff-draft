@@ -1,0 +1,39 @@
+# Fantasy Draft Terminal
+
+## Goal
+Offline, single-file HTML draft assistant for one ESPN league.
+Draft is [DATE]. Must run with wifi off. No backend, no CDN, no build step.
+
+## League
+12 teams, snake, redraft, 14 rounds, 90s/pick. Draft slot: [TBD]
+Starters: QB1 RB2 WR2 TE1 FLEX1 K1 DST1 · Bench 5 · IR 2
+Caps: QB4 RB8 WR8 TE3 K3 DST3
+Playoffs: 8 of 12 teams, weeks 15-17, one week per round
+Waivers: reset weekly to inverse standings, no FAAB, 1-day period
+
+## Scoring
+Pass: 0.04/yd, TD 4, INT -2, PFD 0.1, 2PC 2 (no yardage bonuses)
+Rush: 0.1/yd, TD 6, RFD 0.25, 2PR 2
+Rec:  0.1/yd, REC 0.5, TD 6, REFD 0.5, 2PRE 2
+Misc: FUML -2, all return/recovery TDs 6
+K: PAT 1, FG 3/3.5/4/5 by distance, miss -1
+DST: see league settings (points-allowed and yards-allowed tiers)
+
+## Design decisions (do not relitigate)
+- Rank by VONA: gain = value - E[best at position at my next pick]
+- Ceiling weighting: value = proj + lambda*sd, lambda live-adjustable, default 0.40
+  (justified by 8-of-12 playoffs + single-week rounds)
+- Survival: P = 1 - Phi((k - effective_adp)/adp_sd), where effective_adp is
+  ADP re-ranked among REMAINING players, not absolute ADP
+- K and DST excluded from VONA entirely, hardcoded to rounds 13-14
+- Replacement: 12QB/24RB/24WR/12TE + 12 FLEX allocated to best next man
+- Show 8 candidates max. One screen, no scrolling, keyboard-driven.
+
+## Empirical first-down rates (nflverse 2023-25, already computed)
+See out/first_down_rates.json. WR 0.597/rec, TE 0.511, RB 0.325.
+RB 0.224/carry, QB 0.344.
+Deep targets convert at 0.92-0.99 — deep threats are NOT devalued here.
+
+## Constraints
+- Single file output. Inline all data as a JS array. System fonts only.
+- No localStorage caveat: running as local file, browser storage works fine.
