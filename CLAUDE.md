@@ -1,8 +1,16 @@
 # Fantasy Draft Terminal
 
 ## Goal
-Offline, single-file HTML draft assistant for one ESPN league.
-Draft is [DATE]. Must run with wifi off. No backend, no CDN, no build step.
+Single-file HTML draft assistant for one ESPN league.
+Draft is [DATE]. No backend, no CDN, no build step.
+
+## Workflow (draft day)
+Network is assumed available. The HTML tool is the source of truth for draft
+state: click each player as they come off the board. When it is my pick, read
+the board, then paste the exported state to Claude Code to confirm a top 3
+with reasoning before committing.
+- HTML holds state. Do NOT record picks anywhere else — two state stores diverge.
+- Claude Code is the judgement layer, not the bookkeeping layer.
 
 ## League
 12 teams, snake, redraft, 14 rounds, 90s/pick. Draft slot: [TBD]
@@ -37,3 +45,4 @@ Deep targets convert at 0.92-0.99 — deep threats are NOT devalued here.
 ## Constraints
 - Single file output. Inline all data as a JS array. System fonts only.
 - No localStorage caveat: running as local file, browser storage works fine.
+- Needs a one-click "Copy state" export (roster, picks, board) to hand to Claude.

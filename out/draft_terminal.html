@@ -107,6 +107,12 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
 @keyframes otcpulse{from{background:var(--panel)}to{background:#1A2C19}}
 .hcell.big.otc{animation:otcpulse 1.2s ease-in-out infinite alternate}
 .hcell.big.otc .v{color:var(--green)}
+
+/* ── footer buttons ──────────────────────────── */
+.fbtn{font-family:var(--sans);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--dimmer);padding:0 12px;border-left:1px solid var(--rule);align-self:stretch}
+.fbtn:hover{color:var(--text);background:var(--panel2)}
+.fbtn.ok{color:var(--green)}
 </style>
 </head>
 <body>
@@ -165,7 +171,8 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
     <div class="keys">
       <span><b>Enter</b> record</span><span><b>1–8</b> draft rank</span><span><b>Bksp</b> undo</span><span><b>Esc</b> clear</span>
     </div>
-    <button id="reset" style="font-family:var(--sans);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dimmer);padding:0 12px;border-left:1px solid var(--rule);height:100%;margin-left:auto">Reset</button>
+    <button id="copy" class="fbtn" style="margin-left:auto">Copy state</button>
+    <button id="reset" class="fbtn">Reset</button>
   </footer>
 </div>
 
@@ -2897,6 +2904,72 @@ function resetDraft(){
   picks=[]; save(); render();
 }
 
+// ── state export (paste into Claude for a top-3 sanity check) ────
+function buildState(){
+  const mine=myRoster(), nm=nextMyPick(), nxt=pickAfterNext();
+  const L=[];
+  L.push(`DRAFT STATE — on the clock ${fmtPick(curPick())} (round ${curRound()} of ${ROUNDS})`);
+  L.push(`My slot ${slot}/${TEAMS} · ceiling weight lambda ${lambda.toFixed(2)}`);
+  L.push(`My next pick ${nm?fmtPick(nm):'—'}${nxt?`, then ${fmtPick(nxt)}`:' (last pick)'}`);
+  L.push('');
+
+  const order=['QB','RB','RB','WR','WR','TE','FLEX','K','DST'];
+  const used=new Set(), slots=[];
+  for(const s of order){
+    let cand=null;
+    for(const p of mine){
+      if(used.has(p.id))continue;
+      if(s==='FLEX'?['RB','WR','TE'].includes(p.pos):p.pos===s){cand=p;break;}
+    }
+    if(cand)used.add(cand.id);
+    slots.push(`${s} ${cand?cand.name:'—'}`);
+  }
+  L.push(`MY ROSTER (${mine.length}/${ROUNDS})`);
+  L.push('  '+slots.join(' | '));
+  const bench=mine.filter(p=>!used.has(p.id));
+  if(bench.length)L.push('  BENCH '+bench.map(p=>`${p.name} (${p.pos})`).join(', '));
+  L.push('  counts '+POS.map(k=>`${k} ${mine.filter(p=>p.pos===k).length}/${CAPS[k]}`).join(', '));
+  L.push('');
+
+  const rows=computeBoard().slice(0,8);
+  L.push(`TOP CANDIDATES — gain = value lost if I wait until ${nxt?fmtPick(nxt):'my next pick'}`);
+  L.push(`(survives = P(still on board at ${nxt?fmtPick(nxt):'next pick'}), using ADP re-ranked among remaining)`);
+  rows.forEach((r,i)=>L.push(
+    `  ${String(i+1).padStart(2)}. ${r.p.name.padEnd(22)} ${r.p.pos.padEnd(3)} ${(r.p.team||'—').padEnd(4)}`+
+    ` proj ${r.p.proj.toFixed(0).padStart(3)} · gain ${(r.gain>0?'+':'')+r.gain.toFixed(1)} · survives ${(r.surv*100).toFixed(0)}%`));
+  L.push('');
+
+  const recent=picks.slice(-12);
+  if(recent.length){
+    L.push('RECENTLY TAKEN (oldest first)');
+    L.push('  '+recent.map((id,i)=>{
+      const n=picks.length-recent.length+i+1, p=byId.get(id);
+      return `${fmtPick(n)} ${p?p.name:'?'}${myPicks().includes(n)?'*':''}`;
+    }).join(' · ')+'   (* = mine)');
+  }
+  L.push('');
+  L.push(`${remaining().length} players left in pool.`);
+  L.push('Which of these should I take, and why? Give a top 3 with one line each.');
+  return L.join('\n');
+}
+
+async function copyState(){
+  const txt=buildState(), btn=$('#copy');
+  let ok=true;
+  try{ await navigator.clipboard.writeText(txt); }
+  catch(e){
+    const ta=document.createElement('textarea');
+    ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ ok=document.execCommand('copy'); }catch(e2){ ok=false; }
+    document.body.removeChild(ta);
+  }
+  btn.textContent=ok?'Copied':'Copy failed';
+  btn.classList.toggle('ok',ok);
+  setTimeout(()=>{btn.textContent='Copy state';btn.classList.remove('ok');},1400);
+  $('#q').focus();
+}
+
 // ── event listeners ──────────────────────────────────────────────
 $('#q').addEventListener('input',render);
 $('#q').addEventListener('keydown',e=>{
@@ -2926,6 +2999,7 @@ $('#filt').addEventListener('click',e=>{
   posFilter=b.dataset.pos; render();
 });
 $('#reset').addEventListener('click',resetDraft);
+$('#copy').addEventListener('click',copyState);
 
 setInterval(()=>{if(document.activeElement!==$('#slot'))$('#q').focus();},1200);
 

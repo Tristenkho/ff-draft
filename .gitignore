@@ -1,1 +1,4 @@
 .DS_Store
+
+# ESPN credentials — never commit
+.espn.json
