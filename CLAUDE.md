@@ -12,6 +12,21 @@ with reasoning before committing.
 - HTML holds state. Do NOT record picks anywhere else — two state stores diverge.
 - Claude Code is the judgement layer, not the bookkeeping layer.
 
+## Delivery automation
+- After completing and validating requested code or site changes, automatically
+  stage only the files owned by that task, create a focused commit, and push it.
+- Treat a successful push to the publishing branch as authorization to trigger
+  the configured GitHub Pages deployment; do not ask for a separate routine
+  commit, push, or publish confirmation.
+- Preserve unrelated working-tree changes and never include them in the commit.
+  Generated scratch files and bulky raw simulation output stay uncommitted unless
+  the user explicitly asks to publish them.
+- If the current branch cannot publish directly, push a focused feature branch
+  and open a draft pull request automatically.
+- Stop before publishing only when validation fails, authentication or the remote
+  is unavailable, the intended file scope is genuinely ambiguous, or the action
+  would expose secrets or perform a destructive migration.
+
 ## League
 12 teams, snake, redraft, 14 rounds, 90s/pick. Draft slot: [TBD]
 Starters: QB1 RB2 WR2 TE1 FLEX1 K1 DST1 · Bench 5 · IR 2

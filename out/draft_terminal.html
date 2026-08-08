@@ -276,7 +276,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
     <button id="reset" class="fbtn">Reset draft</button>
   </footer>
 </div>
-<div class="help" id="help"><div class="helpbox"><button id="helpclose" aria-label="Close help">×</button><h2>Draft terminal guide</h2><p><b>VONA</b> is the ceiling-adjusted value lost if you wait until your next pick. Players within 7.5 VONA points share a tier, then Model rank breaks the near-tie. <b>Survives</b> is the chance the player is still available then.</p><p><b>Model</b> uses custom league scoring, ceiling weighting, value over replacement, and a 20% half-PPR ECR sanity check. <b>Δ</b> is Model rank versus ECR: a positive number means the model is higher on the player.</p><p><b>Draft</b> shows the full available pool and lets you sort by VONA, Model, Points, ECR, or ADP. <b>Auto to my pick</b> records varied need-aware opponent selections until your next turn; use the footer button or press <b>⌘ Enter</b> on Mac / <b>Ctrl Enter</b> on Windows. <b>~</b> marks those picks in the log and copied state. <b>Snake</b> is a separate full-width board. Model, ECR, and ADP follow their source exactly; <b>Need-aware</b> simulates each team filling starters, FLEX, depth, and late special teams. Randomize adds optional variation. Snake never records picks.</p><p>Record every real pick here. Copy state on your turn and paste it to Codex or Claude for a reasoned top three. K/DST stay out of VONA, are prioritized in rounds 13–14, and remain visible/selectable throughout the draft.</p></div></div>
+<div class="help" id="help"><div class="helpbox"><button id="helpclose" aria-label="Close help">×</button><h2>Draft terminal guide</h2><p><b>VONA</b> is the ceiling-adjusted value lost if you wait until your next pick. Players within 7.5 VONA points share a tier, then Model rank breaks the near-tie. <b>Survives</b> is the chance the player is still available then.</p><p><b>Model</b> uses custom league scoring, ceiling weighting, value over replacement, and a 20% half-PPR ECR sanity check. <b>Δ</b> is Model rank versus ECR: a positive number means the model is higher on the player.</p><p><b>Winning build</b> defaults to one QB, one TE, and ten RB/WR. It starts with three RB/WR through Round 4, completes every skill starter by Round 8, and takes K and D/ST in Rounds 13–14. One late QB2 or TE2 may replace a depth pick only when it beats the best legal RB/WR by a full value threshold; TE has the lower hurdle because it can fill FLEX. Players that would block the path stay searchable but rank below eligible recommendations.</p><p><b>Draft</b> shows the full available pool and lets you sort by VONA, Model, Points, ECR, or ADP. <b>Auto to my pick</b> records varied need-aware opponent selections until your next turn; use the footer button or press <b>⌘ Enter</b> on Mac / <b>Ctrl Enter</b> on Windows. <b>~</b> marks those picks in the log and copied state. <b>Snake</b> is a separate full-width board. Model, ECR, and ADP follow their source exactly; <b>Need-aware</b> simulates each team filling starters, FLEX, depth, and late special teams. Randomize adds optional variation. Snake never records picks.</p><p>Record every real pick here. Copy state on your turn and paste it to Codex or Claude for a reasoned top three. K/DST stay out of VONA, are prioritized in rounds 13–14, and remain visible/selectable throughout the draft.</p></div></div>
 
 <script>
 // ── league constants ─────────────────────────────────────────────
@@ -2955,6 +2955,12 @@ const PLAYERS=[
 const CAPS={QB:4,RB:8,WR:8,TE:3,K:3,DST:3}; // max at each position (per league rules)
 const KDST_ROUND=13;                  // K and DST go in rounds 13-14
 const VONA_TIE_BAND=7.5;              // near-ties use Model rank as the tiebreak
+const STRATEGY={
+  coreEarly:3, coreDeadline:4,        // RB/WR foundation before onesie depth
+  starterDeadline:8,                 // QB1 RB2 WR2 TE1 + RB/WR FLEX
+  coreTotal:10, minCoreEach:4,        // normal 12-round skill build
+  luxuryStart:9, te2Edge:5, qb2Edge:5
+};
 // Sources: ESPN’s public 2026 projection feed plus FantasyPros 2026 half-PPR
 // ECR and half-PPR ADP, refreshed 2026-08-07.
 // Skill-position totals start from ESPN’s PPR projection, then use this league’s
@@ -3037,7 +3043,7 @@ function mockNeedAdjustment(p,roster,round){
       if(round<=8)return -8;
       return -25;
     }
-    return 80; // no routine backup-QB picks in a 14-round, one-QB build
+    return round>=11?35:80; // late QB2 is possible, but still a luxury
   }
   if(p.pos==='TE'){
     if(te===0){
@@ -3047,16 +3053,19 @@ function mockNeedAdjustment(p,roster,round){
       if(round<=8)return -8;
       return -14;
     }
-    return 45; // a backup TE is a rare late luxury, not a default need
+    return round>=10?18:45; // late TE2 can beat weak depth; never a default need
   }
   const have=p.pos==='RB'?rb:wr;
   if(have<2)return -18;
   if(flex===0)return -10;
   return round<=10?-4:10;
 }
-function mockEligible(p,roster,needsOnly=false){
+function mockEligible(p,roster,needsOnly=false,round=1){
   const count=roster.filter(x=>x.pos===p.pos).length;
-  if(needsOnly&&['QB','TE','K','DST'].includes(p.pos)&&count>=1)return false;
+  const onesies=roster.filter(x=>x.pos==='QB'||x.pos==='TE').length;
+  if(needsOnly&&['K','DST'].includes(p.pos)&&count>=1)return false;
+  if(needsOnly&&p.pos==='QB'&&count>=1&&(round<11||count>=2||onesies>=3))return false;
+  if(needsOnly&&p.pos==='TE'&&count>=1&&(round<10||count>=2||onesies>=3))return false;
   return count<(CAPS[p.pos]||0);
 }
 function chooseNeedAware(candidates,roster,round,meta,randomized=false){
@@ -3073,7 +3082,7 @@ function autoToMyPick(){
   const total=TEAMS*ROUNDS, meta=modelMeta(), rosters=rostersFromDraft();
   while(picks.length<total&&!myPicks().includes(curPick())){
     const n=curPick(), round=Math.ceil(n/TEAMS), team=teamAtPick(n), roster=rosters[team-1];
-    let candidates=remaining().filter(p=>mockEligible(p,roster,true));
+    let candidates=remaining().filter(p=>mockEligible(p,roster,true,round));
     if(!candidates.length)candidates=remaining();
     // Auto reflects draft-room uncertainty: close candidates can swap order,
     // while roster needs and large value gaps still dominate the selection.
@@ -3094,7 +3103,7 @@ function runMock(mode='adp',randomized=false){
     let id=picks[n-1];
     if(!id){
       const allowed=mode==='needs'?['QB','RB','WR','TE','K','DST']:(round===13?['K']:round===14?['DST']:POS);
-      let candidates=PLAYERS.filter(p=>!used.has(p.id)&&allowed.includes(p.pos)&&mockEligible(p,roster,mode==='needs'));
+      let candidates=PLAYERS.filter(p=>!used.has(p.id)&&allowed.includes(p.pos)&&mockEligible(p,roster,mode==='needs',round));
       if(!candidates.length)candidates=PLAYERS.filter(p=>!used.has(p.id)&&allowed.includes(p.pos));
       if(mode==='needs')id=chooseNeedAware(candidates,roster,round,meta,randomized)?.id;
       else{
@@ -3182,7 +3191,10 @@ function needFactor(pos){
   const have=mine.filter(p=>p.pos===pos).length;
   if(have>=(CAPS[pos]||0)) return 0;       // at position cap — never draft more
   const base=STARTERS[pos]||0;
-  const flexOK=(pos!=='QB');
+  // Treat FLEX as an RB/WR depth job for recommendation purposes. A second
+  // TE must earn a separate late-value exception instead of receiving a
+  // starter-sized need boost here.
+  const flexOK=(pos==='RB'||pos==='WR');
   if(have<base) return 1;
   if(have<base+(flexOK?1:0)) return 0.85;
   const bench=benchSlotsFilled(mine);
@@ -3208,6 +3220,76 @@ function benchSlotsFilled(mine){
   return clamp(mine.length-startersFilled,0,5);
 }
 
+// Recommendation guardrails for this 14-round, one-QB league. The winning
+// default is one QB, one TE, ten RB/WR, then K + D/ST. One late QB2 or TE2
+// may replace a depth pick only when it clears a meaningful VONA value bar.
+// These are board recommendations, not a second draft-state store.
+function recommendationRound(){
+  const n=nextMyPick();
+  return n?Math.ceil(n/TEAMS):ROUNDS;
+}
+function rosterCounts(roster){
+  const out={QB:0,RB:0,WR:0,TE:0,K:0,DST:0};
+  roster.forEach(p=>{if(out[p.pos]!=null)out[p.pos]++;});
+  return out;
+}
+function recommendationEligibility(p,mine=myRoster(),round=recommendationRound()){
+  const have=rosterCounts(mine);
+  if(have[p.pos]>=(CAPS[p.pos]||0))return {ok:false,reason:`${p.pos} cap reached`};
+
+  if(round>=KDST_ROUND){
+    if(!have.K)return {ok:p.pos==='K',reason:'finish K in round 13'};
+    if(!have.DST)return {ok:p.pos==='DST',reason:'finish D/ST in round 14'};
+    return {ok:!['K','DST'].includes(p.pos),reason:'special teams complete'};
+  }
+  if(['K','DST'].includes(p.pos))return {ok:false,reason:'K/DST wait until rounds 13–14'};
+
+  // A single late luxury pick can beat RB/WR depth, but only after every
+  // weekly skill starter is secure. computeBoard applies the value hurdle.
+  let luxury=false;
+  if(p.pos==='QB'&&have.QB>=1){
+    if(have.QB>=2||round<STRATEGY.luxuryStart||have.QB+have.TE>=3)
+      return {ok:false,reason:'QB depth is not worth another roster spot'};
+    luxury=true;
+  }
+  if(p.pos==='TE'&&have.TE>=1){
+    if(have.TE>=2||round<STRATEGY.luxuryStart||have.QB+have.TE>=3)
+      return {ok:false,reason:'TE depth is not worth another roster spot'};
+    luxury=true;
+  }
+
+  const after={...have}; after[p.pos]++;
+  const coreAfter=after.RB+after.WR;
+  // Honor the draft-day plan: three RB/WR by the end of round four.
+  if(round<=STRATEGY.coreDeadline&&coreAfter+(STRATEGY.coreDeadline-round)<STRATEGY.coreEarly)
+    return {ok:false,reason:'preserve three-RB/WR start'};
+
+  // By round eight, lock every weekly skill starter: QB, RB2, WR2, TE and a
+  // RB/WR FLEX. This prevents a position run from leaving a zero at RB or WR.
+  if(round<=STRATEGY.starterDeadline){
+    const futureToEight=STRATEGY.starterDeadline-round;
+    const qbStarter=Math.max(0,1-after.QB), teStarter=Math.max(0,1-after.TE);
+    const rbStarter=Math.max(0,2-after.RB), wrStarter=Math.max(0,2-after.WR);
+    const coreStarter=Math.max(rbStarter+wrStarter,5-coreAfter);
+    if(qbStarter+teStarter+coreStarter>futureToEight)
+      return {ok:false,reason:'finish every skill starter by round 8'};
+  }
+
+  // Preserve a legal high-upside finish through round 12. The normal build
+  // has ten RB/WR; one approved luxury pick reduces that to nine. Recover
+  // gracefully if a real draft has already departed from the ideal plan.
+  const future=Math.max(0,12-round);
+  const qbNeed=Math.max(0,1-after.QB), teNeed=Math.max(0,1-after.TE);
+  const extras=Math.max(0,after.QB-1)+Math.max(0,after.TE-1);
+  const coreTarget=Math.max(8,STRATEGY.coreTotal-extras);
+  const minEach=Math.min(STRATEGY.minCoreEach,Math.floor(coreTarget/2));
+  const rbNeed=Math.max(0,minEach-after.RB), wrNeed=Math.max(0,minEach-after.WR);
+  const coreNeed=Math.max(rbNeed+wrNeed,coreTarget-coreAfter);
+  if(qbNeed+teNeed+coreNeed>future)
+    return {ok:false,reason:'would block a complete RB/WR build'};
+  return {ok:true,reason:'',luxury};
+}
+
 function modelMeta(){
   const pool=skillPool(), {rep}=replacement(pool);
   const core=[...pool].sort((a,b)=>(value(b)-(rep[b.pos]||0))-(value(a)-(rep[a.pos]||0)));
@@ -3223,6 +3305,9 @@ function modelMeta(){
 
 function rankText(n){return n&&n<900?String(n):'—';}
 function why(r){
+  if(!r.eligible)return `not recommended · ${r.blockedReason}`;
+  if(r.luxury){const edge=r.p.pos==='TE'?STRATEGY.te2Edge:STRATEGY.qb2Edge;
+    return `late ${r.p.pos} value exception · clears RB/WR by ${edge.toFixed(1)}+ ${r.p.pos==='TE'?'ceiling points':'VONA'}`;}
   const open=openStarterSlots(myRoster());
   const need=open[r.p.pos]||(['RB','WR','TE'].includes(r.p.pos)&&open.FLEX?1:0);
   if(r.vonaTier===1)return `${need?'starter need · ':''}VONA T1 · Model ${rankText(r.modelRank)} tiebreak`;
@@ -3245,7 +3330,7 @@ function planText(mine){
 function nextTurnTargets(){
   const nxt=pickAfterNext();
   if(!nxt||isKDST())return '';
-  const targets=computeBoard().filter(r=>!r.isSpecial&&r.surv<.45).slice(0,3);
+  const targets=computeBoard().filter(r=>r.eligible&&!r.isSpecial&&r.surv<.45).slice(0,3);
   if(!targets.length)return '';
   return `<div class="runbox"><div class="eyebrow" style="margin-bottom:5px">At risk before ${fmtPick(nxt)}</div><div class="t">${targets.map(r=>`${r.p.name} <b>${r.p.pos}</b> ${Math.round(r.surv*100)}%`).join(' · ')}</div></div>`;
 }
@@ -3260,18 +3345,37 @@ function computeBoard(){
   const ranked=new Map();
   [...pool].sort((a,b)=>a.adp-b.adp).forEach((p,i)=>ranked.set(p.id,curPick()+i));
 
+  const mine=myRoster(), recRound=recommendationRound(), recKDST=recRound>=KDST_ROUND;
   const rows=pool.map(p=>{
+    const eligibility=recommendationEligibility(p,mine,recRound);
     const isSpecial=['K','DST'].includes(p.pos);
     // Special teams are excluded from VONA and the skill-player model. Their
     // late-round order is projection-only, but they remain searchable/selectable.
     if(isSpecial)return {p,v:p.proj,vor:0,gain:0,surv:nxt?survives(p,nxt,ranked):0,
-      modelRank:999,isSpecial:true};
+      modelRank:999,isSpecial:true,eligible:eligibility.ok,blockedReason:eligibility.reason,
+      luxury:!!eligibility.luxury};
     const v=value(p);
     const vor=v-(rep[p.pos]||0);
     const eNext=nxt?expBestAt(p.pos,nxt,pool,ranked):0;
     const gain=nxt?(v-eNext)*needFactor(p.pos):vor*needFactor(p.pos);
     const surv=nxt?survives(p,nxt,ranked):0;
-    return {p,v,vor,gain,surv,modelRank:meta.modelRank.get(p.id)||999};
+    return {p,v,vor,gain,surv,modelRank:meta.modelRank.get(p.id)||999,
+      eligible:eligibility.ok,blockedReason:eligibility.reason,luxury:!!eligibility.luxury};
+  });
+  const eligibleCore=rows.filter(r=>r.eligible&&['RB','WR'].includes(r.p.pos));
+  const bestCoreGain=Math.max(...eligibleCore.map(r=>r.gain),-1e9);
+  const bestCoreValue=Math.max(...eligibleCore.map(r=>r.v),-1e9);
+  rows.filter(r=>r.eligible&&r.luxury).forEach(r=>{
+    // TE2 competes directly with RB/WR for FLEX or bench, so compare actual
+    // ceiling-adjusted points rather than TE scarcity. QB2 cannot start or
+    // FLEX, so retain the heavily discounted VONA test plus a five-point bar.
+    const clears=r.p.pos==='TE'?r.v>=bestCoreValue+STRATEGY.te2Edge:r.gain>=bestCoreGain+STRATEGY.qb2Edge;
+    if(r.vor<=0||!clears){
+      r.eligible=false;
+      r.blockedReason=r.p.pos==='TE'
+        ? `TE2 needs ${STRATEGY.te2Edge.toFixed(1)} ceiling points over RB/WR depth`
+        : `QB2 needs ${STRATEGY.qb2Edge.toFixed(1)} VONA over RB/WR depth`;
+    }
   });
   const rawVona=[...rows].sort((a,b)=>b.gain-a.gain||a.modelRank-b.modelRank);
   let tier=0,tierTop=Infinity;
@@ -3279,10 +3383,10 @@ function computeBoard(){
     if(tier===0||tierTop-r.gain>=VONA_TIE_BAND){tier++;tierTop=r.gain;}
     r.vonaTier=tier;
   });
-  rows.sort((a,b)=>isKDST()
+  rows.sort((a,b)=>Number(b.eligible)-Number(a.eligible)||(recKDST
     ? (Number(!!b.isSpecial)-Number(!!a.isSpecial) || (b.isSpecial&&a.isSpecial
       ? b.p.proj-a.p.proj : b.gain-a.gain))
-    : (a.vonaTier-b.vonaTier||a.modelRank-b.modelRank||b.gain-a.gain));
+    : (a.vonaTier-b.vonaTier||a.modelRank-b.modelRank||b.gain-a.gain)));
   return rows;
 }
 
@@ -3296,7 +3400,7 @@ function urgency(r){
 // ── render ───────────────────────────────────────────────────────
 function render(){
   const q=$('#q').value.trim().toLowerCase();
-  const kdst=isKDST();
+  const kdst=recommendationRound()>=KDST_ROUND;
   const isOTC=myPicks().includes(curPick());
 
   // header
@@ -3351,7 +3455,7 @@ function render(){
   const bench=benchSlotsFilled(mine);
   const openLine=['QB','RB','WR','TE','FLEX','K','DST'].filter(k=>open[k]).map(k=>`${k} ${open[k]}`).join(' · ')||'starters set';
   const kdNote=kdst?`<br><span style="color:var(--amber)">▶ Pick K + D/ST now</span>`:`<br>K + D/ST: <span>rds 13–14</span>`;
-  $('#needs').innerHTML=`Caps: ${posLine} · ${kLine} · ${dLine}<br>Starter slots left: <span>${openLine}</span><br>Bench: <span>${bench}/5</span> · roster spots left: <span>${ROUNDS-mine.length}</span>`+kdNote;
+  $('#needs').innerHTML=`Caps: ${posLine} · ${kLine} · ${dLine}<br>Starter slots left: <span>${openLine}</span><br>Bench: <span>${bench}/5</span> · roster spots left: <span>${ROUNDS-mine.length}</span><br>Build: <span>QB1 · TE1 · RB/WR 10; one late QB/TE value exception</span>`+kdNote;
 
   // board
   if(view==='plan'){
@@ -3381,11 +3485,12 @@ function render(){
   if(posFilter) rows2=rows2.filter(r=>r.p.pos===posFilter);
   if(q) rows2=rows2.filter(r=>r.p.name.toLowerCase().includes(q)||r.p.team?.toLowerCase()===q);
   if(view==='prep'){
-    const order={gain:(a,b)=>a.vonaTier-b.vonaTier||a.modelRank-b.modelRank||b.gain-a.gain,
-      model:(a,b)=>a.modelRank-b.modelRank,
-      proj:(a,b)=>b.p.proj-a.p.proj,
-      ecr:(a,b)=>(a.p.ecr||999)-(b.p.ecr||999),
-      adp:(a,b)=>a.p.adp-b.p.adp};
+    const strategic=cmp=>(a,b)=>Number(b.eligible)-Number(a.eligible)||cmp(a,b);
+    const order={gain:strategic((a,b)=>a.vonaTier-b.vonaTier||a.modelRank-b.modelRank||b.gain-a.gain),
+      model:strategic((a,b)=>a.modelRank-b.modelRank),
+      proj:strategic((a,b)=>b.p.proj-a.p.proj),
+      ecr:strategic((a,b)=>(a.p.ecr||999)-(b.p.ecr||999)),
+      adp:strategic((a,b)=>a.p.adp-b.p.adp)};
     rows2.sort(order[sortBy]);
   }
   visibleRows=rows2;
@@ -3450,6 +3555,13 @@ function render(){
 function draft(id){
   if(picks.length>=TEAMS*ROUNDS)return;
   if(picks.includes(id))return;
+  const player=byId.get(id);
+  if(!player)return;
+  const roster=rostersFromDraft()[teamAtPick(curPick())-1];
+  if(!mockEligible(player,roster)){
+    window.alert(`${player.pos} cap reached for the team on the clock.`);
+    return;
+  }
   picks.push(id); save(); $('#q').value=''; render();
 }
 function undo(){
@@ -3469,6 +3581,7 @@ function buildState(){
   L.push(`DRAFT STATE — on the clock ${fmtPick(curPick())} (round ${curRound()} of ${ROUNDS})`);
   L.push(`My slot ${slot}/${TEAMS} · ceiling weight lambda ${lambda.toFixed(2)}`);
   L.push(`Model: custom league scoring, ceiling weighting, replacement value, then an 80/20 half-PPR ECR sanity check; VONA gaps under ${VONA_TIE_BAND.toFixed(1)} points share a tier and use Model rank as the tiebreak; ADP is used for survival/timing.`);
+  L.push('Build guardrails: default QB1/TE1; three RB/WR by Round 4; all skill starters by Round 8; ten RB/WR with at least four each; one late QB2 or TE2 only when it clears the position-appropriate RB/WR value threshold; K + D/ST in Rounds 13–14.');
   L.push(`My next pick ${nm?fmtPick(nm):'—'}${nxt?`, then ${fmtPick(nxt)}`:' (last pick)'}`);
   const open=openStarterSlots(mine);
   L.push(`Starter slots still open: ${Object.entries(open).filter(([,n])=>n).map(([k,n])=>`${k} ${n}`).join(', ')||'none'} · bench ${benchSlotsFilled(mine)}/5 · roster spots left ${ROUNDS-mine.length}`);
