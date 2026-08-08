@@ -245,7 +245,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
       </div>
       <div class="sort" id="sort"><button class="on" data-sort="gain">VONA</button><button data-sort="model">Model</button><button data-sort="proj">Points</button><button data-sort="ecr">ECR</button><button data-sort="adp">ADP</button></div>
       <div class="planbar" id="planbar"><span id="mocknote">Choose an exact source board, or use Need-aware to simulate roster-based opponent selections. Neither changes real draft state.</span><button class="planbtn" data-mock="model">Model</button><button class="planbtn" data-mock="ecr">ECR</button><button class="planbtn" data-mock="adp">ADP</button><button class="planbtn" data-mock="needs">Need-aware</button><button class="planbtn" id="randommock">Randomize</button><button class="planbtn" id="clearmock">Clear mock</button></div>
-      <div class="thead"><div></div><div>Player</div><div>Pts</div><div>Gain</div><div>Model</div><div>ECR</div><div>ADP</div><div>Δ</div><div>Survives</div></div>
+      <div class="thead"><div></div><div>Player</div><div>Pts</div><div>VONA</div><div>Model</div><div>ECR</div><div>ADP</div><div>Δ</div><div>Survives</div></div>
       <div class="board" id="board"></div>
     </div>
 
@@ -279,7 +279,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
     <button id="reset" class="fbtn">Reset draft</button>
   </footer>
 </div>
-<div class="help" id="help"><div class="helpbox"><button id="helpclose" aria-label="Close help">×</button><h2>Draft terminal guide</h2><p><b>Gain</b> is the ceiling-adjusted value lost if you wait until your next pick. <b>Survives</b> is the chance the player is still available then.</p><p><b>Model</b> uses custom league scoring, ceiling weighting, value over replacement, and a 20% half-PPR ECR sanity check. <b>Δ</b> is Model rank versus ECR: a positive number means the model is higher on the player.</p><p><b>Draft</b> shows the full available pool and lets you sort by VONA, Model, Points, ECR, or ADP. <b>Auto to my pick</b> records varied need-aware opponent selections until your next turn; <b>~</b> marks those picks in the log and copied state. <b>Snake</b> is a separate full-width board. Model, ECR, and ADP follow their source exactly; <b>Need-aware</b> simulates each team filling starters, FLEX, depth, and late special teams. Randomize adds optional variation. Snake never records picks.</p><p>Record every real pick here. Copy state on your turn and paste it to Codex or Claude for a reasoned top three. K/DST stay out of VONA, are prioritized in rounds 13–14, and remain visible/selectable throughout the draft.</p></div></div>
+<div class="help" id="help"><div class="helpbox"><button id="helpclose" aria-label="Close help">×</button><h2>Draft terminal guide</h2><p><b>VONA</b> is the ceiling-adjusted value lost if you wait until your next pick. Players within 7.5 VONA points share a tier, then Model rank breaks the near-tie. <b>Survives</b> is the chance the player is still available then.</p><p><b>Model</b> uses custom league scoring, ceiling weighting, value over replacement, and a 20% half-PPR ECR sanity check. <b>Δ</b> is Model rank versus ECR: a positive number means the model is higher on the player.</p><p><b>Draft</b> shows the full available pool and lets you sort by VONA, Model, Points, ECR, or ADP. <b>Auto to my pick</b> records varied need-aware opponent selections until your next turn; <b>~</b> marks those picks in the log and copied state. <b>Snake</b> is a separate full-width board. Model, ECR, and ADP follow their source exactly; <b>Need-aware</b> simulates each team filling starters, FLEX, depth, and late special teams. Randomize adds optional variation. Snake never records picks.</p><p>Record every real pick here. Copy state on your turn and paste it to Codex or Claude for a reasoned top three. K/DST stay out of VONA, are prioritized in rounds 13–14, and remain visible/selectable throughout the draft.</p></div></div>
 
 <script>
 // ── league constants ─────────────────────────────────────────────
@@ -2957,6 +2957,7 @@ const PLAYERS=[
 // ── extended constants ───────────────────────────────────────────
 const CAPS={QB:4,RB:8,WR:8,TE:3,K:3,DST:3}; // max at each position (per league rules)
 const KDST_ROUND=13;                  // K and DST go in rounds 13-14
+const VONA_TIE_BAND=7.5;              // near-ties use Model rank as the tiebreak
 // Sources: ESPN’s public 2026 projection feed plus FantasyPros 2026 half-PPR
 // ECR and half-PPR ADP, refreshed 2026-08-07.
 // Skill-position totals start from ESPN’s PPR projection, then use this league’s
@@ -3227,6 +3228,7 @@ function rankText(n){return n&&n<900?String(n):'—';}
 function why(r){
   const open=openStarterSlots(myRoster());
   const need=open[r.p.pos]||(['RB','WR','TE'].includes(r.p.pos)&&open.FLEX?1:0);
+  if(r.vonaTier===1)return `${need?'starter need · ':''}VONA T1 · Model ${rankText(r.modelRank)} tiebreak`;
   const diff=r.p.ecr>500?0:r.p.ecr-r.modelRank;
   const timing=r.surv<.45?'likely gone next turn':r.surv<.7?'at risk by next turn':'reasonable wait';
   const valueFlag=Math.abs(diff)>=10?(diff>0?`model ${diff} ahead of ECR`:`ECR ${-diff} ahead of model`):timing;
@@ -3274,10 +3276,16 @@ function computeBoard(){
     const surv=nxt?survives(p,nxt,ranked):0;
     return {p,v,vor,gain,surv,modelRank:meta.modelRank.get(p.id)||999};
   });
+  const rawVona=[...rows].sort((a,b)=>b.gain-a.gain||a.modelRank-b.modelRank);
+  let tier=0,tierTop=Infinity;
+  rawVona.forEach(r=>{
+    if(tier===0||tierTop-r.gain>=VONA_TIE_BAND){tier++;tierTop=r.gain;}
+    r.vonaTier=tier;
+  });
   rows.sort((a,b)=>isKDST()
     ? (Number(!!b.isSpecial)-Number(!!a.isSpecial) || (b.isSpecial&&a.isSpecial
       ? b.p.proj-a.p.proj : b.gain-a.gain))
-    : (b.gain-a.gain||a.modelRank-b.modelRank));
+    : (a.vonaTier-b.vonaTier||a.modelRank-b.modelRank||b.gain-a.gain));
   return rows;
 }
 
@@ -3377,7 +3385,7 @@ function render(){
   if(posFilter) rows2=rows2.filter(r=>r.p.pos===posFilter);
   if(q) rows2=rows2.filter(r=>r.p.name.toLowerCase().includes(q)||r.p.team?.toLowerCase()===q);
   if(view==='prep'){
-    const order={gain:(a,b)=>b.gain-a.gain||a.modelRank-b.modelRank,
+    const order={gain:(a,b)=>a.vonaTier-b.vonaTier||a.modelRank-b.modelRank||b.gain-a.gain,
       model:(a,b)=>a.modelRank-b.modelRank,
       proj:(a,b)=>b.p.proj-a.p.proj,
       ecr:(a,b)=>(a.p.ecr||999)-(b.p.ecr||999),
@@ -3415,7 +3423,7 @@ function render(){
         <div class="sub">${r.p.pos} · ${r.p.team||'—'} · T${r.p.tier||'—'}${r.p.bye?' · BYE '+r.p.bye:''}</div>
         ${view==='prep'?`<div class="why">${r.isSpecial?'K/DST: projection-only; excluded from VONA':why(r)}</div>`:''}</div>
       <div class="num">${r.p.proj.toFixed(0)}</div>
-      <div class="num gain" style="color:${c}">${gainTxt}</div>
+      <div class="num gain" style="color:${c}">${gainTxt}${r.isSpecial?'':`<small>T${r.vonaTier}</small>`}</div>
       <div class="num">${rankText(r.modelRank)}</div>
       <div class="num">${rankText(r.p.ecr)}</div>
       <div class="num" style="color:var(--dim)">${r.p.adp.toFixed(0)}</div>
@@ -3464,7 +3472,7 @@ function buildState(){
   const L=[];
   L.push(`DRAFT STATE — on the clock ${fmtPick(curPick())} (round ${curRound()} of ${ROUNDS})`);
   L.push(`My slot ${slot}/${TEAMS} · ceiling weight lambda ${lambda.toFixed(2)}`);
-  L.push('Model: custom league scoring, ceiling weighting, replacement value, then an 80/20 half-PPR ECR sanity check; ADP is used for survival/timing.');
+  L.push(`Model: custom league scoring, ceiling weighting, replacement value, then an 80/20 half-PPR ECR sanity check; VONA gaps under ${VONA_TIE_BAND.toFixed(1)} points share a tier and use Model rank as the tiebreak; ADP is used for survival/timing.`);
   L.push(`My next pick ${nm?fmtPick(nm):'—'}${nxt?`, then ${fmtPick(nxt)}`:' (last pick)'}`);
   const open=openStarterSlots(mine);
   L.push(`Starter slots still open: ${Object.entries(open).filter(([,n])=>n).map(([k,n])=>`${k} ${n}`).join(', ')||'none'} · bench ${benchSlotsFilled(mine)}/5 · roster spots left ${ROUNDS-mine.length}`);
@@ -3490,11 +3498,11 @@ function buildState(){
   L.push('');
 
   const rows=computeBoard().slice(0,8);
-  L.push(`TOP CANDIDATES — gain = value lost if I wait until ${nxt?fmtPick(nxt):'my next pick'}`);
+  L.push(`TOP CANDIDATES — VONA = value lost if I wait until ${nxt?fmtPick(nxt):'my next pick'}; gaps under ${VONA_TIE_BAND.toFixed(1)} share a tier`);
   L.push(`(survives = P(still on board at ${nxt?fmtPick(nxt):'next pick'}), using ADP re-ranked among remaining)`);
   rows.forEach((r,i)=>L.push(
     `  ${String(i+1).padStart(2)}. ${r.p.name.padEnd(22)} ${r.p.pos.padEnd(3)} ${(r.p.team||'—').padEnd(4)}`+
-    ` pts ${r.p.proj.toFixed(0).padStart(3)} · gain ${(r.gain>0?'+':'')+r.gain.toFixed(1)} · model ${rankText(r.modelRank)} · ECR ${rankText(r.p.ecr)} · ADP ${r.p.adp.toFixed(0)} · survives ${(r.surv*100).toFixed(0)}%`));
+    ` pts ${r.p.proj.toFixed(0).padStart(3)} · VONA T${r.vonaTier} ${(r.gain>0?'+':'')+r.gain.toFixed(1)} · model ${rankText(r.modelRank)} · ECR ${rankText(r.p.ecr)} · ADP ${r.p.adp.toFixed(0)} · survives ${(r.surv*100).toFixed(0)}%`));
   L.push('');
 
   if(picks.length){
