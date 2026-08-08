@@ -1,6 +1,6 @@
 /* Offline Monte Carlo harness for out/draft_terminal.html. Does not alter the app. */
 const fs=require('fs'), vm=require('vm');
-const html=fs.readFileSync('out/draft_terminal.html','utf8');
+const html=fs.readFileSync(process.env.DRAFT_HTML||'out/draft_terminal.html','utf8');
 const start=html.indexOf('const TEAMS=12, ROUNDS=14;');
 const end=html.indexOf('// ── render ───────────────────────────────────────');
 if(start<0||end<0) throw new Error('Could not locate the draft engine');

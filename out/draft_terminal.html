@@ -205,7 +205,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
 <body>
 <div id="app">
   <div class="warn" id="warn">
-    <b>2026 RANKINGS</b><span>205-player pool, refreshed Aug 7. Projections: ESPN; half-PPR ECR + ADP: FantasyPros. Skill-position projections are adjusted for your half-PPR and first-down scoring.</span>
+    <b>2026 RANKINGS</b><span>205-player pool, refreshed Aug 8. Projections: median of ESPN, CBS, and FFToday; half-PPR ECR + ADP: FantasyPros. Every source is rescored for your league.</span>
   </div>
 
   <header>
@@ -276,7 +276,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
     <button id="reset" class="fbtn">Reset draft</button>
   </footer>
 </div>
-<div class="help" id="help"><div class="helpbox"><button id="helpclose" aria-label="Close help">×</button><h2>Draft terminal guide</h2><p><b>VONA</b> is the ceiling-adjusted value lost if you wait until your next pick. Players within 7.5 VONA points share a tier, then Model rank breaks the near-tie. <b>Survives</b> is the chance the player is still available then.</p><p><b>Model</b> uses custom league scoring, ceiling weighting, value over replacement, and a 20% half-PPR ECR sanity check. <b>Δ</b> is Model rank versus ECR: a positive number means the model is higher on the player.</p><p><b>Winning build</b> defaults to one QB, one TE, and ten RB/WR. It starts with three RB/WR through Round 4, completes every skill starter by Round 8, and takes K and D/ST in Rounds 13–14. One late QB2 or TE2 may replace a depth pick only when it beats the best legal RB/WR by a full value threshold; TE has the lower hurdle because it can fill FLEX. Players that would block the path stay searchable but rank below eligible recommendations.</p><p><b>Draft</b> shows the full available pool and lets you sort by VONA, Model, Points, ECR, or ADP. <b>Auto to my pick</b> records varied need-aware opponent selections until your next turn; use the footer button or press <b>⌘ Enter</b> on Mac / <b>Ctrl Enter</b> on Windows. <b>~</b> marks those picks in the log and copied state. <b>Snake</b> is a separate full-width board. Model, ECR, and ADP follow their source exactly; <b>Need-aware</b> follows ADP while adjusting for each team's starters, FLEX, depth, and late special teams. Its randomness scales with observed ADP dispersion, calibrated on 2018–2024 draft markets. Snake never records picks.</p><p>Record every real pick here. Copy state on your turn and paste it to Codex or Claude for a reasoned top three. K/DST stay out of VONA, are prioritized in rounds 13–14, and remain visible/selectable throughout the draft.</p></div></div>
+<div class="help" id="help"><div class="helpbox"><button id="helpclose" aria-label="Close help">×</button><h2>Draft terminal guide</h2><p><b>VONA</b> is the ceiling-adjusted value lost if you wait until your next pick. Players within 7.5 VONA points share a tier, then Model rank breaks the near-tie. <b>Survives</b> is the chance the player is still available then.</p><p><b>Points</b> is the median of ESPN, CBS, and FFToday when available. CBS and FFToday raw stat lines are rescored locally for this league; ADP and ECR never enter the projection. The source range appears under each recommendation. <b>Model</b> adds replacement value, the existing ceiling/upside weighting, and a 20% half-PPR ECR sanity check. Projection uncertainty is tracked separately so disagreement is not mistaken for upside. <b>Δ</b> is Model rank versus ECR: a positive number means the model is higher on the player.</p><p><b>Winning build</b> defaults to one QB, one TE, and ten RB/WR. It starts with three RB/WR through Round 4, completes every skill starter by Round 8, and takes K and D/ST in Rounds 13–14. One late QB2 or TE2 may replace a depth pick only when it beats the best legal RB/WR by a full value threshold; TE has the lower hurdle because it can fill FLEX. Players that would block the path stay searchable but rank below eligible recommendations.</p><p><b>Draft</b> shows the full available pool and lets you sort by VONA, Model, Points, ECR, or ADP. <b>Auto to my pick</b> records varied need-aware opponent selections until your next turn; use the footer button or press <b>⌘ Enter</b> on Mac / <b>Ctrl Enter</b> on Windows. <b>~</b> marks those picks in the log and copied state. <b>Snake</b> is a separate full-width board. Model, ECR, and ADP follow their source exactly; <b>Need-aware</b> follows ADP while adjusting for each team's starters, FLEX, depth, and late special teams. Its randomness scales with observed ADP dispersion, calibrated on 2018–2024 draft markets. Snake never records picks.</p><p>Record every real pick here. Copy state on your turn and paste it to Codex or Claude for a reasoned top three. K/DST stay out of VONA, are prioritized in rounds 13–14, and remain visible/selectable throughout the draft.</p></div></div>
 
 <script>
 // ── league constants ─────────────────────────────────────────────
@@ -290,12 +290,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "DET",
     "bye": null,
-    "proj": 358.5,
+    "proj": 358.7,
     "sd": 93.2,
     "adp": 1,
     "adp_sd": 6.1,
     "ecr": 1,
-    "tier": 1
+    "tier": 1,
+    "proj_espn": 358.5,
+    "proj_n": 3,
+    "proj_low": 358.5,
+    "proj_high": 378.1,
+    "proj_unc": 93.7
   },
   {
     "id": 4430807,
@@ -303,12 +308,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "ATL",
     "bye": null,
-    "proj": 343.5,
+    "proj": 354.2,
     "sd": 89.3,
     "adp": 2,
     "adp_sd": 6.1,
     "ecr": 2,
-    "tier": 1
+    "tier": 1,
+    "proj_espn": 343.5,
+    "proj_n": 3,
+    "proj_low": 343.5,
+    "proj_high": 391.3,
+    "proj_unc": 94.4
   },
   {
     "id": 4362628,
@@ -321,7 +331,12 @@ const PLAYERS=[
     "adp": 3,
     "adp_sd": 6.2,
     "ecr": 3,
-    "tier": 1
+    "tier": 1,
+    "proj_espn": 312.6,
+    "proj_n": 3,
+    "proj_low": 307.3,
+    "proj_high": 318.6,
+    "proj_unc": 66.4
   },
   {
     "id": 4426515,
@@ -334,7 +349,12 @@ const PLAYERS=[
     "adp": 4,
     "adp_sd": 6.2,
     "ecr": 4,
-    "tier": 1
+    "tier": 1,
+    "proj_espn": 332.9,
+    "proj_n": 3,
+    "proj_low": 316.7,
+    "proj_high": 349.2,
+    "proj_unc": 71.8
   },
   {
     "id": 3117251,
@@ -347,7 +367,12 @@ const PLAYERS=[
     "adp": 5,
     "adp_sd": 6.3,
     "ecr": 7,
-    "tier": 1
+    "tier": 1,
+    "proj_espn": 332.1,
+    "proj_n": 3,
+    "proj_low": 308.1,
+    "proj_high": 333.8,
+    "proj_unc": 87.1
   },
   {
     "id": 4430878,
@@ -360,7 +385,12 @@ const PLAYERS=[
     "adp": 6,
     "adp_sd": 6.3,
     "ecr": 5,
-    "tier": 1
+    "tier": 1,
+    "proj_espn": 303.6,
+    "proj_n": 3,
+    "proj_low": 287.3,
+    "proj_high": 318.1,
+    "proj_unc": 65.6
   },
   {
     "id": 4242335,
@@ -368,12 +398,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "IND",
     "bye": null,
-    "proj": 318,
+    "proj": 318.0,
     "sd": 82.7,
     "adp": 7,
     "adp_sd": 6.4,
     "ecr": 8,
-    "tier": 1
+    "tier": 1,
+    "proj_espn": 318.0,
+    "proj_n": 3,
+    "proj_low": 291.1,
+    "proj_high": 342.5,
+    "proj_unc": 85.3
   },
   {
     "id": 4374302,
@@ -381,12 +416,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "DET",
     "bye": null,
-    "proj": 300.9,
+    "proj": 294.6,
     "sd": 69.2,
     "adp": 8,
     "adp_sd": 6.4,
     "ecr": 6,
-    "tier": 1
+    "tier": 1,
+    "proj_espn": 300.9,
+    "proj_n": 3,
+    "proj_low": 294.4,
+    "proj_high": 300.9,
+    "proj_unc": 62.5
   },
   {
     "id": 4379399,
@@ -394,12 +434,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "BUF",
     "bye": null,
-    "proj": 284.1,
+    "proj": 279.8,
     "sd": 73.9,
     "adp": 9,
     "adp_sd": 6.5,
     "ecr": 11,
-    "tier": 2
+    "tier": 2,
+    "proj_espn": 284.1,
+    "proj_n": 3,
+    "proj_low": 267.4,
+    "proj_high": 284.1,
+    "proj_unc": 73.1
   },
   {
     "id": 4890973,
@@ -412,7 +457,12 @@ const PLAYERS=[
     "adp": 10,
     "adp_sd": 6.5,
     "ecr": 12,
-    "tier": 2
+    "tier": 2,
+    "proj_espn": 275.3,
+    "proj_n": 3,
+    "proj_low": 260.6,
+    "proj_high": 285.9,
+    "proj_unc": 72.3
   },
   {
     "id": 4262921,
@@ -420,12 +470,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "MIN",
     "bye": null,
-    "proj": 271.5,
+    "proj": 246.7,
     "sd": 62.5,
     "adp": 11,
     "adp_sd": 6.6,
     "ecr": 10,
-    "tier": 2
+    "tier": 2,
+    "proj_espn": 271.5,
+    "proj_n": 3,
+    "proj_low": 232.9,
+    "proj_high": 271.5,
+    "proj_unc": 54.7
   },
   {
     "id": 4241389,
@@ -433,12 +488,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "DAL",
     "bye": null,
-    "proj": 273.6,
+    "proj": 252.7,
     "sd": 62.9,
     "adp": 12,
     "adp_sd": 6.7,
     "ecr": 9,
-    "tier": 2
+    "tier": 2,
+    "proj_espn": 273.6,
+    "proj_n": 3,
+    "proj_low": 235.2,
+    "proj_high": 273.6,
+    "proj_unc": 55.8
   },
   {
     "id": 4429160,
@@ -451,7 +511,12 @@ const PLAYERS=[
     "adp": 13,
     "adp_sd": 6.7,
     "ecr": 18,
-    "tier": 2
+    "tier": 2,
+    "proj_espn": 285.4,
+    "proj_n": 3,
+    "proj_low": 261.1,
+    "proj_high": 306.1,
+    "proj_unc": 76.4
   },
   {
     "id": 3929630,
@@ -459,12 +524,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "PHI",
     "bye": null,
-    "proj": 276,
+    "proj": 268.5,
     "sd": 71.8,
     "adp": 14,
     "adp_sd": 6.8,
     "ecr": 17,
-    "tier": 2
+    "tier": 2,
+    "proj_espn": 276.0,
+    "proj_n": 3,
+    "proj_low": 263.9,
+    "proj_high": 276.0,
+    "proj_unc": 70.0
   },
   {
     "id": 4362238,
@@ -477,7 +547,12 @@ const PLAYERS=[
     "adp": 15,
     "adp_sd": 6.8,
     "ecr": 14,
-    "tier": 2
+    "tier": 2,
+    "proj_espn": 264.4,
+    "proj_n": 3,
+    "proj_low": 260.3,
+    "proj_high": 291.7,
+    "proj_unc": 70.1
   },
   {
     "id": 4685382,
@@ -485,12 +560,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "LAC",
     "bye": null,
-    "proj": 275.7,
+    "proj": 264.3,
     "sd": 71.7,
     "adp": 16,
     "adp_sd": 6.9,
     "ecr": 20,
-    "tier": 2
+    "tier": 2,
+    "proj_espn": 275.7,
+    "proj_n": 3,
+    "proj_low": 243.0,
+    "proj_high": 275.7,
+    "proj_unc": 70.1
   },
   {
     "id": 4426502,
@@ -498,12 +578,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "ATL",
     "bye": null,
-    "proj": 249.1,
+    "proj": 252.3,
     "sd": 57.3,
     "adp": 17,
     "adp_sd": 6.9,
     "ecr": 13,
-    "tier": 2
+    "tier": 2,
+    "proj_espn": 249.1,
+    "proj_n": 3,
+    "proj_low": 249.1,
+    "proj_high": 307.4,
+    "proj_unc": 59.8
   },
   {
     "id": 4567048,
@@ -511,12 +596,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "KC",
     "bye": null,
-    "proj": 271.8,
+    "proj": 258.4,
     "sd": 70.7,
     "adp": 18,
     "adp_sd": 7,
     "ecr": 23,
-    "tier": 3
+    "tier": 3,
+    "proj_espn": 271.8,
+    "proj_n": 3,
+    "proj_low": 223.5,
+    "proj_high": 271.8,
+    "proj_unc": 70.2
   },
   {
     "id": 4361307,
@@ -524,12 +614,17 @@ const PLAYERS=[
     "pos": "TE",
     "team": "ARI",
     "bye": null,
-    "proj": 215.7,
+    "proj": 225.5,
     "sd": 53.9,
     "adp": 19,
     "adp_sd": 7,
     "ecr": 24,
-    "tier": 3
+    "tier": 3,
+    "proj_espn": 215.7,
+    "proj_n": 3,
+    "proj_low": 215.7,
+    "proj_high": 242.9,
+    "proj_unc": 52.8
   },
   {
     "id": 4432665,
@@ -537,12 +632,17 @@ const PLAYERS=[
     "pos": "TE",
     "team": "LV",
     "bye": null,
-    "proj": 216.2,
+    "proj": 219.7,
     "sd": 54,
     "adp": 20,
     "adp_sd": 7.1,
     "ecr": 15,
-    "tier": 2
+    "tier": 2,
+    "proj_espn": 216.2,
+    "proj_n": 3,
+    "proj_low": 216.2,
+    "proj_high": 228.6,
+    "proj_unc": 50.6
   },
   {
     "id": 3043078,
@@ -550,12 +650,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "BAL",
     "bye": null,
-    "proj": 285,
+    "proj": 285.0,
     "sd": 74.1,
     "adp": 21,
     "adp_sd": 7.2,
     "ecr": 21,
-    "tier": 3
+    "tier": 3,
+    "proj_espn": 285.0,
+    "proj_n": 3,
+    "proj_low": 272.2,
+    "proj_high": 301.1,
+    "proj_unc": 75.0
   },
   {
     "id": 3918298,
@@ -563,12 +668,17 @@ const PLAYERS=[
     "pos": "QB",
     "team": "BUF",
     "bye": null,
-    "proj": 400,
+    "proj": 392.8,
     "sd": 56,
     "adp": 22,
     "adp_sd": 7.2,
     "ecr": 27,
-    "tier": 3
+    "tier": 3,
+    "proj_espn": 400.0,
+    "proj_n": 3,
+    "proj_low": 389.3,
+    "proj_high": 400.0,
+    "proj_unc": 61.4
   },
   {
     "id": 4047646,
@@ -581,7 +691,12 @@ const PLAYERS=[
     "adp": 23,
     "adp_sd": 7.3,
     "ecr": 16,
-    "tier": 2
+    "tier": 2,
+    "proj_espn": 231.1,
+    "proj_n": 3,
+    "proj_low": 226.2,
+    "proj_high": 262.4,
+    "proj_unc": 51.5
   },
   {
     "id": 4258173,
@@ -594,7 +709,12 @@ const PLAYERS=[
     "adp": 24,
     "adp_sd": 7.3,
     "ecr": 19,
-    "tier": 2
+    "tier": 2,
+    "proj_espn": 231.8,
+    "proj_n": 3,
+    "proj_low": 223.7,
+    "proj_high": 242.8,
+    "proj_unc": 49.8
   },
   {
     "id": 4426354,
@@ -602,12 +722,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "DAL",
     "bye": null,
-    "proj": 223,
+    "proj": 223.0,
     "sd": 51.3,
     "adp": 25,
     "adp_sd": 7.4,
     "ecr": 22,
-    "tier": 3
+    "tier": 3,
+    "proj_espn": 223.0,
+    "proj_n": 3,
+    "proj_low": 211.3,
+    "proj_high": 273.6,
+    "proj_unc": 54.5
   },
   {
     "id": 4870808,
@@ -615,12 +740,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "ARI",
     "bye": null,
-    "proj": 271.1,
+    "proj": 254.8,
     "sd": 70.5,
     "adp": 26,
     "adp_sd": 7.4,
     "ecr": 33,
-    "tier": 3
+    "tier": 3,
+    "proj_espn": 271.1,
+    "proj_n": 3,
+    "proj_low": 230.3,
+    "proj_high": 271.1,
+    "proj_unc": 68.3
   },
   {
     "id": 4361370,
@@ -628,12 +758,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "NO",
     "bye": null,
-    "proj": 226.6,
+    "proj": 228.1,
     "sd": 52.1,
     "adp": 27,
     "adp_sd": 7.5,
     "ecr": 26,
-    "tier": 3
+    "tier": 3,
+    "proj_espn": 226.6,
+    "proj_n": 3,
+    "proj_low": 226.6,
+    "proj_high": 263.0,
+    "proj_unc": 51.2
   },
   {
     "id": 4047365,
@@ -641,12 +776,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "GB",
     "bye": null,
-    "proj": 278.4,
+    "proj": 260.3,
     "sd": 72.4,
     "adp": 28,
     "adp_sd": 7.5,
     "ecr": 37,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 278.4,
+    "proj_n": 3,
+    "proj_low": 248.2,
+    "proj_high": 278.4,
+    "proj_unc": 68.8
   },
   {
     "id": 4428331,
@@ -659,7 +799,12 @@ const PLAYERS=[
     "adp": 29,
     "adp_sd": 7.6,
     "ecr": 25,
-    "tier": 3
+    "tier": 3,
+    "proj_espn": 251.4,
+    "proj_n": 3,
+    "proj_low": 230.4,
+    "proj_high": 281.8,
+    "proj_unc": 57.3
   },
   {
     "id": 4430737,
@@ -667,12 +812,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "LAR",
     "bye": null,
-    "proj": 234.1,
+    "proj": 245.5,
     "sd": 60.9,
     "adp": 30,
     "adp_sd": 7.7,
     "ecr": 30,
-    "tier": 3
+    "tier": 3,
+    "proj_espn": 234.1,
+    "proj_n": 3,
+    "proj_low": 234.1,
+    "proj_high": 250.1,
+    "proj_unc": 64.2
   },
   {
     "id": 4361579,
@@ -680,12 +830,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "DAL",
     "bye": null,
-    "proj": 262.3,
+    "proj": 235.9,
     "sd": 68.2,
     "adp": 31,
     "adp_sd": 7.7,
     "ecr": 40,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 262.3,
+    "proj_n": 3,
+    "proj_low": 217.2,
+    "proj_high": 262.3,
+    "proj_unc": 64.1
   },
   {
     "id": 4427366,
@@ -693,12 +848,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "NYJ",
     "bye": null,
-    "proj": 270.3,
+    "proj": 247.5,
     "sd": 70.3,
     "adp": 32,
     "adp_sd": 7.8,
     "ecr": 38,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 270.3,
+    "proj_n": 3,
+    "proj_low": 244.1,
+    "proj_high": 270.3,
+    "proj_unc": 65.4
   },
   {
     "id": 4241478,
@@ -711,7 +871,12 @@ const PLAYERS=[
     "adp": 33,
     "adp_sd": 7.8,
     "ecr": 28,
-    "tier": 3
+    "tier": 3,
+    "proj_espn": 220.6,
+    "proj_n": 3,
+    "proj_low": 214.5,
+    "proj_high": 223.3,
+    "proj_unc": 46.9
   },
   {
     "id": 4595348,
@@ -724,7 +889,12 @@ const PLAYERS=[
     "adp": 34,
     "adp_sd": 7.9,
     "ecr": 31,
-    "tier": 3
+    "tier": 3,
+    "proj_espn": 215.7,
+    "proj_n": 3,
+    "proj_low": 214.4,
+    "proj_high": 225.4,
+    "proj_unc": 46.0
   },
   {
     "id": 4696981,
@@ -732,12 +902,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "NYG",
     "bye": null,
-    "proj": 239.7,
+    "proj": 245.6,
     "sd": 62.3,
     "adp": 35,
     "adp_sd": 7.9,
     "ecr": 50,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 239.7,
+    "proj_n": 3,
+    "proj_low": 239.7,
+    "proj_high": 246.5,
+    "proj_unc": 63.9
   },
   {
     "id": 4239993,
@@ -750,7 +925,12 @@ const PLAYERS=[
     "adp": 36,
     "adp_sd": 8,
     "ecr": 32,
-    "tier": 3
+    "tier": 3,
+    "proj_espn": 203.8,
+    "proj_n": 3,
+    "proj_low": 190.5,
+    "proj_high": 228.7,
+    "proj_unc": 46.0
   },
   {
     "id": 3916387,
@@ -758,12 +938,17 @@ const PLAYERS=[
     "pos": "QB",
     "team": "BAL",
     "bye": null,
-    "proj": 351.5,
+    "proj": 345.4,
     "sd": 49.2,
     "adp": 37,
     "adp_sd": 8,
     "ecr": 36,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 351.5,
+    "proj_n": 3,
+    "proj_low": 338.5,
+    "proj_high": 351.5,
+    "proj_unc": 54.1
   },
   {
     "id": 4685472,
@@ -771,12 +956,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "CAR",
     "bye": null,
-    "proj": 223.5,
+    "proj": 209.0,
     "sd": 51.4,
     "adp": 38,
     "adp_sd": 8.1,
     "ecr": 34,
-    "tier": 3
+    "tier": 3,
+    "proj_espn": 223.5,
+    "proj_n": 3,
+    "proj_low": 206.4,
+    "proj_high": 223.5,
+    "proj_unc": 44.9
   },
   {
     "id": 4239996,
@@ -784,12 +974,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "NO",
     "bye": null,
-    "proj": 241.5,
+    "proj": 227.3,
     "sd": 62.8,
     "adp": 39,
     "adp_sd": 8.1,
     "ecr": 46,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 241.5,
+    "proj_n": 3,
+    "proj_low": 225.8,
+    "proj_high": 241.5,
+    "proj_unc": 59.5
   },
   {
     "id": 4429615,
@@ -802,7 +997,12 @@ const PLAYERS=[
     "adp": 40,
     "adp_sd": 8.2,
     "ecr": 29,
-    "tier": 3
+    "tier": 3,
+    "proj_espn": 223.3,
+    "proj_n": 3,
+    "proj_low": 217.4,
+    "proj_high": 246.6,
+    "proj_unc": 49.0
   },
   {
     "id": 4567750,
@@ -815,7 +1015,12 @@ const PLAYERS=[
     "adp": 41,
     "adp_sd": 8.3,
     "ecr": 35,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 215.6,
+    "proj_n": 3,
+    "proj_low": 208.9,
+    "proj_high": 218.7,
+    "proj_unc": 45.9
   },
   {
     "id": 4569618,
@@ -823,12 +1028,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "NYJ",
     "bye": null,
-    "proj": 227.9,
+    "proj": 225.3,
     "sd": 52.4,
     "adp": 42,
     "adp_sd": 8.3,
     "ecr": 39,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 227.9,
+    "proj_n": 3,
+    "proj_low": 218.7,
+    "proj_high": 227.9,
+    "proj_unc": 47.9
   },
   {
     "id": 4723086,
@@ -841,7 +1051,12 @@ const PLAYERS=[
     "adp": 43,
     "adp_sd": 8.4,
     "ecr": 42,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 186.5,
+    "proj_n": 3,
+    "proj_low": 176.0,
+    "proj_high": 209.5,
+    "proj_unc": 44.9
   },
   {
     "id": 4596448,
@@ -849,12 +1064,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "TB",
     "bye": null,
-    "proj": 208.8,
+    "proj": 230.5,
     "sd": 54.3,
     "adp": 44,
     "adp_sd": 8.4,
     "ecr": 57,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 208.8,
+    "proj_n": 3,
+    "proj_low": 208.8,
+    "proj_high": 238.5,
+    "proj_unc": 61.2
   },
   {
     "id": 4612826,
@@ -862,12 +1082,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "LAC",
     "bye": null,
-    "proj": 204.2,
+    "proj": 196.0,
     "sd": 47,
     "adp": 45,
     "adp_sd": 8.5,
     "ecr": 41,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 204.2,
+    "proj_n": 3,
+    "proj_low": 192.3,
+    "proj_high": 204.2,
+    "proj_unc": 41.8
   },
   {
     "id": 4685702,
@@ -875,12 +1100,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "CLE",
     "bye": null,
-    "proj": 232.2,
+    "proj": 213.6,
     "sd": 60.4,
     "adp": 46,
     "adp_sd": 8.5,
     "ecr": 55,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 232.2,
+    "proj_n": 3,
+    "proj_low": 204.0,
+    "proj_high": 232.2,
+    "proj_unc": 56.8
   },
   {
     "id": 4685278,
@@ -893,7 +1123,12 @@ const PLAYERS=[
     "adp": 47,
     "adp_sd": 8.6,
     "ecr": 47,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 191.6,
+    "proj_n": 3,
+    "proj_low": 188.2,
+    "proj_high": 203.7,
+    "proj_unc": 41.2
   },
   {
     "id": 4372016,
@@ -901,12 +1136,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "DEN",
     "bye": null,
-    "proj": 197.6,
+    "proj": 196.1,
     "sd": 45.5,
     "adp": 48,
     "adp_sd": 8.6,
     "ecr": 43,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 197.6,
+    "proj_n": 3,
+    "proj_low": 192.2,
+    "proj_high": 197.6,
+    "proj_unc": 41.6
   },
   {
     "id": 4432710,
@@ -914,12 +1154,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "NE",
     "bye": null,
-    "proj": 204.6,
+    "proj": 201.0,
     "sd": 53.2,
     "adp": 49,
     "adp_sd": 8.7,
     "ecr": 61,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 204.6,
+    "proj_n": 3,
+    "proj_low": 195.3,
+    "proj_high": 204.6,
+    "proj_unc": 52.4
   },
   {
     "id": 4035538,
@@ -932,7 +1177,12 @@ const PLAYERS=[
     "adp": 50,
     "adp_sd": 8.8,
     "ecr": 59,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 193.6,
+    "proj_n": 3,
+    "proj_low": 192.2,
+    "proj_high": 200.6,
+    "proj_unc": 50.5
   },
   {
     "id": 3915416,
@@ -945,7 +1195,12 @@ const PLAYERS=[
     "adp": 51,
     "adp_sd": 8.8,
     "ecr": 60,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 196.7,
+    "proj_n": 3,
+    "proj_low": 193.3,
+    "proj_high": 197.0,
+    "proj_unc": 41.7
   },
   {
     "id": 4431452,
@@ -958,7 +1213,12 @@ const PLAYERS=[
     "adp": 52,
     "adp_sd": 8.9,
     "ecr": 44,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 349.3,
+    "proj_n": 3,
+    "proj_low": 345.7,
+    "proj_high": 351.2,
+    "proj_unc": 54.5
   },
   {
     "id": 4431459,
@@ -971,7 +1231,12 @@ const PLAYERS=[
     "adp": 53,
     "adp_sd": 8.9,
     "ecr": 56,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 187.5,
+    "proj_n": 3,
+    "proj_low": 172.5,
+    "proj_high": 190.9,
+    "proj_unc": 43.7
   },
   {
     "id": 3915511,
@@ -979,12 +1244,17 @@ const PLAYERS=[
     "pos": "QB",
     "team": "CIN",
     "bye": null,
-    "proj": 332.4,
+    "proj": 326.8,
     "sd": 46.5,
     "adp": 54,
     "adp_sd": 9,
     "ecr": 48,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 332.4,
+    "proj_n": 3,
+    "proj_low": 323.6,
+    "proj_high": 332.4,
+    "proj_unc": 51.1
   },
   {
     "id": 3121422,
@@ -997,7 +1267,12 @@ const PLAYERS=[
     "adp": 55,
     "adp_sd": 9,
     "ecr": 45,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 201.5,
+    "proj_n": 3,
+    "proj_low": 181.6,
+    "proj_high": 210.3,
+    "proj_unc": 44.4
   },
   {
     "id": 4259545,
@@ -1005,12 +1280,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "CHI",
     "bye": null,
-    "proj": 214,
+    "proj": 223.4,
     "sd": 55.6,
     "adp": 56,
     "adp_sd": 9.1,
     "ecr": 54,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 214.0,
+    "proj_n": 3,
+    "proj_low": 214.0,
+    "proj_high": 237.9,
+    "proj_unc": 58.9
   },
   {
     "id": 4882093,
@@ -1018,12 +1298,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "JAX",
     "bye": null,
-    "proj": 206.7,
+    "proj": 207.5,
     "sd": 53.7,
     "adp": 57,
     "adp_sd": 9.1,
     "ecr": 64,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 206.7,
+    "proj_n": 3,
+    "proj_low": 206.7,
+    "proj_high": 227.9,
+    "proj_unc": 54.8
   },
   {
     "id": 16800,
@@ -1031,12 +1316,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "LAR",
     "bye": null,
-    "proj": 219,
+    "proj": 207.0,
     "sd": 50.4,
     "adp": 58,
     "adp_sd": 9.2,
     "ecr": 49,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 219.0,
+    "proj_n": 3,
+    "proj_low": 199.4,
+    "proj_high": 219.0,
+    "proj_unc": 44.6
   },
   {
     "id": 4426388,
@@ -1044,12 +1334,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "DET",
     "bye": null,
-    "proj": 196.3,
+    "proj": 208.3,
     "sd": 45.2,
     "adp": 59,
     "adp_sd": 9.2,
     "ecr": 51,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 196.3,
+    "proj_n": 3,
+    "proj_low": 196.3,
+    "proj_high": 210.6,
+    "proj_unc": 44.6
   },
   {
     "id": 4426348,
@@ -1062,7 +1357,12 @@ const PLAYERS=[
     "adp": 60,
     "adp_sd": 9.3,
     "ecr": 53,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 350.9,
+    "proj_n": 3,
+    "proj_low": 336.2,
+    "proj_high": 354.6,
+    "proj_unc": 55.3
   },
   {
     "id": 4685512,
@@ -1075,7 +1375,12 @@ const PLAYERS=[
     "adp": 61,
     "adp_sd": 9.4,
     "ecr": 65,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 197.4,
+    "proj_n": 3,
+    "proj_low": 185.8,
+    "proj_high": 200.0,
+    "proj_unc": 51.7
   },
   {
     "id": 16737,
@@ -1083,12 +1388,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "SF",
     "bye": null,
-    "proj": 171.3,
+    "proj": 192.6,
     "sd": 39.4,
     "adp": 62,
     "adp_sd": 9.4,
     "ecr": 52,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 171.3,
+    "proj_n": 3,
+    "proj_low": 171.3,
+    "proj_high": 208.0,
+    "proj_unc": 43.5
   },
   {
     "id": 4040715,
@@ -1096,12 +1406,17 @@ const PLAYERS=[
     "pos": "QB",
     "team": "PHI",
     "bye": null,
-    "proj": 349.9,
+    "proj": 341.9,
     "sd": 49,
     "adp": 63,
     "adp_sd": 9.5,
     "ecr": 62,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 349.9,
+    "proj_n": 3,
+    "proj_low": 340.0,
+    "proj_high": 349.9,
+    "proj_unc": 53.5
   },
   {
     "id": 4431299,
@@ -1114,7 +1429,12 @@ const PLAYERS=[
     "adp": 64,
     "adp_sd": 9.5,
     "ecr": 63,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 200.9,
+    "proj_n": 3,
+    "proj_low": 188.4,
+    "proj_high": 203.8,
+    "proj_unc": 43.1
   },
   {
     "id": 4248528,
@@ -1127,7 +1447,12 @@ const PLAYERS=[
     "adp": 65,
     "adp_sd": 9.6,
     "ecr": 58,
-    "tier": 4
+    "tier": 4,
+    "proj_espn": 174.9,
+    "proj_n": 3,
+    "proj_low": 173.0,
+    "proj_high": 192.1,
+    "proj_unc": 38.1
   },
   {
     "id": 5083076,
@@ -1135,12 +1460,17 @@ const PLAYERS=[
     "pos": "TE",
     "team": "CLE",
     "bye": null,
-    "proj": 166.9,
+    "proj": 168.3,
     "sd": 41.7,
     "adp": 66,
     "adp_sd": 9.6,
     "ecr": 78,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 166.9,
+    "proj_n": 3,
+    "proj_low": 166.9,
+    "proj_high": 179.7,
+    "proj_unc": 39.0
   },
   {
     "id": 4569987,
@@ -1148,12 +1478,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "PIT",
     "bye": null,
-    "proj": 185.6,
+    "proj": 191.7,
     "sd": 48.3,
     "adp": 67,
     "adp_sd": 9.7,
     "ecr": 70,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 185.6,
+    "proj_n": 3,
+    "proj_low": 185.6,
+    "proj_high": 198.1,
+    "proj_unc": 50.1
   },
   {
     "id": 4572680,
@@ -1161,12 +1496,17 @@ const PLAYERS=[
     "pos": "TE",
     "team": "GB",
     "bye": null,
-    "proj": 155,
+    "proj": 155.0,
     "sd": 38.8,
     "adp": 68,
     "adp_sd": 9.7,
     "ecr": 66,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 155.0,
+    "proj_n": 3,
+    "proj_low": 145.5,
+    "proj_high": 183.6,
+    "proj_unc": 39.0
   },
   {
     "id": 4871023,
@@ -1174,12 +1514,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "TEN",
     "bye": null,
-    "proj": 195.5,
+    "proj": 168.6,
     "sd": 45,
     "adp": 69,
     "adp_sd": 9.8,
     "ecr": 68,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 195.5,
+    "proj_n": 3,
+    "proj_low": 143.2,
+    "proj_high": 195.5,
+    "proj_unc": 41.6
   },
   {
     "id": 4432773,
@@ -1192,7 +1537,12 @@ const PLAYERS=[
     "adp": 70,
     "adp_sd": 9.8,
     "ecr": 72,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 165.2,
+    "proj_n": 3,
+    "proj_low": 156.1,
+    "proj_high": 187.3,
+    "proj_unc": 37.4
   },
   {
     "id": 4360248,
@@ -1200,12 +1550,17 @@ const PLAYERS=[
     "pos": "TE",
     "team": "ATL",
     "bye": null,
-    "proj": 165.4,
+    "proj": 167.0,
     "sd": 41.3,
     "adp": 71,
     "adp_sd": 9.9,
     "ecr": 82,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 165.4,
+    "proj_n": 3,
+    "proj_low": 165.4,
+    "proj_high": 197.0,
+    "proj_unc": 40.9
   },
   {
     "id": 4569173,
@@ -1218,7 +1573,12 @@ const PLAYERS=[
     "adp": 72,
     "adp_sd": 10,
     "ecr": 75,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 187.4,
+    "proj_n": 3,
+    "proj_low": 178.0,
+    "proj_high": 188.0,
+    "proj_unc": 48.9
   },
   {
     "id": 4568490,
@@ -1226,12 +1586,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "DEN",
     "bye": null,
-    "proj": 156.4,
+    "proj": 157.8,
     "sd": 40.7,
     "adp": 73,
     "adp_sd": 10,
     "ecr": 94,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 156.4,
+    "proj_n": 3,
+    "proj_low": 156.4,
+    "proj_high": 196.7,
+    "proj_unc": 45.1
   },
   {
     "id": 4430027,
@@ -1244,7 +1609,12 @@ const PLAYERS=[
     "adp": 74,
     "adp_sd": 10.1,
     "ecr": 81,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 169.7,
+    "proj_n": 3,
+    "proj_low": 148.8,
+    "proj_high": 181.1,
+    "proj_unc": 41.1
   },
   {
     "id": 4431611,
@@ -1252,12 +1622,17 @@ const PLAYERS=[
     "pos": "QB",
     "team": "CHI",
     "bye": null,
-    "proj": 307.5,
+    "proj": 319.7,
     "sd": 43,
     "adp": 75,
     "adp_sd": 10.1,
     "ecr": 67,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 307.5,
+    "proj_n": 3,
+    "proj_low": 307.5,
+    "proj_high": 324.9,
+    "proj_unc": 50.4
   },
   {
     "id": 4432708,
@@ -1265,12 +1640,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "ARI",
     "bye": null,
-    "proj": 180.1,
+    "proj": 180.4,
     "sd": 41.4,
     "adp": 76,
     "adp_sd": 10.2,
     "ecr": 71,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 180.1,
+    "proj_n": 3,
+    "proj_low": 180.1,
+    "proj_high": 191.9,
+    "proj_unc": 38.6
   },
   {
     "id": 4241416,
@@ -1278,12 +1658,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "CAR",
     "bye": null,
-    "proj": 179.6,
+    "proj": 189.2,
     "sd": 46.7,
     "adp": 77,
     "adp_sd": 10.2,
     "ecr": 83,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 179.6,
+    "proj_n": 3,
+    "proj_low": 179.6,
+    "proj_high": 192.4,
+    "proj_unc": 49.5
   },
   {
     "id": 4038815,
@@ -1296,7 +1681,12 @@ const PLAYERS=[
     "adp": 78,
     "adp_sd": 10.3,
     "ecr": 84,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 188.1,
+    "proj_n": 3,
+    "proj_low": 166.7,
+    "proj_high": 213.2,
+    "proj_unc": 52.5
   },
   {
     "id": 4038941,
@@ -1304,12 +1694,17 @@ const PLAYERS=[
     "pos": "QB",
     "team": "LAC",
     "bye": null,
-    "proj": 310.5,
+    "proj": 315.4,
     "sd": 43.5,
     "adp": 79,
     "adp_sd": 10.3,
     "ecr": 69,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 310.5,
+    "proj_n": 3,
+    "proj_low": 310.5,
+    "proj_high": 324.5,
+    "proj_unc": 49.5
   },
   {
     "id": 3916148,
@@ -1322,7 +1717,12 @@ const PLAYERS=[
     "adp": 80,
     "adp_sd": 10.4,
     "ecr": 73,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 193.4,
+    "proj_n": 3,
+    "proj_low": 191.9,
+    "proj_high": 200.0,
+    "proj_unc": 50.4
   },
   {
     "id": 2577417,
@@ -1330,12 +1730,17 @@ const PLAYERS=[
     "pos": "QB",
     "team": "DAL",
     "bye": null,
-    "proj": 313.9,
+    "proj": 318.9,
     "sd": 43.9,
     "adp": 81,
     "adp_sd": 10.5,
     "ecr": 79,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 313.9,
+    "proj_n": 3,
+    "proj_low": 313.9,
+    "proj_high": 335.4,
+    "proj_unc": 50.6
   },
   {
     "id": 4432620,
@@ -1348,7 +1753,12 @@ const PLAYERS=[
     "adp": 82,
     "adp_sd": 10.5,
     "ecr": 77,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 174.7,
+    "proj_n": 3,
+    "proj_low": 146.9,
+    "proj_high": 183.9,
+    "proj_unc": 40.2
   },
   {
     "id": 4360310,
@@ -1361,7 +1771,12 @@ const PLAYERS=[
     "adp": 83,
     "adp_sd": 10.6,
     "ecr": 74,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 314.9,
+    "proj_n": 3,
+    "proj_low": 313.1,
+    "proj_high": 328.4,
+    "proj_unc": 49.6
   },
   {
     "id": 4047650,
@@ -1374,7 +1789,12 @@ const PLAYERS=[
     "adp": 84,
     "adp_sd": 10.6,
     "ecr": 76,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 182.2,
+    "proj_n": 3,
+    "proj_low": 180.5,
+    "proj_high": 183.9,
+    "proj_unc": 38.7
   },
   {
     "id": 4608686,
@@ -1382,12 +1802,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "CHI",
     "bye": null,
-    "proj": 178.5,
+    "proj": 159.9,
     "sd": 46.4,
     "adp": 85,
     "adp_sd": 10.7,
     "ecr": 96,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 178.5,
+    "proj_n": 3,
+    "proj_low": 140.8,
+    "proj_high": 178.5,
+    "proj_unc": 44.3
   },
   {
     "id": 4880281,
@@ -1395,12 +1820,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "NO",
     "bye": null,
-    "proj": 174.9,
+    "proj": 156.9,
     "sd": 40.2,
     "adp": 86,
     "adp_sd": 10.7,
     "ecr": 87,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 174.9,
+    "proj_n": 3,
+    "proj_low": 151.0,
+    "proj_high": 174.9,
+    "proj_unc": 34.8
   },
   {
     "id": 4360078,
@@ -1413,7 +1843,12 @@ const PLAYERS=[
     "adp": 87,
     "adp_sd": 10.8,
     "ecr": 80,
-    "tier": 5
+    "tier": 5,
+    "proj_espn": 189.8,
+    "proj_n": 3,
+    "proj_low": 184.4,
+    "proj_high": 211.0,
+    "proj_unc": 41.8
   },
   {
     "id": 4360761,
@@ -1426,7 +1861,12 @@ const PLAYERS=[
     "adp": 88,
     "adp_sd": 10.8,
     "ecr": 90,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 162.5,
+    "proj_n": 3,
+    "proj_low": 158.9,
+    "proj_high": 168.6,
+    "proj_unc": 34.7
   },
   {
     "id": 4689114,
@@ -1439,7 +1879,12 @@ const PLAYERS=[
     "adp": 89,
     "adp_sd": 10.9,
     "ecr": 89,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 330.1,
+    "proj_n": 3,
+    "proj_low": 323.2,
+    "proj_high": 337.1,
+    "proj_unc": 51.8
   },
   {
     "id": 3128429,
@@ -1452,7 +1897,12 @@ const PLAYERS=[
     "adp": 90,
     "adp_sd": 10.9,
     "ecr": 86,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 190.1,
+    "proj_n": 3,
+    "proj_low": 177.1,
+    "proj_high": 205.6,
+    "proj_unc": 41.9
   },
   {
     "id": 3116165,
@@ -1460,12 +1910,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "TB",
     "bye": null,
-    "proj": 145.5,
+    "proj": 162.2,
     "sd": 33.5,
     "adp": 91,
     "adp_sd": 11,
     "ecr": 85,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 145.5,
+    "proj_n": 3,
+    "proj_low": 145.5,
+    "proj_high": 180.3,
+    "proj_unc": 37.2
   },
   {
     "id": 4241985,
@@ -1478,7 +1933,12 @@ const PLAYERS=[
     "adp": 92,
     "adp_sd": 11.1,
     "ecr": 88,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 177.8,
+    "proj_n": 3,
+    "proj_low": 176.0,
+    "proj_high": 179.3,
+    "proj_unc": 46.2
   },
   {
     "id": 4429096,
@@ -1486,12 +1946,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "LAR",
     "bye": null,
-    "proj": 164,
+    "proj": 136.9,
     "sd": 42.6,
     "adp": 93,
     "adp_sd": 11.1,
     "ecr": 95,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 164.0,
+    "proj_n": 3,
+    "proj_low": 126.8,
+    "proj_high": 164.0,
+    "proj_unc": 38.9
   },
   {
     "id": 4870795,
@@ -1499,12 +1964,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "PHI",
     "bye": null,
-    "proj": 161.5,
+    "proj": 141.5,
     "sd": 37.1,
     "adp": 94,
     "adp_sd": 11.2,
     "ecr": 101,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 161.5,
+    "proj_n": 3,
+    "proj_low": 136.7,
+    "proj_high": 161.5,
+    "proj_unc": 31.9
   },
   {
     "id": 4678008,
@@ -1512,12 +1982,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "CAR",
     "bye": null,
-    "proj": 161.6,
+    "proj": 148.4,
     "sd": 42,
     "adp": 95,
     "adp_sd": 11.2,
     "ecr": 110,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 161.6,
+    "proj_n": 3,
+    "proj_low": 128.8,
+    "proj_high": 161.6,
+    "proj_unc": 40.9
   },
   {
     "id": 3040151,
@@ -1525,12 +2000,17 @@ const PLAYERS=[
     "pos": "TE",
     "team": "SF",
     "bye": null,
-    "proj": 160,
+    "proj": 160.0,
     "sd": 40,
     "adp": 96,
     "adp_sd": 11.3,
     "ecr": 105,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 160.0,
+    "proj_n": 3,
+    "proj_low": 125.5,
+    "proj_high": 180.8,
+    "proj_unc": 43.1
   },
   {
     "id": 15847,
@@ -1538,12 +2018,17 @@ const PLAYERS=[
     "pos": "TE",
     "team": "KC",
     "bye": null,
-    "proj": 159,
+    "proj": 159.0,
     "sd": 39.7,
     "adp": 97,
     "adp_sd": 11.3,
     "ecr": 102,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 159.0,
+    "proj_n": 3,
+    "proj_low": 156.3,
+    "proj_high": 176.2,
+    "proj_unc": 37.5
   },
   {
     "id": 3139477,
@@ -1556,7 +2041,12 @@ const PLAYERS=[
     "adp": 98,
     "adp_sd": 11.4,
     "ecr": 99,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 316.1,
+    "proj_n": 3,
+    "proj_low": 311.8,
+    "proj_high": 328.9,
+    "proj_unc": 49.8
   },
   {
     "id": 4361741,
@@ -1569,7 +2059,12 @@ const PLAYERS=[
     "adp": 99,
     "adp_sd": 11.4,
     "ecr": 92,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 319.6,
+    "proj_n": 3,
+    "proj_low": 316.1,
+    "proj_high": 334.4,
+    "proj_unc": 50.5
   },
   {
     "id": 4385690,
@@ -1582,7 +2077,12 @@ const PLAYERS=[
     "adp": 100,
     "adp_sd": 11.5,
     "ecr": 114,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 141.1,
+    "proj_n": 3,
+    "proj_low": 133.8,
+    "proj_high": 163.5,
+    "proj_unc": 34.7
   },
   {
     "id": 4361050,
@@ -1595,7 +2095,12 @@ const PLAYERS=[
     "adp": 101,
     "adp_sd": 11.6,
     "ecr": 125,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 140.9,
+    "proj_n": 3,
+    "proj_low": 131.9,
+    "proj_high": 180.0,
+    "proj_unc": 38.4
   },
   {
     "id": 4426338,
@@ -1603,12 +2108,17 @@ const PLAYERS=[
     "pos": "QB",
     "team": "DEN",
     "bye": null,
-    "proj": 324.4,
+    "proj": 322.8,
     "sd": 45.4,
     "adp": 102,
     "adp_sd": 11.6,
     "ecr": 98,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 324.4,
+    "proj_n": 3,
+    "proj_low": 300.2,
+    "proj_high": 324.4,
+    "proj_unc": 51.5
   },
   {
     "id": 12483,
@@ -1616,12 +2126,17 @@ const PLAYERS=[
     "pos": "QB",
     "team": "LAR",
     "bye": null,
-    "proj": 317.3,
+    "proj": 305.9,
     "sd": 44.4,
     "adp": 103,
     "adp_sd": 11.7,
     "ecr": 104,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 317.3,
+    "proj_n": 3,
+    "proj_low": 303.8,
+    "proj_high": 317.3,
+    "proj_unc": 48.1
   },
   {
     "id": 4035687,
@@ -1629,12 +2144,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "PIT",
     "bye": null,
-    "proj": 178.9,
+    "proj": 178.4,
     "sd": 41.1,
     "adp": 104,
     "adp_sd": 11.7,
     "ecr": 91,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 178.9,
+    "proj_n": 3,
+    "proj_low": 164.9,
+    "proj_high": 178.9,
+    "proj_unc": 38.4
   },
   {
     "id": 4371733,
@@ -1647,7 +2167,12 @@ const PLAYERS=[
     "adp": 105,
     "adp_sd": 11.8,
     "ecr": 103,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 167.2,
+    "proj_n": 3,
+    "proj_low": 131.5,
+    "proj_high": 177.9,
+    "proj_unc": 47.8
   },
   {
     "id": 4429025,
@@ -1660,7 +2185,12 @@ const PLAYERS=[
     "adp": 106,
     "adp_sd": 11.8,
     "ecr": 93,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 154.3,
+    "proj_n": 3,
+    "proj_low": 146.6,
+    "proj_high": 178.0,
+    "proj_unc": 35.3
   },
   {
     "id": 4429205,
@@ -1673,7 +2203,12 @@ const PLAYERS=[
     "adp": 107,
     "adp_sd": 11.9,
     "ecr": 106,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 158.5,
+    "proj_n": 3,
+    "proj_low": 152.9,
+    "proj_high": 163.3,
+    "proj_unc": 33.9
   },
   {
     "id": 4575131,
@@ -1681,12 +2216,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "WAS",
     "bye": null,
-    "proj": 158.2,
+    "proj": 154.0,
     "sd": 41.1,
     "adp": 108,
     "adp_sd": 11.9,
     "ecr": 113,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 158.2,
+    "proj_n": 3,
+    "proj_low": 142.4,
+    "proj_high": 158.2,
+    "proj_unc": 40.6
   },
   {
     "id": 4242355,
@@ -1699,7 +2239,12 @@ const PLAYERS=[
     "adp": 109,
     "adp_sd": 12,
     "ecr": 117,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 149.1,
+    "proj_n": 3,
+    "proj_low": 142.1,
+    "proj_high": 160.4,
+    "proj_unc": 35.0
   },
   {
     "id": 4697815,
@@ -1712,7 +2257,12 @@ const PLAYERS=[
     "adp": 110,
     "adp_sd": 12.1,
     "ecr": 107,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 165.7,
+    "proj_n": 3,
+    "proj_low": 153.7,
+    "proj_high": 168.9,
+    "proj_unc": 43.6
   },
   {
     "id": 3916433,
@@ -1725,7 +2275,12 @@ const PLAYERS=[
     "adp": 111,
     "adp_sd": 12.1,
     "ecr": 108,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 168.1,
+    "proj_n": 3,
+    "proj_low": 163.8,
+    "proj_high": 179.6,
+    "proj_unc": 36.3
   },
   {
     "id": 4360569,
@@ -1733,12 +2288,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "MIN",
     "bye": null,
-    "proj": 134.6,
+    "proj": 137.8,
     "sd": 35,
     "adp": 112,
     "adp_sd": 12.2,
     "ecr": 116,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 134.6,
+    "proj_n": 3,
+    "proj_low": 134.6,
+    "proj_high": 161.6,
+    "proj_unc": 37.8
   },
   {
     "id": 3042519,
@@ -1746,12 +2306,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "MIN",
     "bye": null,
-    "proj": 182.4,
+    "proj": 167.6,
     "sd": 47.4,
     "adp": 113,
     "adp_sd": 12.2,
     "ecr": 112,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 182.4,
+    "proj_n": 3,
+    "proj_low": 143.5,
+    "proj_high": 182.4,
+    "proj_unc": 46.4
   },
   {
     "id": 3116365,
@@ -1759,12 +2324,17 @@ const PLAYERS=[
     "pos": "TE",
     "team": "BAL",
     "bye": null,
-    "proj": 155.4,
+    "proj": 153.4,
     "sd": 38.9,
     "adp": 114,
     "adp_sd": 12.3,
     "ecr": 121,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 155.4,
+    "proj_n": 3,
+    "proj_low": 146.6,
+    "proj_high": 155.4,
+    "proj_unc": 35.3
   },
   {
     "id": 3046779,
@@ -1772,12 +2342,17 @@ const PLAYERS=[
     "pos": "QB",
     "team": "DET",
     "bye": null,
-    "proj": 293.2,
+    "proj": 302.5,
     "sd": 41,
     "adp": 115,
     "adp_sd": 12.3,
     "ecr": 111,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 293.2,
+    "proj_n": 3,
+    "proj_low": 293.2,
+    "proj_high": 313.2,
+    "proj_unc": 47.9
   },
   {
     "id": 4569587,
@@ -1785,12 +2360,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "TEN",
     "bye": null,
-    "proj": 158.5,
+    "proj": 165.1,
     "sd": 36.5,
     "adp": 116,
     "adp_sd": 12.4,
     "ecr": 100,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 158.5,
+    "proj_n": 3,
+    "proj_low": 158.5,
+    "proj_high": 193.8,
+    "proj_unc": 38.2
   },
   {
     "id": 4362249,
@@ -1798,12 +2378,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "GB",
     "bye": null,
-    "proj": 158.6,
+    "proj": 164.8,
     "sd": 36.5,
     "adp": 117,
     "adp_sd": 12.4,
     "ecr": 109,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 158.6,
+    "proj_n": 3,
+    "proj_low": 158.6,
+    "proj_high": 171.8,
+    "proj_unc": 35.3
   },
   {
     "id": 4688813,
@@ -1816,7 +2401,12 @@ const PLAYERS=[
     "adp": 118,
     "adp_sd": 12.5,
     "ecr": 97,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 157.7,
+    "proj_n": 3,
+    "proj_low": 154.4,
+    "proj_high": 167.9,
+    "proj_unc": 33.9
   },
   {
     "id": 3121023,
@@ -1829,7 +2419,12 @@ const PLAYERS=[
     "adp": 119,
     "adp_sd": 12.5,
     "ecr": 118,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 159.5,
+    "proj_n": 3,
+    "proj_low": 142.3,
+    "proj_high": 189.1,
+    "proj_unc": 41.3
   },
   {
     "id": 3953687,
@@ -1842,7 +2437,12 @@ const PLAYERS=[
     "adp": 122,
     "adp_sd": 12.7,
     "ecr": 216,
-    "tier": 9
+    "tier": 9,
+    "proj_espn": 171.6,
+    "proj_n": 1,
+    "proj_low": 171.6,
+    "proj_high": 171.6,
+    "proj_unc": 0.0
   },
   {
     "id": 4683062,
@@ -1850,12 +2450,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "KC",
     "bye": null,
-    "proj": 162.5,
+    "proj": 157.5,
     "sd": 37.4,
     "adp": 123,
     "adp_sd": 12.8,
     "ecr": 120,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 162.5,
+    "proj_n": 3,
+    "proj_low": 152.7,
+    "proj_high": 162.5,
+    "proj_unc": 33.6
   },
   {
     "id": 4426385,
@@ -1863,12 +2468,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "SEA",
     "bye": null,
-    "proj": 134.8,
+    "proj": 127.2,
     "sd": 35,
     "adp": 124,
     "adp_sd": 12.8,
     "ecr": 137,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 134.8,
+    "proj_n": 3,
+    "proj_low": 111.0,
+    "proj_high": 134.8,
+    "proj_unc": 34.5
   },
   {
     "id": 3917315,
@@ -1876,12 +2486,17 @@ const PLAYERS=[
     "pos": "QB",
     "team": "MIN",
     "bye": null,
-    "proj": 277.3,
+    "proj": 299.3,
     "sd": 38.8,
     "adp": 126,
     "adp_sd": 12.9,
     "ecr": 115,
-    "tier": 6
+    "tier": 6,
+    "proj_espn": 277.3,
+    "proj_n": 3,
+    "proj_low": 277.3,
+    "proj_high": 307.5,
+    "proj_unc": 48.4
   },
   {
     "id": 4036378,
@@ -1889,12 +2504,17 @@ const PLAYERS=[
     "pos": "QB",
     "team": "GB",
     "bye": null,
-    "proj": 284.8,
+    "proj": 284.2,
     "sd": 39.9,
     "adp": 127,
     "adp_sd": 13,
     "ecr": 122,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 284.8,
+    "proj_n": 3,
+    "proj_low": 277.7,
+    "proj_high": 284.8,
+    "proj_unc": 44.5
   },
   {
     "id": 3052587,
@@ -1907,7 +2527,12 @@ const PLAYERS=[
     "adp": 130,
     "adp_sd": 13.2,
     "ecr": 119,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 290.9,
+    "proj_n": 3,
+    "proj_low": 288.0,
+    "proj_high": 315.4,
+    "proj_unc": 47.0
   },
   {
     "id": 4242512,
@@ -1915,12 +2540,17 @@ const PLAYERS=[
     "pos": "QB",
     "team": "MIA",
     "bye": null,
-    "proj": 266.5,
+    "proj": 294.9,
     "sd": 37.3,
     "adp": 131,
     "adp_sd": 13.2,
     "ecr": 134,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 266.5,
+    "proj_n": 3,
+    "proj_low": 266.5,
+    "proj_high": 308.8,
+    "proj_unc": 49.3
   },
   {
     "id": 4361432,
@@ -1933,7 +2563,12 @@ const PLAYERS=[
     "adp": 132,
     "adp_sd": 13.3,
     "ecr": 127,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 149.2,
+    "proj_n": 3,
+    "proj_low": 147.9,
+    "proj_high": 152.2,
+    "proj_unc": 31.7
   },
   {
     "id": 4241474,
@@ -1941,12 +2576,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "ATL",
     "bye": null,
-    "proj": 98.7,
+    "proj": 97.9,
     "sd": 25.7,
     "adp": 133,
     "adp_sd": 13.3,
     "ecr": 151,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 98.7,
+    "proj_n": 3,
+    "proj_low": 88.0,
+    "proj_high": 98.7,
+    "proj_unc": 25.9
   },
   {
     "id": 3046439,
@@ -1959,7 +2599,12 @@ const PLAYERS=[
     "adp": 134,
     "adp_sd": 13.4,
     "ecr": 149,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 136.2,
+    "proj_n": 3,
+    "proj_low": 134.0,
+    "proj_high": 150.1,
+    "proj_unc": 32.0
   },
   {
     "id": 4373626,
@@ -1972,7 +2617,12 @@ const PLAYERS=[
     "adp": 135,
     "adp_sd": 13.4,
     "ecr": 132,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 90.8,
+    "proj_n": 3,
+    "proj_low": 86.9,
+    "proj_high": 101.3,
+    "proj_unc": 24.4
   },
   {
     "id": 4360516,
@@ -1980,12 +2630,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "NYG",
     "bye": null,
-    "proj": 88,
+    "proj": 124.1,
     "sd": 22.9,
     "adp": 136,
     "adp_sd": 13.5,
     "ecr": 126,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 88.0,
+    "proj_n": 3,
+    "proj_low": 88.0,
+    "proj_high": 143.3,
+    "proj_unc": 39.6
   },
   {
     "id": 4870653,
@@ -1993,12 +2648,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "CLE",
     "bye": null,
-    "proj": 150.5,
+    "proj": 142.3,
     "sd": 34.6,
     "adp": 137,
     "adp_sd": 13.5,
     "ecr": 133,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 150.5,
+    "proj_n": 3,
+    "proj_low": 114.6,
+    "proj_high": 150.5,
+    "proj_unc": 33.9
   },
   {
     "id": 4430539,
@@ -2011,7 +2671,12 @@ const PLAYERS=[
     "adp": 138,
     "adp_sd": 13.6,
     "ecr": 145,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 127.9,
+    "proj_n": 3,
+    "proj_low": 119.6,
+    "proj_high": 163.5,
+    "proj_unc": 34.9
   },
   {
     "id": 4360689,
@@ -2019,12 +2684,17 @@ const PLAYERS=[
     "pos": "QB",
     "team": "NO",
     "bye": null,
-    "proj": 292.9,
+    "proj": 302.4,
     "sd": 41,
     "adp": 139,
     "adp_sd": 13.6,
     "ecr": 124,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 292.9,
+    "proj_n": 3,
+    "proj_low": 292.9,
+    "proj_high": 319.0,
+    "proj_unc": 48.4
   },
   {
     "id": 4701936,
@@ -2032,12 +2702,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "GB",
     "bye": null,
-    "proj": 172.4,
+    "proj": 143.3,
     "sd": 39.7,
     "adp": 141,
     "adp_sd": 13.8,
     "ecr": 135,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 172.4,
+    "proj_n": 3,
+    "proj_low": 121.7,
+    "proj_high": 172.4,
+    "proj_unc": 36.8
   },
   {
     "id": 4429059,
@@ -2050,7 +2725,12 @@ const PLAYERS=[
     "adp": 142,
     "adp_sd": 13.8,
     "ecr": 131,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 127.4,
+    "proj_n": 3,
+    "proj_low": 117.5,
+    "proj_high": 130.3,
+    "proj_unc": 33.6
   },
   {
     "id": 4032473,
@@ -2063,7 +2743,12 @@ const PLAYERS=[
     "adp": 143,
     "adp_sd": 13.9,
     "ecr": 138,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 136.9,
+    "proj_n": 3,
+    "proj_low": 134.0,
+    "proj_high": 163.8,
+    "proj_unc": 32.0
   },
   {
     "id": 3054850,
@@ -2071,12 +2756,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "NO",
     "bye": null,
-    "proj": 122,
+    "proj": 122.0,
     "sd": 31.7,
     "adp": 144,
     "adp_sd": 13.9,
     "ecr": 139,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 122.0,
+    "proj_n": 3,
+    "proj_low": 119.2,
+    "proj_high": 141.1,
+    "proj_unc": 33.2
   },
   {
     "id": 2976212,
@@ -2084,12 +2774,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "WAS",
     "bye": null,
-    "proj": 0,
+    "proj": 160.6,
     "sd": 0,
     "adp": 146,
     "adp_sd": 14,
     "ecr": 171,
-    "tier": 8
+    "tier": 8,
+    "proj_espn": 0.0,
+    "proj_n": 2,
+    "proj_low": 156.1,
+    "proj_high": 165.1,
+    "proj_unc": 34.3
   },
   {
     "id": 3929645,
@@ -2097,12 +2792,17 @@ const PLAYERS=[
     "pos": "TE",
     "team": "NO",
     "bye": null,
-    "proj": 127.3,
+    "proj": 130.9,
     "sd": 31.8,
     "adp": 148,
     "adp_sd": 14.1,
     "ecr": 141,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 127.3,
+    "proj_n": 3,
+    "proj_low": 127.3,
+    "proj_high": 159.7,
+    "proj_unc": 33.3
   },
   {
     "id": 4362081,
@@ -2115,7 +2815,12 @@ const PLAYERS=[
     "adp": 150,
     "adp_sd": 14.3,
     "ecr": 225,
-    "tier": 9
+    "tier": 9,
+    "proj_espn": 161.7,
+    "proj_n": 1,
+    "proj_low": 161.7,
+    "proj_high": 161.7,
+    "proj_unc": 0.0
   },
   {
     "id": 5083315,
@@ -2123,12 +2828,17 @@ const PLAYERS=[
     "pos": "TE",
     "team": "NYJ",
     "bye": null,
-    "proj": 146,
+    "proj": 122.3,
     "sd": 36.5,
     "adp": 151,
     "adp_sd": 14.3,
     "ecr": 177,
-    "tier": 8
+    "tier": 8,
+    "proj_espn": 146.0,
+    "proj_n": 3,
+    "proj_low": 87.0,
+    "proj_high": 146.0,
+    "proj_unc": 37.1
   },
   {
     "id": 4373678,
@@ -2136,12 +2846,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "BUF",
     "bye": null,
-    "proj": 157.3,
+    "proj": 158.1,
     "sd": 36.2,
     "adp": 152,
     "adp_sd": 14.4,
     "ecr": 129,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 157.3,
+    "proj_n": 3,
+    "proj_low": 157.3,
+    "proj_high": 159.8,
+    "proj_unc": 33.5
   },
   {
     "id": 2971573,
@@ -2154,7 +2869,12 @@ const PLAYERS=[
     "adp": 153,
     "adp_sd": 14.4,
     "ecr": 218,
-    "tier": 9
+    "tier": 9,
+    "proj_espn": 157.7,
+    "proj_n": 1,
+    "proj_low": 157.7,
+    "proj_high": 157.7,
+    "proj_unc": 0.0
   },
   {
     "id": 4877706,
@@ -2162,12 +2882,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "HOU",
     "bye": null,
-    "proj": 130.3,
+    "proj": 126.1,
     "sd": 30,
     "adp": 154,
     "adp_sd": 14.5,
     "ecr": 123,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 130.3,
+    "proj_n": 3,
+    "proj_low": 113.6,
+    "proj_high": 130.3,
+    "proj_unc": 27.7
   },
   {
     "id": 4428557,
@@ -2175,12 +2900,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "TEN",
     "bye": null,
-    "proj": 137.9,
+    "proj": 133.9,
     "sd": 35.8,
     "adp": 155,
     "adp_sd": 14.5,
     "ecr": 136,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 137.9,
+    "proj_n": 3,
+    "proj_low": 107.9,
+    "proj_high": 137.9,
+    "proj_unc": 37.3
   },
   {
     "id": 4362619,
@@ -2188,12 +2918,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "JAX",
     "bye": null,
-    "proj": 75.5,
+    "proj": 101.0,
     "sd": 19.6,
     "adp": 156,
     "adp_sd": 14.6,
     "ecr": 128,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 75.5,
+    "proj_n": 3,
+    "proj_low": 75.5,
+    "proj_high": 126.4,
+    "proj_unc": 33.5
   },
   {
     "id": 4361529,
@@ -2201,12 +2936,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "DET",
     "bye": null,
-    "proj": 126.3,
+    "proj": 124.6,
     "sd": 32.8,
     "adp": 157,
     "adp_sd": 14.6,
     "ecr": 144,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 126.3,
+    "proj_n": 3,
+    "proj_low": 100.9,
+    "proj_high": 126.3,
+    "proj_unc": 34.4
   },
   {
     "id": 4432577,
@@ -2219,7 +2959,12 @@ const PLAYERS=[
     "adp": 158,
     "adp_sd": 14.7,
     "ecr": 142,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 272.1,
+    "proj_n": 3,
+    "proj_low": 264.1,
+    "proj_high": 293.0,
+    "proj_unc": 44.2
   },
   {
     "id": 3126486,
@@ -2232,7 +2977,12 @@ const PLAYERS=[
     "adp": 159,
     "adp_sd": 14.7,
     "ecr": 162,
-    "tier": 8
+    "tier": 8,
+    "proj_espn": 162.2,
+    "proj_n": 3,
+    "proj_low": 123.0,
+    "proj_high": 166.9,
+    "proj_unc": 39.6
   },
   {
     "id": 2473037,
@@ -2245,7 +2995,12 @@ const PLAYERS=[
     "adp": 160,
     "adp_sd": 14.8,
     "ecr": 229,
-    "tier": 9
+    "tier": 9,
+    "proj_espn": 158.5,
+    "proj_n": 1,
+    "proj_low": 158.5,
+    "proj_high": 158.5,
+    "proj_unc": 0.0
   },
   {
     "id": 4695883,
@@ -2258,7 +3013,12 @@ const PLAYERS=[
     "adp": 161,
     "adp_sd": 14.9,
     "ecr": 130,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 136.9,
+    "proj_n": 3,
+    "proj_low": 120.0,
+    "proj_high": 147.1,
+    "proj_unc": 31.1
   },
   {
     "id": 3886598,
@@ -2271,7 +3031,12 @@ const PLAYERS=[
     "adp": 162,
     "adp_sd": 14.9,
     "ecr": 153,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 105.2,
+    "proj_n": 3,
+    "proj_low": 94.1,
+    "proj_high": 143.5,
+    "proj_unc": 30.7
   },
   {
     "id": 4688380,
@@ -2279,12 +3044,17 @@ const PLAYERS=[
     "pos": "QB",
     "team": "TEN",
     "bye": null,
-    "proj": 244.5,
+    "proj": 249.5,
     "sd": 34.2,
     "adp": 166,
     "adp_sd": 15.1,
     "ecr": 150,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 244.5,
+    "proj_n": 3,
+    "proj_low": 244.5,
+    "proj_high": 251.2,
+    "proj_unc": 39.0
   },
   {
     "id": 4685415,
@@ -2292,12 +3062,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "JAX",
     "bye": null,
-    "proj": 104.7,
+    "proj": 91.5,
     "sd": 24.1,
     "adp": 168,
     "adp_sd": 15.2,
     "ecr": 169,
-    "tier": 8
+    "tier": 8,
+    "proj_espn": 104.7,
+    "proj_n": 2,
+    "proj_low": 78.2,
+    "proj_high": 104.7,
+    "proj_unc": 23.5
   },
   {
     "id": 4686361,
@@ -2310,7 +3085,12 @@ const PLAYERS=[
     "adp": 169,
     "adp_sd": 15.3,
     "ecr": 228,
-    "tier": 9
+    "tier": 9,
+    "proj_espn": 146.7,
+    "proj_n": 1,
+    "proj_low": 146.7,
+    "proj_high": 146.7,
+    "proj_unc": 0.0
   },
   {
     "id": 4832800,
@@ -2318,12 +3098,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "CLE",
     "bye": null,
-    "proj": 121.3,
+    "proj": 107.8,
     "sd": 27.9,
     "adp": 171,
     "adp_sd": 15.4,
     "ecr": 164,
-    "tier": 8
+    "tier": 8,
+    "proj_espn": 121.3,
+    "proj_n": 3,
+    "proj_low": 96.5,
+    "proj_high": 121.3,
+    "proj_unc": 25.0
   },
   {
     "id": 5081397,
@@ -2331,12 +3116,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "CLE",
     "bye": null,
-    "proj": 79.7,
+    "proj": 104.0,
     "sd": 20.7,
     "adp": 172,
     "adp_sd": 15.5,
     "ecr": 140,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 79.7,
+    "proj_n": 3,
+    "proj_low": 79.7,
+    "proj_high": 115.0,
+    "proj_unc": 30.8
   },
   {
     "id": 4723820,
@@ -2344,12 +3134,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "NYJ",
     "bye": null,
-    "proj": 97,
+    "proj": 100.1,
     "sd": 22.3,
     "adp": 173,
     "adp_sd": 15.5,
     "ecr": 165,
-    "tier": 8
+    "tier": 8,
+    "proj_espn": 97.0,
+    "proj_n": 3,
+    "proj_low": 97.0,
+    "proj_high": 126.2,
+    "proj_unc": 24.9
   },
   {
     "id": 4036133,
@@ -2357,12 +3152,17 @@ const PLAYERS=[
     "pos": "TE",
     "team": "MIN",
     "bye": null,
-    "proj": 139.2,
+    "proj": 119.4,
     "sd": 34.8,
     "adp": 174,
     "adp_sd": 15.6,
     "ecr": 167,
-    "tier": 8
+    "tier": 8,
+    "proj_espn": 139.2,
+    "proj_n": 3,
+    "proj_low": 117.1,
+    "proj_high": 139.2,
+    "proj_unc": 29.1
   },
   {
     "id": 4596334,
@@ -2370,12 +3170,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "LAC",
     "bye": null,
-    "proj": 63.5,
+    "proj": 66.9,
     "sd": 16.5,
     "adp": 176,
     "adp_sd": 15.7,
     "ecr": 147,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 63.5,
+    "proj_n": 3,
+    "proj_low": 63.5,
+    "proj_high": 80.1,
+    "proj_unc": 18.8
   },
   {
     "id": 3045147,
@@ -2383,12 +3188,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "ARI",
     "bye": null,
-    "proj": 0,
+    "proj": 75.0,
     "sd": 0,
     "adp": 177,
     "adp_sd": 15.7,
     "ecr": 184,
-    "tier": 8
+    "tier": 8,
+    "proj_espn": 0.0,
+    "proj_n": 2,
+    "proj_low": 34.3,
+    "proj_high": 115.6,
+    "proj_unc": 45.1
   },
   {
     "id": 3917792,
@@ -2401,7 +3211,12 @@ const PLAYERS=[
     "adp": 178,
     "adp_sd": 15.8,
     "ecr": 152,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 294.4,
+    "proj_n": 3,
+    "proj_low": 276.6,
+    "proj_high": 302.6,
+    "proj_unc": 47.2
   },
   {
     "id": 4430834,
@@ -2414,7 +3229,12 @@ const PLAYERS=[
     "adp": 180,
     "adp_sd": 15.9,
     "ecr": 159,
-    "tier": 8
+    "tier": 8,
+    "proj_espn": 123.9,
+    "proj_n": 3,
+    "proj_low": 110.6,
+    "proj_high": 126.5,
+    "proj_unc": 27.2
   },
   {
     "id": 4429013,
@@ -2427,7 +3247,12 @@ const PLAYERS=[
     "adp": 181,
     "adp_sd": 16,
     "ecr": 148,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 67.7,
+    "proj_n": 3,
+    "proj_low": 66.8,
+    "proj_high": 74.4,
+    "proj_unc": 17.9
   },
   {
     "id": 4686658,
@@ -2440,7 +3265,12 @@ const PLAYERS=[
     "adp": 182,
     "adp_sd": 16,
     "ecr": 211,
-    "tier": 9
+    "tier": 9,
+    "proj_espn": 67.6,
+    "proj_n": 3,
+    "proj_low": 60.0,
+    "proj_high": 88.3,
+    "proj_unc": 21.3
   },
   {
     "id": 4570037,
@@ -2448,12 +3278,17 @@ const PLAYERS=[
     "pos": "TE",
     "team": "LAR",
     "bye": null,
-    "proj": 124.7,
+    "proj": 97.7,
     "sd": 31.2,
     "adp": 183,
     "adp_sd": 16.1,
     "ecr": 182,
-    "tier": 8
+    "tier": 8,
+    "proj_espn": 124.7,
+    "proj_n": 3,
+    "proj_low": 96.0,
+    "proj_high": 124.7,
+    "proj_unc": 26.0
   },
   {
     "id": 4382466,
@@ -2466,7 +3301,12 @@ const PLAYERS=[
     "adp": 185,
     "adp_sd": 16.2,
     "ecr": 178,
-    "tier": 8
+    "tier": 8,
+    "proj_espn": 115.1,
+    "proj_n": 3,
+    "proj_low": 104.8,
+    "proj_high": 128.5,
+    "proj_unc": 26.3
   },
   {
     "id": 4574716,
@@ -2479,7 +3319,12 @@ const PLAYERS=[
     "adp": 188,
     "adp_sd": 16.3,
     "ecr": 251,
-    "tier": 9
+    "tier": 9,
+    "proj_espn": 159.5,
+    "proj_n": 1,
+    "proj_low": 159.5,
+    "proj_high": 159.5,
+    "proj_unc": 0.0
   },
   {
     "id": 4710714,
@@ -2487,12 +3332,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "SF",
     "bye": null,
-    "proj": 102.8,
+    "proj": 114.0,
     "sd": 23.6,
     "adp": 193,
     "adp_sd": 16.6,
     "ecr": 163,
-    "tier": 8
+    "tier": 8,
+    "proj_espn": 102.8,
+    "proj_n": 3,
+    "proj_low": 102.8,
+    "proj_high": 137.3,
+    "proj_unc": 28.1
   },
   {
     "id": 4689936,
@@ -2505,7 +3355,12 @@ const PLAYERS=[
     "adp": 194,
     "adp_sd": 16.7,
     "ecr": 239,
-    "tier": 9
+    "tier": 9,
+    "proj_espn": 145.9,
+    "proj_n": 1,
+    "proj_low": 145.9,
+    "proj_high": 145.9,
+    "proj_unc": 0.0
   },
   {
     "id": 4697745,
@@ -2518,7 +3373,12 @@ const PLAYERS=[
     "adp": 199,
     "adp_sd": 16.9,
     "ecr": 237,
-    "tier": 9
+    "tier": 9,
+    "proj_espn": 145.9,
+    "proj_n": 1,
+    "proj_low": 145.9,
+    "proj_high": 145.9,
+    "proj_unc": 0.0
   },
   {
     "id": 4034949,
@@ -2531,7 +3391,12 @@ const PLAYERS=[
     "adp": 200,
     "adp_sd": 17,
     "ecr": 235,
-    "tier": 9
+    "tier": 9,
+    "proj_espn": 155.3,
+    "proj_n": 1,
+    "proj_low": 155.3,
+    "proj_high": 155.3,
+    "proj_unc": 0.0
   },
   {
     "id": 4241463,
@@ -2544,7 +3409,12 @@ const PLAYERS=[
     "adp": 202,
     "adp_sd": 17.1,
     "ecr": 158,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 127.6,
+    "proj_n": 3,
+    "proj_low": 123.2,
+    "proj_high": 134.8,
+    "proj_unc": 27.5
   },
   {
     "id": 3055899,
@@ -2557,7 +3427,12 @@ const PLAYERS=[
     "adp": 203,
     "adp_sd": 17.2,
     "ecr": 258,
-    "tier": 9
+    "tier": 9,
+    "proj_espn": 148.4,
+    "proj_n": 1,
+    "proj_low": 148.4,
+    "proj_high": 148.4,
+    "proj_unc": 0.0
   },
   {
     "id": 4685247,
@@ -2570,7 +3445,12 @@ const PLAYERS=[
     "adp": 207,
     "adp_sd": 17.4,
     "ecr": 173,
-    "tier": 8
+    "tier": 8,
+    "proj_espn": 76.7,
+    "proj_n": 3,
+    "proj_low": 74.9,
+    "proj_high": 98.2,
+    "proj_unc": 22.6
   },
   {
     "id": 5081432,
@@ -2583,7 +3463,12 @@ const PLAYERS=[
     "adp": 215,
     "adp_sd": 17.8,
     "ecr": 217,
-    "tier": 9
+    "tier": 9,
+    "proj_espn": 107.3,
+    "proj_n": 3,
+    "proj_low": 78.4,
+    "proj_high": 126.8,
+    "proj_unc": 30.2
   },
   {
     "id": 4567104,
@@ -2596,7 +3481,12 @@ const PLAYERS=[
     "adp": 221,
     "adp_sd": 18.2,
     "ecr": 285,
-    "tier": 10
+    "tier": 10,
+    "proj_espn": 142.2,
+    "proj_n": 1,
+    "proj_low": 142.2,
+    "proj_high": 142.2,
+    "proj_unc": 0.0
   },
   {
     "id": 3925357,
@@ -2609,7 +3499,12 @@ const PLAYERS=[
     "adp": 222,
     "adp_sd": 18.2,
     "ecr": 181,
-    "tier": 8
+    "tier": 8,
+    "proj_espn": 134.9,
+    "proj_n": 3,
+    "proj_low": 105.9,
+    "proj_high": 151.3,
+    "proj_unc": 34.2
   },
   {
     "id": 17427,
@@ -2622,7 +3517,12 @@ const PLAYERS=[
     "adp": 225,
     "adp_sd": 18.4,
     "ecr": 242,
-    "tier": 9
+    "tier": 9,
+    "proj_espn": 144.5,
+    "proj_n": 1,
+    "proj_low": 144.5,
+    "proj_high": 144.5,
+    "proj_unc": 0.0
   },
   {
     "id": 4597500,
@@ -2630,12 +3530,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "NYJ",
     "bye": null,
-    "proj": 117.2,
+    "proj": 109.1,
     "sd": 27,
     "adp": 226,
     "adp_sd": 18.4,
     "ecr": 156,
-    "tier": 7
+    "tier": 7,
+    "proj_espn": 117.2,
+    "proj_n": 2,
+    "proj_low": 100.9,
+    "proj_high": 117.2,
+    "proj_unc": 24.5
   },
   {
     "id": 4366031,
@@ -2643,12 +3548,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "HOU",
     "bye": null,
-    "proj": 98.5,
+    "proj": 132.2,
     "sd": 22.6,
     "adp": 228,
     "adp_sd": 18.5,
     "ecr": 213,
-    "tier": 9
+    "tier": 9,
+    "proj_espn": 98.5,
+    "proj_n": 2,
+    "proj_low": 98.5,
+    "proj_high": 165.9,
+    "proj_unc": 43.8
   },
   {
     "id": 4428718,
@@ -2661,7 +3571,12 @@ const PLAYERS=[
     "adp": 229,
     "adp_sd": 18.6,
     "ecr": 161,
-    "tier": 8
+    "tier": 8,
+    "proj_espn": 128.7,
+    "proj_n": 3,
+    "proj_low": 125.0,
+    "proj_high": 138.3,
+    "proj_unc": 27.9
   },
   {
     "id": 4686612,
@@ -2669,12 +3584,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "LAC",
     "bye": null,
-    "proj": 82.6,
+    "proj": 80.8,
     "sd": 19,
     "adp": 232,
     "adp_sd": 18.8,
     "ecr": 166,
-    "tier": 8
+    "tier": 8,
+    "proj_espn": 82.6,
+    "proj_n": 2,
+    "proj_low": 79.1,
+    "proj_high": 82.6,
+    "proj_unc": 17.2
   },
   {
     "id": 4429501,
@@ -2682,12 +3602,17 @@ const PLAYERS=[
     "pos": "RB",
     "team": "BUF",
     "bye": null,
-    "proj": 37.3,
+    "proj": 52.1,
     "sd": 9.7,
     "adp": 234,
     "adp_sd": 18.9,
     "ecr": 176,
-    "tier": 8
+    "tier": 8,
+    "proj_espn": 37.3,
+    "proj_n": 2,
+    "proj_low": 37.3,
+    "proj_high": 66.9,
+    "proj_unc": 20.1
   },
   {
     "id": 4870612,
@@ -2695,12 +3620,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "ATL",
     "bye": null,
-    "proj": 93.2,
+    "proj": 89.5,
     "sd": 21.4,
     "adp": 235,
     "adp_sd": 18.9,
     "ecr": 227,
-    "tier": 9
+    "tier": 9,
+    "proj_espn": 93.2,
+    "proj_n": 2,
+    "proj_low": 85.8,
+    "proj_high": 93.2,
+    "proj_unc": 19.3
   },
   {
     "id": 4038441,
@@ -2713,7 +3643,12 @@ const PLAYERS=[
     "adp": 247,
     "adp_sd": 19.6,
     "ecr": 240,
-    "tier": 9
+    "tier": 9,
+    "proj_espn": 103.7,
+    "proj_n": 3,
+    "proj_low": 85.6,
+    "proj_high": 111.8,
+    "proj_unc": 29.1
   },
   {
     "id": 4040655,
@@ -2726,7 +3661,12 @@ const PLAYERS=[
     "adp": 257,
     "adp_sd": 20.1,
     "ecr": 193,
-    "tier": 8
+    "tier": 8,
+    "proj_espn": 85.8,
+    "proj_n": 3,
+    "proj_low": 63.9,
+    "proj_high": 110.9,
+    "proj_unc": 26.5
   },
   {
     "id": 5083754,
@@ -2734,12 +3674,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "DAL",
     "bye": null,
-    "proj": 82.9,
+    "proj": 88.7,
     "sd": 19.1,
     "adp": 259,
     "adp_sd": 20.2,
     "ecr": 172,
-    "tier": 8
+    "tier": 8,
+    "proj_espn": 82.9,
+    "proj_n": 2,
+    "proj_low": 82.9,
+    "proj_high": 94.4,
+    "proj_unc": 19.7
   },
   {
     "id": 4685261,
@@ -2747,12 +3692,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "PIT",
     "bye": null,
-    "proj": 117.6,
+    "proj": 106.8,
     "sd": 27,
     "adp": 267,
     "adp_sd": 20.7,
     "ecr": 244,
-    "tier": 9
+    "tier": 9,
+    "proj_espn": 117.6,
+    "proj_n": 3,
+    "proj_low": 101.5,
+    "proj_high": 117.6,
+    "proj_unc": 23.6
   },
   {
     "id": 4685397,
@@ -2765,7 +3715,12 @@ const PLAYERS=[
     "adp": 269,
     "adp_sd": 20.8,
     "ecr": 241,
-    "tier": 9
+    "tier": 9,
+    "proj_espn": 62.6,
+    "proj_n": 3,
+    "proj_low": 44.5,
+    "proj_high": 121.5,
+    "proj_unc": 36.7
   },
   {
     "id": 4360939,
@@ -2773,12 +3728,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "BAL",
     "bye": null,
-    "proj": 115.1,
+    "proj": 116.3,
     "sd": 26.5,
     "adp": 292,
     "adp_sd": 22.1,
     "ecr": 197,
-    "tier": 8
+    "tier": 8,
+    "proj_espn": 115.1,
+    "proj_n": 3,
+    "proj_low": 115.1,
+    "proj_high": 136.7,
+    "proj_unc": 26.6
   },
   {
     "id": -16007,
@@ -2791,7 +3751,12 @@ const PLAYERS=[
     "adp": 999,
     "adp_sd": 60.9,
     "ecr": 999,
-    "tier": 99
+    "tier": 99,
+    "proj_espn": 130.7,
+    "proj_n": 1,
+    "proj_low": 130.7,
+    "proj_high": 130.7,
+    "proj_unc": 0.0
   },
   {
     "id": -16005,
@@ -2804,7 +3769,12 @@ const PLAYERS=[
     "adp": 999,
     "adp_sd": 60.9,
     "ecr": 999,
-    "tier": 99
+    "tier": 99,
+    "proj_espn": 104.3,
+    "proj_n": 1,
+    "proj_low": 104.3,
+    "proj_high": 104.3,
+    "proj_unc": 0.0
   },
   {
     "id": -16024,
@@ -2817,7 +3787,12 @@ const PLAYERS=[
     "adp": 999,
     "adp_sd": 60.9,
     "ecr": 999,
-    "tier": 99
+    "tier": 99,
+    "proj_espn": 93.8,
+    "proj_n": 1,
+    "proj_low": 93.8,
+    "proj_high": 93.8,
+    "proj_unc": 0.0
   },
   {
     "id": -16012,
@@ -2830,7 +3805,12 @@ const PLAYERS=[
     "adp": 999,
     "adp_sd": 60.9,
     "ecr": 999,
-    "tier": 99
+    "tier": 99,
+    "proj_espn": 100.6,
+    "proj_n": 1,
+    "proj_low": 100.6,
+    "proj_high": 100.6,
+    "proj_unc": 0.0
   },
   {
     "id": -16021,
@@ -2843,7 +3823,12 @@ const PLAYERS=[
     "adp": 999,
     "adp_sd": 60.9,
     "ecr": 999,
-    "tier": 99
+    "tier": 99,
+    "proj_espn": 106.9,
+    "proj_n": 1,
+    "proj_low": 106.9,
+    "proj_high": 106.9,
+    "proj_unc": 0.0
   },
   {
     "id": -16008,
@@ -2856,7 +3841,12 @@ const PLAYERS=[
     "adp": 999,
     "adp_sd": 60.9,
     "ecr": 999,
-    "tier": 99
+    "tier": 99,
+    "proj_espn": 107.8,
+    "proj_n": 1,
+    "proj_low": 107.8,
+    "proj_high": 107.8,
+    "proj_unc": 0.0
   },
   {
     "id": -16017,
@@ -2869,7 +3859,12 @@ const PLAYERS=[
     "adp": 999,
     "adp_sd": 60.9,
     "ecr": 999,
-    "tier": 99
+    "tier": 99,
+    "proj_espn": 100.3,
+    "proj_n": 1,
+    "proj_low": 100.3,
+    "proj_high": 100.3,
+    "proj_unc": 0.0
   },
   {
     "id": -16014,
@@ -2882,7 +3877,12 @@ const PLAYERS=[
     "adp": 999,
     "adp_sd": 60.9,
     "ecr": 999,
-    "tier": 99
+    "tier": 99,
+    "proj_espn": 123.3,
+    "proj_n": 1,
+    "proj_low": 123.3,
+    "proj_high": 123.3,
+    "proj_unc": 0.0
   },
   {
     "id": -16033,
@@ -2890,12 +3890,17 @@ const PLAYERS=[
     "pos": "DST",
     "team": "BAL",
     "bye": null,
-    "proj": 120,
+    "proj": 120.0,
     "sd": 28.8,
     "adp": 999,
     "adp_sd": 60.9,
     "ecr": 999,
-    "tier": 99
+    "tier": 99,
+    "proj_espn": 120.0,
+    "proj_n": 1,
+    "proj_low": 120.0,
+    "proj_high": 120.0,
+    "proj_unc": 0.0
   },
   {
     "id": 4428209,
@@ -2903,12 +3908,17 @@ const PLAYERS=[
     "pos": "WR",
     "team": "SF",
     "bye": null,
-    "proj": 0,
+    "proj": 0.0,
     "sd": 0,
     "adp": 999,
     "adp_sd": 60.9,
     "ecr": 999,
-    "tier": 99
+    "tier": 99,
+    "proj_espn": 0.0,
+    "proj_n": 0,
+    "proj_low": 0.0,
+    "proj_high": 0.0,
+    "proj_unc": 0.0
   },
   {
     "id": -16026,
@@ -2921,7 +3931,12 @@ const PLAYERS=[
     "adp": 999,
     "adp_sd": 60.9,
     "ecr": 999,
-    "tier": 99
+    "tier": 99,
+    "proj_espn": 119.4,
+    "proj_n": 1,
+    "proj_low": 119.4,
+    "proj_high": 119.4,
+    "proj_unc": 0.0
   },
   {
     "id": -16023,
@@ -2934,7 +3949,12 @@ const PLAYERS=[
     "adp": 999,
     "adp_sd": 60.9,
     "ecr": 999,
-    "tier": 99
+    "tier": 99,
+    "proj_espn": 126.3,
+    "proj_n": 1,
+    "proj_low": 126.3,
+    "proj_high": 126.3,
+    "proj_unc": 0.0
   },
   {
     "id": -16034,
@@ -2942,12 +3962,17 @@ const PLAYERS=[
     "pos": "DST",
     "team": "HOU",
     "bye": null,
-    "proj": 128,
+    "proj": 128.0,
     "sd": 30.7,
     "adp": 999,
     "adp_sd": 60.9,
     "ecr": 999,
-    "tier": 99
+    "tier": 99,
+    "proj_espn": 128.0,
+    "proj_n": 1,
+    "proj_low": 128.0,
+    "proj_high": 128.0,
+    "proj_unc": 0.0
   }
 ];
 
@@ -2956,17 +3981,17 @@ const CAPS={QB:4,RB:8,WR:8,TE:3,K:3,DST:3}; // max at each position (per league 
 const KDST_ROUND=13;                  // K and DST go in rounds 13-14
 const VONA_TIE_BAND=7.5;              // near-ties use Model rank as the tiebreak
 const OPPONENT={modelWeight:0,needWeight:.20,noiseScale:.65};
+const PROJECTION_META={sources:['ESPN','CBS','FFToday'],method:'median',updated:'2026-08-08'};
 const STRATEGY={
   coreEarly:3, coreDeadline:4,        // RB/WR foundation before onesie depth
   starterDeadline:8,                 // QB1 RB2 WR2 TE1 + RB/WR FLEX
   coreTotal:10, minCoreEach:4,        // normal 12-round skill build
   luxuryStart:9, te2Edge:5, qb2Edge:5
 };
-// Sources: ESPN’s public 2026 projection feed plus FantasyPros 2026 half-PPR
-// ECR and half-PPR ADP, refreshed 2026-08-07.
-// Skill-position totals start from ESPN’s PPR projection, then use this league’s
-// 0.5 PPR and the supplied empirical first-down rates. SD is a position/rank
-// uncertainty proxy for ceiling weighting, not a vendor-supplied standard deviation.
+// Projections: robust median of ESPN, CBS, and FFToday, refreshed 2026-08-08.
+// CBS and FFToday raw stat lines are rescored locally for the league. FantasyPros
+// 2026 half-PPR ECR and ADP remain separate consensus/timing inputs. SD combines
+// historical position residuals with current source disagreement.
 
 // ── state ────────────────────────────────────────────────────────
 let slot=3, lambda=0.40, picks=[], autoPickNos=[], posFilter='', view='prep', sortBy='gain', visibleRows=[], mockPicks=[], mockMode='adp', mockRandom=false, roomKeys=false;
@@ -3307,17 +4332,22 @@ function modelMeta(){
 }
 
 function rankText(n){return n&&n<900?String(n):'—';}
+function projectionText(p){
+  if(!p.proj_n)return 'no current projection';
+  if(p.proj_n===1)return 'single-source projection';
+  return `${p.proj_n}-source range ${p.proj_low.toFixed(0)}–${p.proj_high.toFixed(0)}`;
+}
 function why(r){
   if(!r.eligible)return `not recommended · ${r.blockedReason}`;
   if(r.luxury){const edge=r.p.pos==='TE'?STRATEGY.te2Edge:STRATEGY.qb2Edge;
-    return `late ${r.p.pos} value exception · clears RB/WR by ${edge.toFixed(1)}+ ${r.p.pos==='TE'?'ceiling points':'VONA'}`;}
+    return `late ${r.p.pos} value exception · clears RB/WR by ${edge.toFixed(1)}+ ${r.p.pos==='TE'?'ceiling points':'VONA'} · ${projectionText(r.p)}`;}
   const open=openStarterSlots(myRoster());
   const need=open[r.p.pos]||(['RB','WR','TE'].includes(r.p.pos)&&open.FLEX?1:0);
-  if(r.vonaTier===1)return `${need?'starter need · ':''}VONA T1 · Model ${rankText(r.modelRank)} tiebreak`;
+  if(r.vonaTier===1)return `${need?'starter need · ':''}VONA T1 · Model ${rankText(r.modelRank)} tiebreak · ${projectionText(r.p)}`;
   const diff=r.p.ecr>500?0:r.p.ecr-r.modelRank;
   const timing=r.surv<.45?'likely gone next turn':r.surv<.7?'at risk by next turn':'reasonable wait';
   const valueFlag=Math.abs(diff)>=10?(diff>0?`model ${diff} ahead of ECR`:`ECR ${-diff} ahead of model`):timing;
-  return `${need?'starter need · ':''}${valueFlag}`;
+  return `${need?'starter need · ':''}${valueFlag} · ${projectionText(r.p)}`;
 }
 
 function planText(mine){
@@ -3583,6 +4613,7 @@ function buildState(){
   const L=[];
   L.push(`DRAFT STATE — on the clock ${fmtPick(curPick())} (round ${curRound()} of ${ROUNDS})`);
   L.push(`My slot ${slot}/${TEAMS} · ceiling weight lambda ${lambda.toFixed(2)}`);
+  L.push(`Projection: ${PROJECTION_META.method} of ${PROJECTION_META.sources.join(', ')} where available, each rescored for league settings; source disagreement is tracked separately from upside; ADP/ECR are not projection inputs.`);
   L.push(`Model: custom league scoring, ceiling weighting, replacement value, then an 80/20 half-PPR ECR sanity check; VONA gaps under ${VONA_TIE_BAND.toFixed(1)} points share a tier and use Model rank as the tiebreak; ADP is used for survival/timing.`);
   L.push('Build guardrails: default QB1/TE1; three RB/WR by Round 4; all skill starters by Round 8; ten RB/WR with at least four each; one late QB2 or TE2 only when it clears the position-appropriate RB/WR value threshold; K + D/ST in Rounds 13–14.');
   L.push(`My next pick ${nm?fmtPick(nm):'—'}${nxt?`, then ${fmtPick(nxt)}`:' (last pick)'}`);
@@ -3614,7 +4645,7 @@ function buildState(){
   L.push(`(survives = P(still on board at ${nxt?fmtPick(nxt):'next pick'}), using ADP re-ranked among remaining)`);
   rows.forEach((r,i)=>L.push(
     `  ${String(i+1).padStart(2)}. ${r.p.name.padEnd(22)} ${r.p.pos.padEnd(3)} ${(r.p.team||'—').padEnd(4)}`+
-    ` pts ${r.p.proj.toFixed(0).padStart(3)} · VONA T${r.vonaTier} ${(r.gain>0?'+':'')+r.gain.toFixed(1)} · model ${rankText(r.modelRank)} · ECR ${rankText(r.p.ecr)} · ADP ${r.p.adp.toFixed(0)} · survives ${(r.surv*100).toFixed(0)}%`));
+    ` pts ${r.p.proj.toFixed(0).padStart(3)} (${r.p.proj_n||0}src ${r.p.proj_low?.toFixed(0)??'—'}–${r.p.proj_high?.toFixed(0)??'—'}) · VONA T${r.vonaTier} ${(r.gain>0?'+':'')+r.gain.toFixed(1)} · model ${rankText(r.modelRank)} · ECR ${rankText(r.p.ecr)} · ADP ${r.p.adp.toFixed(0)} · survives ${(r.surv*100).toFixed(0)}%`));
   L.push('');
 
   if(picks.length){
