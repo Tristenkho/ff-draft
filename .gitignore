@@ -2,3 +2,7 @@
 
 # ESPN credentials — never commit
 .espn.json
+
+# Generated historical inputs and Python bytecode
+.cache/
+__pycache__/
