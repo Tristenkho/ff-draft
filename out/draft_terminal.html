@@ -276,7 +276,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
     <button id="reset" class="fbtn">Reset draft</button>
   </footer>
 </div>
-<div class="help" id="help"><div class="helpbox"><button id="helpclose" aria-label="Close help">×</button><h2>Draft terminal guide</h2><p><b>VONA</b> is the ceiling-adjusted value lost if you wait until your next pick. Players within 7.5 VONA points share a tier, then Model rank breaks the near-tie. <b>Survives</b> is the chance the player is still available then.</p><p><b>Model</b> uses custom league scoring, ceiling weighting, value over replacement, and a 20% half-PPR ECR sanity check. <b>Δ</b> is Model rank versus ECR: a positive number means the model is higher on the player.</p><p><b>Winning build</b> defaults to one QB, one TE, and ten RB/WR. It starts with three RB/WR through Round 4, completes every skill starter by Round 8, and takes K and D/ST in Rounds 13–14. One late QB2 or TE2 may replace a depth pick only when it beats the best legal RB/WR by a full value threshold; TE has the lower hurdle because it can fill FLEX. Players that would block the path stay searchable but rank below eligible recommendations.</p><p><b>Draft</b> shows the full available pool and lets you sort by VONA, Model, Points, ECR, or ADP. <b>Auto to my pick</b> records varied need-aware opponent selections until your next turn; use the footer button or press <b>⌘ Enter</b> on Mac / <b>Ctrl Enter</b> on Windows. <b>~</b> marks those picks in the log and copied state. <b>Snake</b> is a separate full-width board. Model, ECR, and ADP follow their source exactly; <b>Need-aware</b> simulates each team filling starters, FLEX, depth, and late special teams. Randomize adds optional variation. Snake never records picks.</p><p>Record every real pick here. Copy state on your turn and paste it to Codex or Claude for a reasoned top three. K/DST stay out of VONA, are prioritized in rounds 13–14, and remain visible/selectable throughout the draft.</p></div></div>
+<div class="help" id="help"><div class="helpbox"><button id="helpclose" aria-label="Close help">×</button><h2>Draft terminal guide</h2><p><b>VONA</b> is the ceiling-adjusted value lost if you wait until your next pick. Players within 7.5 VONA points share a tier, then Model rank breaks the near-tie. <b>Survives</b> is the chance the player is still available then.</p><p><b>Model</b> uses custom league scoring, ceiling weighting, value over replacement, and a 20% half-PPR ECR sanity check. <b>Δ</b> is Model rank versus ECR: a positive number means the model is higher on the player.</p><p><b>Winning build</b> defaults to one QB, one TE, and ten RB/WR. It starts with three RB/WR through Round 4, completes every skill starter by Round 8, and takes K and D/ST in Rounds 13–14. One late QB2 or TE2 may replace a depth pick only when it beats the best legal RB/WR by a full value threshold; TE has the lower hurdle because it can fill FLEX. Players that would block the path stay searchable but rank below eligible recommendations.</p><p><b>Draft</b> shows the full available pool and lets you sort by VONA, Model, Points, ECR, or ADP. <b>Auto to my pick</b> records varied need-aware opponent selections until your next turn; use the footer button or press <b>⌘ Enter</b> on Mac / <b>Ctrl Enter</b> on Windows. <b>~</b> marks those picks in the log and copied state. <b>Snake</b> is a separate full-width board. Model, ECR, and ADP follow their source exactly; <b>Need-aware</b> follows ADP while adjusting for each team's starters, FLEX, depth, and late special teams. Its randomness scales with observed ADP dispersion, calibrated on 2018–2024 draft markets. Snake never records picks.</p><p>Record every real pick here. Copy state on your turn and paste it to Codex or Claude for a reasoned top three. K/DST stay out of VONA, are prioritized in rounds 13–14, and remain visible/selectable throughout the draft.</p></div></div>
 
 <script>
 // ── league constants ─────────────────────────────────────────────
@@ -2955,6 +2955,7 @@ const PLAYERS=[
 const CAPS={QB:4,RB:8,WR:8,TE:3,K:3,DST:3}; // max at each position (per league rules)
 const KDST_ROUND=13;                  // K and DST go in rounds 13-14
 const VONA_TIE_BAND=7.5;              // near-ties use Model rank as the tiebreak
+const OPPONENT={modelWeight:0,needWeight:.20,noiseScale:.65};
 const STRATEGY={
   coreEarly:3, coreDeadline:4,        // RB/WR foundation before onesie depth
   starterDeadline:8,                 // QB1 RB2 WR2 TE1 + RB/WR FLEX
@@ -3009,9 +3010,10 @@ const pickForTeam=(round,team)=>overallOf(round,round%2?team:TEAMS-team+1);
 // Planning-only board. Default modes follow the selected source exactly;
 // Randomize is deliberately opt-in and only perturbs that source ranking.
 // Recorded real picks are seeded but are never changed by this display.
-function mockNoise(){
+function mockNoise(p){
   const u=Math.max(Math.random(),1e-9),v=Math.max(Math.random(),1e-9);
-  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)*4;
+  const sd=p?Math.max(p.adp_sd,1.5)*OPPONENT.noiseScale:4;
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)*sd;
 }
 function mockMetric(p,mode,meta){
   if(mode==='model'||mode==='needs')return meta.modelRank.get(p.id)||999;
@@ -3020,7 +3022,7 @@ function mockMetric(p,mode,meta){
 }
 function mockMetricLabel(){
   if(mockMode==='model')return 'MODEL';
-  if(mockMode==='needs')return 'MODEL + NEED';
+  if(mockMode==='needs')return 'ADP + NEED';
   return mockMode.toUpperCase();
 }
 const teamAtPick=n=>{
@@ -3070,7 +3072,8 @@ function mockEligible(p,roster,needsOnly=false,round=1){
 }
 function chooseNeedAware(candidates,roster,round,meta,randomized=false){
   const scores=new Map(candidates.map(p=>[p.id,
-    mockMetric(p,'needs',meta)+mockNeedAdjustment(p,roster,round)+(randomized?mockNoise():0)]));
+    p.adp+OPPONENT.modelWeight*((meta.modelRank.get(p.id)||999)-p.adp)
+      +OPPONENT.needWeight*mockNeedAdjustment(p,roster,round)+(randomized?mockNoise(p):0)]));
   return [...candidates].sort((a,b)=>scores.get(a.id)-scores.get(b.id)||a.name.localeCompare(b.name))[0]||null;
 }
 function rostersFromDraft(){
@@ -3107,7 +3110,7 @@ function runMock(mode='adp',randomized=false){
       if(!candidates.length)candidates=PLAYERS.filter(p=>!used.has(p.id)&&allowed.includes(p.pos));
       if(mode==='needs')id=chooseNeedAware(candidates,roster,round,meta,randomized)?.id;
       else{
-        const scores=new Map(candidates.map(p=>[p.id,mockMetric(p,mode,meta)+(randomized?mockNoise():0)]));
+        const scores=new Map(candidates.map(p=>[p.id,mockMetric(p,mode,meta)+(randomized?mockNoise(p):0)]));
         candidates.sort((a,b)=>scores.get(a.id)-scores.get(b.id)||a.name.localeCompare(b.name));
         id=candidates[0]?.id;
       }
@@ -3469,7 +3472,7 @@ function render(){
     $('#planbar').classList.add('on');
     $('#mocknote').textContent=mockPicks.length
       ? (mockMode==='needs'
-        ? `${mockRandom?'Randomized ':''}Need-aware board — each team follows Model value while filling QB/RB/WR/TE starters, FLEX, depth, and late K/DST. Real picks always override it.`
+        ? `${mockRandom?'Randomized ':''}Need-aware board — each team follows market ADP with calibrated roster-need adjustments while filling starters, FLEX, depth, and late K/DST. Real picks always override it.`
         : (mockRandom
           ? `Randomized ${mockMetricLabel()} board — selected source rank plus small variation. K and D/ST remain in rounds 13–14; this never changes real picks.`
           : `${mockMetricLabel()} board — exact selected-source order, with K and D/ST held for rounds 13–14. This never changes real picks.`))
