@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B0E13">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Draft Terminal">
 <title>Lava Hound Draft Terminal</title>
 <style>
 :root{
@@ -13,16 +17,17 @@
   --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
+html,body{height:100%;overscroll-behavior:none}
 body{
   background:var(--ink);color:var(--text);font-family:var(--mono);
   font-size:14px;overflow:hidden;font-variant-numeric:tabular-nums;
+  -webkit-tap-highlight-color:transparent;
 }
 .eyebrow{font-family:var(--sans);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:600}
 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 input{font:inherit;color:inherit;background:none;border:none;outline:none}
 
-#app{display:grid;grid-template-rows:auto 1fr auto;height:100%}
+#app{display:grid;grid-template-rows:auto auto 1fr auto;height:100%}
 
 /* ── header ─────────────────────────────── */
 header{border-bottom:1px solid var(--rule);background:var(--panel);
@@ -38,10 +43,17 @@ header{border-bottom:1px solid var(--rule);background:var(--panel);
 .warn b{color:#FFCE85}
 
 /* ── body ───────────────────────────────── */
-main{display:grid;grid-template-columns:180px 1fr 232px;min-height:0}
+main{display:grid;grid-template-columns:230px 1fr 260px;min-height:0}
+main.snake-mode{grid-template-columns:1fr}
+main.snake-mode>.col:first-child,main.snake-mode>.col:last-child{display:none}
 .col{min-height:0;display:flex;flex-direction:column}
 .col+.col{border-left:1px solid var(--rule)}
 .chead{padding:8px 12px 7px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:baseline}
+.mode{display:flex;align-self:stretch;margin:-8px -12px -7px 0}
+.mode button{padding:0 10px;border-left:1px solid var(--rule);font-family:var(--sans);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dimmer)}
+.mode button.on{background:var(--panel2);color:var(--amber)}
+.autohead{align-self:stretch;padding:0 10px;border-left:1px solid var(--rule);font:600 9px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.autohead:hover{color:var(--amber);background:var(--panel2)}.autohead:disabled{color:var(--dimmer);cursor:default;background:none}
 
 /* roster rail */
 .slots{padding:6px 8px;overflow:auto}
@@ -55,7 +67,7 @@ main{display:grid;grid-template-columns:180px 1fr 232px;min-height:0}
 
 /* board */
 .board{overflow:auto;padding:2px 0}
-.brow{position:relative;display:grid;grid-template-columns:16px 1fr 52px 58px 56px 58px;
+.brow{position:relative;display:grid;grid-template-columns:16px minmax(130px,1fr) 48px 54px 44px 44px 48px 40px 50px;
   align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid #1A2029;cursor:pointer}
 .brow:hover{background:var(--panel)}
 .bar{position:absolute;left:0;top:0;bottom:0;opacity:.13;pointer-events:none}
@@ -66,7 +78,7 @@ main{display:grid;grid-template-columns:180px 1fr 232px;min-height:0}
 .num{text-align:right;font-size:13px;z-index:1}
 .num.gain{font-weight:700;font-size:15px}
 .num small{display:block;font-size:9px;color:var(--dimmer);font-family:var(--sans);letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
-.thead{display:grid;grid-template-columns:16px 1fr 52px 58px 56px 58px;gap:8px;padding:5px 14px;
+.thead{display:grid;grid-template-columns:16px minmax(130px,1fr) 48px 54px 44px 44px 48px 40px 50px;gap:8px;padding:5px 14px;
   border-bottom:1px solid var(--rule)}
 .thead div{font-family:var(--sans);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--dimmer);text-align:right}
 .thead div:nth-child(2){text-align:left}
@@ -74,6 +86,9 @@ main{display:grid;grid-template-columns:180px 1fr 232px;min-height:0}
 
 /* right rail */
 .rr{padding:10px 12px;overflow:auto;font-size:12px}
+#roomcol{outline:none}
+#roomcol.keyboard-active .chead{background:#2b2113}
+#roomcol.keyboard-active .rr{box-shadow:inset 2px 0 0 var(--amber)}
 .runbox{margin-bottom:12px;padding:9px 10px;background:var(--panel);border-left:2px solid var(--rule);border-radius:0 3px 3px 0}
 .runbox.hot{border-left-color:var(--red)}
 .runbox .t{font-size:11.5px;line-height:1.6;color:var(--dim)}
@@ -82,6 +97,7 @@ main{display:grid;grid-template-columns:180px 1fr 232px;min-height:0}
 .logrow{display:flex;gap:8px;padding:3px 0;font-size:11px;color:var(--dim);border-bottom:1px solid #171D25}
 .logrow .p{color:var(--dimmer);width:38px;flex:none}
 .logrow.mine .n{color:var(--amber)}
+.logrow.auto .p{color:var(--cyan)}
 .logrow .n{color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* command bar */
@@ -102,6 +118,21 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
   text-transform:uppercase;color:var(--dimmer);border-right:1px solid var(--rule)}
 .filt button:hover{color:var(--text);background:var(--panel2)}
 .filt button.on{background:var(--panel2);color:var(--amber)}
+.sort{display:none;border-bottom:1px solid var(--rule);background:#11161e}
+.sort button{padding:5px 10px;font-family:var(--sans);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--dimmer);border-right:1px solid var(--rule)}
+.sort button.on{color:var(--cyan);background:var(--panel2)}
+.planbar{display:none;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid var(--rule);background:#11161e;color:var(--dim);font:10px var(--sans);line-height:1.35}
+.planbar.on{display:flex}.planbar span{flex:1}.planbtn{padding:4px 8px;border:1px solid var(--rule);border-radius:3px;color:var(--text);font:600 9px var(--sans);letter-spacing:.08em;text-transform:uppercase}.planbtn:hover,.planbtn.on{border-color:var(--amber);color:var(--amber);background:#2b2113}
+.snakeboard{padding:0;overflow:auto;background:#10151d}
+.snakegrid{display:grid;grid-template-columns:30px repeat(12,minmax(0,1fr));min-width:0}
+.snakehead,.snakecorner{position:sticky;top:0;z-index:2;background:var(--panel);border-bottom:1px solid var(--rule);padding:7px 4px;text-align:center;color:var(--dim);font:600 9px var(--sans);letter-spacing:.1em;text-transform:uppercase}
+.snakecorner{left:0;z-index:3}.snakehead.mine{color:var(--amber);background:#2b2113}.snake-round{position:sticky;left:0;z-index:1;display:flex;align-items:center;justify-content:center;min-height:52px;background:var(--panel);border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);color:var(--dimmer);font:600 9px var(--sans);letter-spacing:.08em}
+.snakecell{min-height:52px;padding:6px 7px;border-right:1px solid #242c38;border-bottom:1px solid #242c38;background:#151a22;overflow:hidden}.snakecell.mock{background:#171e28}.snakecell.real{background:#1b2530}.snakecell.mine{box-shadow:inset 0 0 0 1px var(--amber);background:#302515}.snakecell .pick{display:block;color:var(--dimmer);font:9px var(--sans);letter-spacing:.06em}.snakecell .sname{display:block;margin-top:3px;color:var(--text);font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.snakecell.mine .sname{color:#ffce85}.snakecell .spos{display:block;margin-top:2px;color:var(--dim);font-size:9px}.snakeempty{color:#4b5769}
+.why{font-family:var(--sans);font-size:9.5px;color:var(--dimmer);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.help{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.68);z-index:4;padding:20px}
+.help.on{display:flex}.helpbox{position:relative;width:min(560px,100%);background:var(--panel);border:1px solid var(--rule);box-shadow:0 20px 70px #000;padding:20px;font-family:var(--sans);line-height:1.55;color:var(--dim)}
+.helpbox h2{font:600 16px var(--mono);color:var(--text);margin-bottom:10px}.helpbox p{margin:8px 0}.helpbox b{color:var(--amber)}
+.helpbox button{position:absolute;right:10px;top:8px;color:var(--dim);font-size:20px;padding:4px 8px}
 
 /* ── on the clock ────────────────────────────── */
 @keyframes otcpulse{from{background:var(--panel)}to{background:#1A2C19}}
@@ -113,12 +144,58 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
   color:var(--dimmer);padding:0 12px;border-left:1px solid var(--rule);align-self:stretch}
 .fbtn:hover{color:var(--text);background:var(--panel2)}
 .fbtn.ok{color:var(--green)}
+.fbtn:disabled{color:var(--dimmer);cursor:default;background:none}
+.mobile-nav{display:none}
+
+@media (max-width:900px){
+  body{font-size:13px}
+  #app{height:100dvh;grid-template-rows:auto auto 1fr auto auto}
+  .warn{padding:5px max(10px,env(safe-area-inset-right)) 5px max(10px,env(safe-area-inset-left));font-size:9px;line-height:1.25}
+  header{overflow-x:auto;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);scrollbar-width:none}
+  header::-webkit-scrollbar{display:none}
+  .hcell{padding:8px 10px;min-width:max-content}
+  .hcell.big .v{font-size:21px}
+  .hcell:nth-child(4),.hcell.grow{display:none}
+  main,main.snake-mode{display:block;min-height:0}
+  main>.col,main.snake-mode>.col{display:none;border-left:0;height:100%}
+  main>.col.mobile-on,main.snake-mode>.col.mobile-on{display:flex}
+  .chead{min-height:36px;padding:7px 9px;gap:6px}
+  .mode{margin:-7px -9px -7px 0}
+  .mode button,.filt button,.sort button{min-height:40px;padding-left:11px;padding-right:11px}
+  .filt,.sort,.planbar{overflow-x:auto;flex:none;scrollbar-width:none}
+  .filt::-webkit-scrollbar,.sort::-webkit-scrollbar,.planbar::-webkit-scrollbar{display:none}
+  .planbar{align-items:stretch;padding:5px 8px}
+  .planbar span{display:none}
+  .planbtn{min-height:38px;white-space:nowrap}
+  .brow,.thead{grid-template-columns:22px minmax(0,1fr) 42px 48px 52px;gap:5px;padding-left:8px;padding-right:8px}
+  .brow{min-height:64px;padding-top:8px;padding-bottom:8px}
+  .brow>:nth-child(6),.brow>:nth-child(7),.brow>:nth-child(8),.brow>:nth-child(9),
+  .thead>:nth-child(5),.thead>:nth-child(6),.thead>:nth-child(7),.thead>:nth-child(8){display:none}
+  .nm{font-size:14px}.why{font-size:8.5px}.num{font-size:12px}.num.gain{font-size:13px}
+  .slots{padding:8px}.slotrow{min-height:38px;font-size:14px}.needs{font-size:12px}
+  .rr{padding:10px;overscroll-behavior:contain}
+  .snakegrid{grid-template-columns:30px repeat(12,76px);min-width:942px}
+  footer{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;padding:0 max(6px,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(6px,env(safe-area-inset-left))}
+  footer .caret,.keys{display:none}
+  #q{grid-column:1/-1;width:100%;padding:10px 6px;border-bottom:1px solid var(--rule);font-size:16px}
+  .fbtn{min-height:44px;padding:0 5px;border-left:0;border-right:1px solid var(--rule);font-size:8.5px;line-height:1.15}
+  #auto{margin-left:0!important}
+  #autoTop{display:none!important}
+  #share{display:block!important}
+  #reset{border-right:0}
+  .mobile-nav{display:flex;background:var(--panel);border-top:1px solid var(--rule);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+  .mobile-nav button{flex:1;min-height:44px;border-right:1px solid var(--rule);font:600 10px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+  .mobile-nav button:last-child{border-right:0}
+  .mobile-nav button.on{color:var(--amber);background:var(--panel2);box-shadow:inset 0 2px 0 var(--amber)}
+  .help{padding:12px max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
+  .helpbox{max-height:85dvh;overflow:auto}
+}
 </style>
 </head>
 <body>
 <div id="app">
   <div class="warn" id="warn">
-    <b>SAMPLE DATA</b><span>Player pool is 2025 actual production scored under your rules — not 2026 projections. ADP is synthetic. Replace <code>PLAYERS</code> before drafting.</span>
+    <b>2026 RANKINGS</b><span>205-player pool, refreshed Aug 7. Projections: ESPN; half-PPR ECR + ADP: FantasyPros. Skill-position projections are adjusted for your half-PPR and first-down scoring.</span>
   </div>
 
   <header>
@@ -136,28 +213,33 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
   </header>
 
   <main>
-    <div class="col">
+    <div class="col" id="rostercol">
       <div class="chead"><span class="eyebrow">Your roster</span><span class="eyebrow" id="rcount"></span></div>
       <div class="slots" id="slots"></div>
       <div class="needs" id="needs"></div>
     </div>
 
-    <div class="col">
-      <div class="chead"><span class="eyebrow" id="boardtitle">Best available — by gain</span><span class="eyebrow" id="poolcount"></span></div>
+    <div class="col mobile-on" id="boardcol">
+      <div class="chead"><span class="eyebrow" id="boardtitle">Full rankings — by gain</span><div class="mode" id="mode"><button class="on" data-view="prep">Draft</button><button data-view="plan">Snake</button></div><button id="autoTop" class="autohead">Auto to my pick</button><span class="eyebrow" id="poolcount"></span></div>
       <div class="filt" id="filt">
         <button class="on" data-pos="">All</button>
         <button data-pos="QB">QB</button>
         <button data-pos="RB">RB</button>
         <button data-pos="WR">WR</button>
         <button data-pos="TE">TE</button>
+        <button data-pos="K">K</button>
+        <button data-pos="DST">D/ST</button>
       </div>
-      <div class="thead"><div></div><div>Player</div><div>Proj</div><div>Gain</div><div>ADP</div><div>Survives</div></div>
+      <div class="sort" id="sort"><button class="on" data-sort="gain">VONA</button><button data-sort="model">Model</button><button data-sort="proj">Points</button><button data-sort="ecr">ECR</button><button data-sort="adp">ADP</button></div>
+      <div class="planbar" id="planbar"><span id="mocknote">Choose an exact source board, or use Need-aware to simulate roster-based opponent selections. Neither changes real draft state.</span><button class="planbtn" data-mock="model">Model</button><button class="planbtn" data-mock="ecr">ECR</button><button class="planbtn" data-mock="adp">ADP</button><button class="planbtn" data-mock="needs">Need-aware</button><button class="planbtn" id="randommock">Randomize</button><button class="planbtn" id="clearmock">Clear mock</button></div>
+      <div class="thead"><div></div><div>Player</div><div>Pts</div><div>Gain</div><div>Model</div><div>ECR</div><div>ADP</div><div>Δ</div><div>Survives</div></div>
       <div class="board" id="board"></div>
     </div>
 
-    <div class="col">
-      <div class="chead"><span class="eyebrow">Room</span></div>
+    <div class="col" id="roomcol" tabindex="0" aria-label="Room keyboard controls">
+      <div class="chead"><span class="eyebrow">Room</span><span class="eyebrow" id="roomhint">click for undo</span></div>
       <div class="rr">
+        <div id="plan"></div>
         <div id="runs"></div>
         <div class="eyebrow" style="margin:12px 0 5px">Recent picks</div>
         <div class="log" id="log"></div>
@@ -165,16 +247,26 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
     </div>
   </main>
 
+  <nav class="mobile-nav" id="mobilenav" aria-label="Draft views">
+    <button data-panel="rostercol">Roster</button>
+    <button class="on" data-panel="boardcol">Board</button>
+    <button data-panel="roomcol">Room</button>
+  </nav>
+
   <footer>
     <span class="caret">›</span>
     <input id="q" placeholder="Type a name, press Enter to record the pick on the clock" autocomplete="off" spellcheck="false">
     <div class="keys">
-      <span><b>Enter</b> record</span><span><b>1–8</b> draft rank</span><span><b>Bksp</b> undo</span><span><b>Esc</b> clear</span>
+      <span><b>Enter</b> record</span><span><b>Room:</b> Bksp undo · Esc clear search</span>
     </div>
-    <button id="copy" class="fbtn" style="margin-left:auto">Copy state</button>
-    <button id="reset" class="fbtn">Reset</button>
+    <button id="auto" class="fbtn" style="margin-left:auto">Auto to my pick</button>
+    <button id="copy" class="fbtn">Copy state</button>
+    <button id="share" class="fbtn" style="display:none">Share state</button>
+    <button id="helpbtn" class="fbtn">Help</button>
+    <button id="reset" class="fbtn">Reset draft</button>
   </footer>
 </div>
+<div class="help" id="help"><div class="helpbox"><button id="helpclose" aria-label="Close help">×</button><h2>Draft terminal guide</h2><p><b>Gain</b> is the ceiling-adjusted value lost if you wait until your next pick. <b>Survives</b> is the chance the player is still available then.</p><p><b>Model</b> uses custom league scoring, ceiling weighting, value over replacement, and a 20% half-PPR ECR sanity check. <b>Δ</b> is Model rank versus ECR: a positive number means the model is higher on the player.</p><p><b>Draft</b> shows the full available pool and lets you sort by VONA, Model, Points, ECR, or ADP. <b>Auto to my pick</b> records need-aware opponent selections until your next turn; <b>~</b> marks those picks in the log and copied state. <b>Snake</b> is a separate full-width board. Model, ECR, and ADP follow their source exactly; <b>Need-aware</b> simulates each team filling starters, FLEX, depth, and late special teams. Randomize adds optional variation. Snake never records picks.</p><p>Record every real pick here. Copy state on your turn and paste it to Codex or Claude for a reasoned top three. K/DST stay out of VONA, are prioritized in rounds 13–14, and remain visible/selectable throughout the draft.</p></div></div>
 
 <script>
 // ── league constants ─────────────────────────────────────────────
@@ -182,2522 +274,2703 @@ const TEAMS=12, ROUNDS=14;
 const STARTERS={QB:1,RB:2,WR:2,TE:1,FLEX:1};          // K and D/ST are excluded on purpose
 const POS=['QB','RB','WR','TE'];
 const PLAYERS=[
- {
-  "id": 0,
-  "name": "Josh Allen",
-  "pos": "QB",
-  "team": "BUF",
-  "bye": null,
-  "proj": 391.8,
-  "sd": 85.5,
-  "adp": 1.0,
-  "adp_sd": 4.3
- },
- {
-  "id": 1,
-  "name": "Jonathan Taylor",
-  "pos": "RB",
-  "team": "IND",
-  "bye": null,
-  "proj": 366.0,
-  "sd": 80.9,
-  "adp": 1.0,
-  "adp_sd": 4.2
- },
- {
-  "id": 2,
-  "name": "Jahmyr Gibbs",
-  "pos": "RB",
-  "team": "DET",
-  "bye": null,
-  "proj": 356.1,
-  "sd": 79.1,
-  "adp": 1.0,
-  "adp_sd": 6.9
- },
- {
-  "id": 3,
-  "name": "Drake Maye",
-  "pos": "QB",
-  "team": "NE",
-  "bye": null,
-  "proj": 377.5,
-  "sd": 82.9,
-  "adp": 3.3,
-  "adp_sd": 4.6
- },
- {
-  "id": 4,
-  "name": "Trevor Lawrence",
-  "pos": "QB",
-  "team": "JAX",
-  "bye": null,
-  "proj": 365.8,
-  "sd": 80.8,
-  "adp": 6.1,
-  "adp_sd": 6.1
- },
- {
-  "id": 5,
-  "name": "De'Von Achane",
-  "pos": "RB",
-  "team": "MIA",
-  "bye": null,
-  "proj": 314.1,
-  "sd": 71.5,
-  "adp": 6.1,
-  "adp_sd": 5.0
- },
- {
-  "id": 6,
-  "name": "Jaxon Smith-Njigba",
-  "pos": "WR",
-  "team": "SEA",
-  "bye": null,
-  "proj": 340.4,
-  "sd": 76.3,
-  "adp": 6.8,
-  "adp_sd": 5.3
- },
- {
-  "id": 7,
-  "name": "Matthew Stafford",
-  "pos": "QB",
-  "team": "LA",
-  "bye": null,
-  "proj": 374.0,
-  "sd": 82.3,
-  "adp": 6.9,
-  "adp_sd": 7.0
- },
- {
-  "id": 8,
-  "name": "Bijan Robinson",
-  "pos": "RB",
-  "team": "ATL",
-  "bye": null,
-  "proj": 362.2,
-  "sd": 80.2,
-  "adp": 7.1,
-  "adp_sd": 7.5
- },
- {
-  "id": 9,
-  "name": "Amon-Ra St. Brown",
-  "pos": "WR",
-  "team": "DET",
-  "bye": null,
-  "proj": 302.4,
-  "sd": 69.4,
-  "adp": 9.7,
-  "adp_sd": 6.4
- },
- {
-  "id": 10,
-  "name": "Dak Prescott",
-  "pos": "QB",
-  "team": "DAL",
-  "bye": null,
-  "proj": 333.5,
-  "sd": 75.0,
-  "adp": 11.0,
-  "adp_sd": 5.1
- },
- {
-  "id": 11,
-  "name": "Bo Nix",
-  "pos": "QB",
-  "team": "DEN",
-  "bye": null,
-  "proj": 322.7,
-  "sd": 73.1,
-  "adp": 12.5,
-  "adp_sd": 8.2
- },
- {
-  "id": 12,
-  "name": "Jaxson Dart",
-  "pos": "QB",
-  "team": "NYG",
-  "bye": null,
-  "proj": 259.3,
-  "sd": 61.7,
-  "adp": 12.5,
-  "adp_sd": 5.4
- },
- {
-  "id": 13,
-  "name": "Christian McCaffrey",
-  "pos": "RB",
-  "team": "SF",
-  "bye": null,
-  "proj": 405.4,
-  "sd": 88.0,
-  "adp": 12.9,
-  "adp_sd": 6.5
- },
- {
-  "id": 14,
-  "name": "Jared Goff",
-  "pos": "QB",
-  "team": "DET",
-  "bye": null,
-  "proj": 320.6,
-  "sd": 72.7,
-  "adp": 13.6,
-  "adp_sd": 7.0
- },
- {
-  "id": 15,
-  "name": "Caleb Williams",
-  "pos": "QB",
-  "team": "CHI",
-  "bye": null,
-  "proj": 341.9,
-  "sd": 76.5,
-  "adp": 14.4,
-  "adp_sd": 8.1
- },
- {
-  "id": 16,
-  "name": "Puka Nacua",
-  "pos": "WR",
-  "team": "LA",
-  "bye": null,
-  "proj": 351.8,
-  "sd": 78.3,
-  "adp": 16.3,
-  "adp_sd": 8.1
- },
- {
-  "id": 17,
-  "name": "Kyren Williams",
-  "pos": "RB",
-  "team": "LA",
-  "bye": null,
-  "proj": 269.8,
-  "sd": 63.6,
-  "adp": 16.4,
-  "adp_sd": 7.5
- },
- {
-  "id": 18,
-  "name": "Jalen Hurts",
-  "pos": "QB",
-  "team": "PHI",
-  "bye": null,
-  "proj": 326.1,
-  "sd": 73.7,
-  "adp": 16.8,
-  "adp_sd": 6.9
- },
- {
-  "id": 19,
-  "name": "James Cook",
-  "pos": "RB",
-  "team": "BUF",
-  "bye": null,
-  "proj": 308.2,
-  "sd": 70.5,
-  "adp": 19.2,
-  "adp_sd": 8.4
- },
- {
-  "id": 20,
-  "name": "Ja'Marr Chase",
-  "pos": "WR",
-  "team": "CIN",
-  "bye": null,
-  "proj": 287.6,
-  "sd": 66.8,
-  "adp": 20.8,
-  "adp_sd": 8.7
- },
- {
-  "id": 21,
-  "name": "Justin Herbert",
-  "pos": "QB",
-  "team": "LAC",
-  "bye": null,
-  "proj": 311.1,
-  "sd": 71.0,
-  "adp": 21.2,
-  "adp_sd": 8.7
- },
- {
-  "id": 22,
-  "name": "Daniel Jones",
-  "pos": "QB",
-  "team": "IND",
-  "bye": null,
-  "proj": 244.1,
-  "sd": 58.9,
-  "adp": 21.2,
-  "adp_sd": 8.3
- },
- {
-  "id": 23,
-  "name": "Patrick Mahomes",
-  "pos": "QB",
-  "team": "KC",
-  "bye": null,
-  "proj": 305.2,
-  "sd": 69.9,
-  "adp": 21.3,
-  "adp_sd": 6.4
- },
- {
-  "id": 24,
-  "name": "Javonte Williams",
-  "pos": "RB",
-  "team": "DAL",
-  "bye": null,
-  "proj": 245.6,
-  "sd": 59.2,
-  "adp": 22.1,
-  "adp_sd": 7.1
- },
- {
-  "id": 25,
-  "name": "Baker Mayfield",
-  "pos": "QB",
-  "team": "TB",
-  "bye": null,
-  "proj": 291.9,
-  "sd": 67.5,
-  "adp": 23.5,
-  "adp_sd": 7.8
- },
- {
-  "id": 26,
-  "name": "Chase Brown",
-  "pos": "RB",
-  "team": "CIN",
-  "bye": null,
-  "proj": 265.8,
-  "sd": 62.8,
-  "adp": 24.7,
-  "adp_sd": 8.0
- },
- {
-  "id": 27,
-  "name": "George Pickens",
-  "pos": "WR",
-  "team": "DAL",
-  "bye": null,
-  "proj": 279.9,
-  "sd": 65.4,
-  "adp": 25.2,
-  "adp_sd": 9.0
- },
- {
-  "id": 28,
-  "name": "Jordan Love",
-  "pos": "QB",
-  "team": "GB",
-  "bye": null,
-  "proj": 250.5,
-  "sd": 60.1,
-  "adp": 26.4,
-  "adp_sd": 7.4
- },
- {
-  "id": 29,
-  "name": "Sam Darnold",
-  "pos": "QB",
-  "team": "SEA",
-  "bye": null,
-  "proj": 251.7,
-  "sd": 60.3,
-  "adp": 27.7,
-  "adp_sd": 8.8
- },
- {
-  "id": 30,
-  "name": "Josh Jacobs",
-  "pos": "RB",
-  "team": "GB",
-  "bye": null,
-  "proj": 236.9,
-  "sd": 57.6,
-  "adp": 29.3,
-  "adp_sd": 8.1
- },
- {
-  "id": 31,
-  "name": "Aaron Rodgers",
-  "pos": "QB",
-  "team": "PIT",
-  "bye": null,
-  "proj": 239.9,
-  "sd": 58.2,
-  "adp": 32.1,
-  "adp_sd": 9.5
- },
- {
-  "id": 32,
-  "name": "Derrick Henry",
-  "pos": "RB",
-  "team": "BAL",
-  "bye": null,
-  "proj": 293.8,
-  "sd": 67.9,
-  "adp": 33.0,
-  "adp_sd": 7.9
- },
- {
-  "id": 33,
-  "name": "Davante Adams",
-  "pos": "WR",
-  "team": "LA",
-  "bye": null,
-  "proj": 218.4,
-  "sd": 54.3,
-  "adp": 33.9,
-  "adp_sd": 8.8
- },
- {
-  "id": 34,
-  "name": "Jaylen Warren",
-  "pos": "RB",
-  "team": "PIT",
-  "bye": null,
-  "proj": 216.6,
-  "sd": 54.0,
-  "adp": 34.3,
-  "adp_sd": 7.7
- },
- {
-  "id": 35,
-  "name": "Travis Etienne",
-  "pos": "RB",
-  "team": "JAX",
-  "bye": null,
-  "proj": 254.9,
-  "sd": 60.9,
-  "adp": 36.9,
-  "adp_sd": 8.3
- },
- {
-  "id": 36,
-  "name": "Chris Olave",
-  "pos": "WR",
-  "team": "NO",
-  "bye": null,
-  "proj": 244.5,
-  "sd": 59.0,
-  "adp": 38.4,
-  "adp_sd": 10.6
- },
- {
-  "id": 37,
-  "name": "D'Andre Swift",
-  "pos": "RB",
-  "team": "CHI",
-  "bye": null,
-  "proj": 231.7,
-  "sd": 56.7,
-  "adp": 38.5,
-  "adp_sd": 8.8
- },
- {
-  "id": 38,
-  "name": "Trey McBride",
-  "pos": "TE",
-  "team": "ARI",
-  "bye": null,
-  "proj": 284.4,
-  "sd": 66.2,
-  "adp": 38.7,
-  "adp_sd": 10.5
- },
- {
-  "id": 39,
-  "name": "Zay Flowers",
-  "pos": "WR",
-  "team": "BAL",
-  "bye": null,
-  "proj": 225.1,
-  "sd": 55.5,
-  "adp": 39.6,
-  "adp_sd": 9.5
- },
- {
-  "id": 40,
-  "name": "Jacoby Brissett",
-  "pos": "QB",
-  "team": "ARI",
-  "bye": null,
-  "proj": 245.9,
-  "sd": 59.3,
-  "adp": 40.1,
-  "adp_sd": 8.1
- },
- {
-  "id": 41,
-  "name": "Saquon Barkley",
-  "pos": "RB",
-  "team": "PHI",
-  "bye": null,
-  "proj": 229.5,
-  "sd": 56.3,
-  "adp": 41.6,
-  "adp_sd": 10.5
- },
- {
-  "id": 42,
-  "name": "Breece Hall",
-  "pos": "RB",
-  "team": "NYJ",
-  "bye": null,
-  "proj": 210.5,
-  "sd": 52.9,
-  "adp": 47.3,
-  "adp_sd": 8.9
- },
- {
-  "id": 43,
-  "name": "Lamar Jackson",
-  "pos": "QB",
-  "team": "BAL",
-  "bye": null,
-  "proj": 229.8,
-  "sd": 56.4,
-  "adp": 47.7,
-  "adp_sd": 11.3
- },
- {
-  "id": 44,
-  "name": "C.J. Stroud",
-  "pos": "QB",
-  "team": "HOU",
-  "bye": null,
-  "proj": 226.6,
-  "sd": 55.8,
-  "adp": 47.8,
-  "adp_sd": 8.8
- },
- {
-  "id": 45,
-  "name": "TreVeyon Henderson",
-  "pos": "RB",
-  "team": "NE",
-  "bye": null,
-  "proj": 203.5,
-  "sd": 51.6,
-  "adp": 48.1,
-  "adp_sd": 10.8
- },
- {
-  "id": 46,
-  "name": "Bryce Young",
-  "pos": "QB",
-  "team": "CAR",
-  "bye": null,
-  "proj": 235.3,
-  "sd": 57.4,
-  "adp": 49.0,
-  "adp_sd": 9.4
- },
- {
-  "id": 47,
-  "name": "Brock Purdy",
-  "pos": "QB",
-  "team": "SF",
-  "bye": null,
-  "proj": 192.4,
-  "sd": 49.6,
-  "adp": 49.9,
-  "adp_sd": 10.0
- },
- {
-  "id": 48,
-  "name": "Rico Dowdle",
-  "pos": "RB",
-  "team": "CAR",
-  "bye": null,
-  "proj": 216.6,
-  "sd": 54.0,
-  "adp": 50.6,
-  "adp_sd": 11.9
- },
- {
-  "id": 49,
-  "name": "Jameson Williams",
-  "pos": "WR",
-  "team": "DET",
-  "bye": null,
-  "proj": 211.1,
-  "sd": 53.0,
-  "adp": 51.9,
-  "adp_sd": 10.6
- },
- {
-  "id": 50,
-  "name": "Ashton Jeanty",
-  "pos": "RB",
-  "team": "LV",
-  "bye": null,
-  "proj": 235.1,
-  "sd": 57.3,
-  "adp": 52.1,
-  "adp_sd": 11.2
- },
- {
-  "id": 51,
-  "name": "Courtland Sutton",
-  "pos": "WR",
-  "team": "DEN",
-  "bye": null,
-  "proj": 206.7,
-  "sd": 52.2,
-  "adp": 54.7,
-  "adp_sd": 11.7
- },
- {
-  "id": 52,
-  "name": "Cam Ward",
-  "pos": "QB",
-  "team": "TEN",
-  "bye": null,
-  "proj": 205.7,
-  "sd": 52.0,
-  "adp": 54.8,
-  "adp_sd": 9.8
- },
- {
-  "id": 53,
-  "name": "Tetairoa McMillan",
-  "pos": "WR",
-  "team": "CAR",
-  "bye": null,
-  "proj": 203.8,
-  "sd": 51.7,
-  "adp": 55.0,
-  "adp_sd": 12.0
- },
- {
-  "id": 54,
-  "name": "A.J. Brown",
-  "pos": "WR",
-  "team": "PHI",
-  "bye": null,
-  "proj": 204.8,
-  "sd": 51.9,
-  "adp": 55.2,
-  "adp_sd": 12.3
- },
- {
-  "id": 55,
-  "name": "Kenneth Gainwell",
-  "pos": "RB",
-  "team": "PIT",
-  "bye": null,
-  "proj": 204.8,
-  "sd": 51.9,
-  "adp": 56.8,
-  "adp_sd": 10.1
- },
- {
-  "id": 56,
-  "name": "RJ Harvey",
-  "pos": "RB",
-  "team": "DEN",
-  "bye": null,
-  "proj": 199.1,
-  "sd": 50.8,
-  "adp": 59.5,
-  "adp_sd": 11.6
- },
- {
-  "id": 57,
-  "name": "Stefon Diggs",
-  "pos": "WR",
-  "team": "NE",
-  "bye": null,
-  "proj": 193.3,
-  "sd": 49.8,
-  "adp": 59.6,
-  "adp_sd": 10.8
- },
- {
-  "id": 58,
-  "name": "Tony Pollard",
-  "pos": "RB",
-  "team": "TEN",
-  "bye": null,
-  "proj": 186.8,
-  "sd": 48.6,
-  "adp": 60.0,
-  "adp_sd": 12.2
- },
- {
-  "id": 59,
-  "name": "Drake London",
-  "pos": "WR",
-  "team": "ATL",
-  "bye": null,
-  "proj": 188.9,
-  "sd": 49.0,
-  "adp": 61.1,
-  "adp_sd": 10.2
- },
- {
-  "id": 60,
-  "name": "Jaylen Waddle",
-  "pos": "WR",
-  "team": "MIA",
-  "bye": null,
-  "proj": 186.4,
-  "sd": 48.5,
-  "adp": 62.0,
-  "adp_sd": 11.7
- },
- {
-  "id": 61,
-  "name": "Tee Higgins",
-  "pos": "WR",
-  "team": "CIN",
-  "bye": null,
-  "proj": 202.9,
-  "sd": 51.5,
-  "adp": 62.7,
-  "adp_sd": 12.6
- },
- {
-  "id": 62,
-  "name": "DeVonta Smith",
-  "pos": "WR",
-  "team": "PHI",
-  "bye": null,
-  "proj": 185.3,
-  "sd": 48.4,
-  "adp": 63.1,
-  "adp_sd": 12.5
- },
- {
-  "id": 63,
-  "name": "Kyle Pitts",
-  "pos": "TE",
-  "team": "ATL",
-  "bye": null,
-  "proj": 192.3,
-  "sd": 49.6,
-  "adp": 63.6,
-  "adp_sd": 10.7
- },
- {
-  "id": 64,
-  "name": "Geno Smith",
-  "pos": "QB",
-  "team": "LV",
-  "bye": null,
-  "proj": 190.0,
-  "sd": 49.2,
-  "adp": 63.6,
-  "adp_sd": 12.9
- },
- {
-  "id": 65,
-  "name": "Nico Collins",
-  "pos": "WR",
-  "team": "HOU",
-  "bye": null,
-  "proj": 212.9,
-  "sd": 53.3,
-  "adp": 64.7,
-  "adp_sd": 11.2
- },
- {
-  "id": 66,
-  "name": "Michael Wilson",
-  "pos": "WR",
-  "team": "ARI",
-  "bye": null,
-  "proj": 207.1,
-  "sd": 52.3,
-  "adp": 65.4,
-  "adp_sd": 13.0
- },
- {
-  "id": 67,
-  "name": "Michael Pittman",
-  "pos": "WR",
-  "team": "IND",
-  "bye": null,
-  "proj": 185.5,
-  "sd": 48.4,
-  "adp": 68.3,
-  "adp_sd": 12.3
- },
- {
-  "id": 68,
-  "name": "Dallas Goedert",
-  "pos": "TE",
-  "team": "PHI",
-  "bye": null,
-  "proj": 172.1,
-  "sd": 46.0,
-  "adp": 69.2,
-  "adp_sd": 11.4
- },
- {
-  "id": 69,
-  "name": "Kenneth Walker III",
-  "pos": "RB",
-  "team": "SEA",
-  "bye": null,
-  "proj": 193.9,
-  "sd": 49.9,
-  "adp": 69.6,
-  "adp_sd": 13.2
- },
- {
-  "id": 70,
-  "name": "CeeDee Lamb",
-  "pos": "WR",
-  "team": "DAL",
-  "bye": null,
-  "proj": 184.9,
-  "sd": 48.3,
-  "adp": 71.5,
-  "adp_sd": 13.6
- },
- {
-  "id": 71,
-  "name": "Justin Jefferson",
-  "pos": "WR",
-  "team": "MIN",
-  "bye": null,
-  "proj": 183.0,
-  "sd": 47.9,
-  "adp": 75.2,
-  "adp_sd": 13.6
- },
- {
-  "id": 72,
-  "name": "DK Metcalf",
-  "pos": "WR",
-  "team": "PIT",
-  "bye": null,
-  "proj": 176.4,
-  "sd": 46.8,
-  "adp": 76.0,
-  "adp_sd": 14.5
- },
- {
-  "id": 73,
-  "name": "Wan'Dale Robinson",
-  "pos": "WR",
-  "team": "NYG",
-  "bye": null,
-  "proj": 191.7,
-  "sd": 49.5,
-  "adp": 77.2,
-  "adp_sd": 12.5
- },
- {
-  "id": 74,
-  "name": "Tyler Warren",
-  "pos": "TE",
-  "team": "IND",
-  "bye": null,
-  "proj": 172.2,
-  "sd": 46.0,
-  "adp": 79.2,
-  "adp_sd": 12.6
- },
- {
-  "id": 75,
-  "name": "Tyler Shough",
-  "pos": "QB",
-  "team": "NO",
-  "bye": null,
-  "proj": 169.6,
-  "sd": 45.5,
-  "adp": 79.2,
-  "adp_sd": 12.4
- },
- {
-  "id": 76,
-  "name": "Travis Kelce",
-  "pos": "TE",
-  "team": "KC",
-  "bye": null,
-  "proj": 176.2,
-  "sd": 46.7,
-  "adp": 80.9,
-  "adp_sd": 13.7
- },
- {
-  "id": 77,
-  "name": "Zach Charbonnet",
-  "pos": "RB",
-  "team": "SEA",
-  "bye": null,
-  "proj": 185.1,
-  "sd": 48.3,
-  "adp": 82.9,
-  "adp_sd": 13.5
- },
- {
-  "id": 78,
-  "name": "David Montgomery",
-  "pos": "RB",
-  "team": "DET",
-  "bye": null,
-  "proj": 169.0,
-  "sd": 45.4,
-  "adp": 83.6,
-  "adp_sd": 13.4
- },
- {
-  "id": 79,
-  "name": "Tua Tagovailoa",
-  "pos": "QB",
-  "team": "MIA",
-  "bye": null,
-  "proj": 173.2,
-  "sd": 46.2,
-  "adp": 84.7,
-  "adp_sd": 13.9
- },
- {
-  "id": 80,
-  "name": "Deebo Samuel Sr.",
-  "pos": "WR",
-  "team": "WAS",
-  "bye": null,
-  "proj": 169.2,
-  "sd": 45.5,
-  "adp": 85.3,
-  "adp_sd": 13.4
- },
- {
-  "id": 81,
-  "name": "Alec Pierce",
-  "pos": "WR",
-  "team": "IND",
-  "bye": null,
-  "proj": 180.3,
-  "sd": 47.5,
-  "adp": 85.5,
-  "adp_sd": 12.6
- },
- {
-  "id": 82,
-  "name": "Harold Fannin Jr.",
-  "pos": "TE",
-  "team": "CLE",
-  "bye": null,
-  "proj": 166.9,
-  "sd": 45.0,
-  "adp": 86.6,
-  "adp_sd": 14.1
- },
- {
-  "id": 83,
-  "name": "Emeka Egbuka",
-  "pos": "WR",
-  "team": "TB",
-  "bye": null,
-  "proj": 179.2,
-  "sd": 47.3,
-  "adp": 87.0,
-  "adp_sd": 13.5
- },
- {
-  "id": 84,
-  "name": "Rhamondre Stevenson",
-  "pos": "RB",
-  "team": "NE",
-  "bye": null,
-  "proj": 171.8,
-  "sd": 45.9,
-  "adp": 87.2,
-  "adp_sd": 14.1
- },
- {
-  "id": 85,
-  "name": "Hunter Henry",
-  "pos": "TE",
-  "team": "NE",
-  "bye": null,
-  "proj": 169.8,
-  "sd": 45.6,
-  "adp": 87.6,
-  "adp_sd": 15.5
- },
- {
-  "id": 86,
-  "name": "Quinshon Judkins",
-  "pos": "RB",
-  "team": "CLE",
-  "bye": null,
-  "proj": 171.0,
-  "sd": 45.8,
-  "adp": 89.9,
-  "adp_sd": 13.5
- },
- {
-  "id": 87,
-  "name": "Jake Ferguson",
-  "pos": "TE",
-  "team": "DAL",
-  "bye": null,
-  "proj": 160.1,
-  "sd": 43.8,
-  "adp": 92.2,
-  "adp_sd": 15.1
- },
- {
-  "id": 88,
-  "name": "DJ Moore",
-  "pos": "WR",
-  "team": "CHI",
-  "bye": null,
-  "proj": 161.0,
-  "sd": 44.0,
-  "adp": 94.8,
-  "adp_sd": 15.4
- },
- {
-  "id": 89,
-  "name": "Brock Bowers",
-  "pos": "TE",
-  "team": "LV",
-  "bye": null,
-  "proj": 160.2,
-  "sd": 43.8,
-  "adp": 95.4,
-  "adp_sd": 14.4
- },
- {
-  "id": 90,
-  "name": "Kareem Hunt",
-  "pos": "RB",
-  "team": "KC",
-  "bye": null,
-  "proj": 154.2,
-  "sd": 42.7,
-  "adp": 96.0,
-  "adp_sd": 15.0
- },
- {
-  "id": 91,
-  "name": "Parker Washington",
-  "pos": "WR",
-  "team": "JAX",
-  "bye": null,
-  "proj": 162.4,
-  "sd": 44.2,
-  "adp": 96.5,
-  "adp_sd": 16.6
- },
- {
-  "id": 92,
-  "name": "Juwan Johnson",
-  "pos": "TE",
-  "team": "NO",
-  "bye": null,
-  "proj": 161.9,
-  "sd": 44.1,
-  "adp": 96.7,
-  "adp_sd": 14.7
- },
- {
-  "id": 93,
-  "name": "Dalton Schultz",
-  "pos": "TE",
-  "team": "HOU",
-  "bye": null,
-  "proj": 156.2,
-  "sd": 43.1,
-  "adp": 97.0,
-  "adp_sd": 15.8
- },
- {
-  "id": 94,
-  "name": "Jakobi Meyers",
-  "pos": "WR",
-  "team": "JAX",
-  "bye": null,
-  "proj": 160.1,
-  "sd": 43.8,
-  "adp": 97.5,
-  "adp_sd": 16.3
- },
- {
-  "id": 95,
-  "name": "Jauan Jennings",
-  "pos": "WR",
-  "team": "SF",
-  "bye": null,
-  "proj": 161.8,
-  "sd": 44.1,
-  "adp": 98.6,
-  "adp_sd": 14.9
- },
- {
-  "id": 96,
-  "name": "Joe Flacco",
-  "pos": "QB",
-  "team": "CIN",
-  "bye": null,
-  "proj": 156.4,
-  "sd": 43.2,
-  "adp": 98.6,
-  "adp_sd": 16.8
- },
- {
-  "id": 97,
-  "name": "Romeo Doubs",
-  "pos": "WR",
-  "team": "GB",
-  "bye": null,
-  "proj": 156.4,
-  "sd": 43.2,
-  "adp": 98.7,
-  "adp_sd": 15.7
- },
- {
-  "id": 98,
-  "name": "Keenan Allen",
-  "pos": "WR",
-  "team": "LAC",
-  "bye": null,
-  "proj": 166.7,
-  "sd": 45.0,
-  "adp": 98.8,
-  "adp_sd": 15.4
- },
- {
-  "id": 99,
-  "name": "Ladd McConkey",
-  "pos": "WR",
-  "team": "LAC",
-  "bye": null,
-  "proj": 165.4,
-  "sd": 44.8,
-  "adp": 101.5,
-  "adp_sd": 16.3
- },
- {
-  "id": 100,
-  "name": "Tre Tucker",
-  "pos": "WR",
-  "team": "LV",
-  "bye": null,
-  "proj": 149.4,
-  "sd": 41.9,
-  "adp": 104.1,
-  "adp_sd": 15.7
- },
- {
-  "id": 101,
-  "name": "Quentin Johnston",
-  "pos": "WR",
-  "team": "LAC",
-  "bye": null,
-  "proj": 159.2,
-  "sd": 43.7,
-  "adp": 106.0,
-  "adp_sd": 16.7
- },
- {
-  "id": 102,
-  "name": "Troy Franklin",
-  "pos": "WR",
-  "team": "DEN",
-  "bye": null,
-  "proj": 155.1,
-  "sd": 42.9,
-  "adp": 106.7,
-  "adp_sd": 15.5
- },
- {
-  "id": 103,
-  "name": "Colston Loveland",
-  "pos": "TE",
-  "team": "CHI",
-  "bye": null,
-  "proj": 155.0,
-  "sd": 42.9,
-  "adp": 107.8,
-  "adp_sd": 17.6
- },
- {
-  "id": 104,
-  "name": "Rachaad White",
-  "pos": "RB",
-  "team": "TB",
-  "bye": null,
-  "proj": 137.2,
-  "sd": 39.7,
-  "adp": 108.7,
-  "adp_sd": 16.5
- },
- {
-  "id": 105,
-  "name": "Joe Burrow",
-  "pos": "QB",
-  "team": "CIN",
-  "bye": null,
-  "proj": 145.7,
-  "sd": 41.2,
-  "adp": 109.0,
-  "adp_sd": 15.6
- },
- {
-  "id": 106,
-  "name": "George Kittle",
-  "pos": "TE",
-  "team": "SF",
-  "bye": null,
-  "proj": 152.0,
-  "sd": 42.4,
-  "adp": 110.5,
-  "adp_sd": 16.4
- },
- {
-  "id": 107,
-  "name": "Justin Fields",
-  "pos": "QB",
-  "team": "NYJ",
-  "bye": null,
-  "proj": 145.4,
-  "sd": 41.2,
-  "adp": 111.2,
-  "adp_sd": 17.8
- },
- {
-  "id": 108,
-  "name": "Jacory Croskey-Merritt",
-  "pos": "RB",
-  "team": "WAS",
-  "bye": null,
-  "proj": 147.6,
-  "sd": 41.6,
-  "adp": 111.3,
-  "adp_sd": 17.6
- },
- {
-  "id": 109,
-  "name": "Tyrone Tracy Jr.",
-  "pos": "RB",
-  "team": "NYG",
-  "bye": null,
-  "proj": 159.6,
-  "sd": 43.7,
-  "adp": 114.8,
-  "adp_sd": 16.9
- },
- {
-  "id": 110,
-  "name": "Rome Odunze",
-  "pos": "WR",
-  "team": "CHI",
-  "bye": null,
-  "proj": 143.7,
-  "sd": 40.9,
-  "adp": 116.3,
-  "adp_sd": 16.7
- },
- {
-  "id": 111,
-  "name": "Marcus Mariota",
-  "pos": "QB",
-  "team": "WAS",
-  "bye": null,
-  "proj": 134.4,
-  "sd": 39.2,
-  "adp": 116.8,
-  "adp_sd": 16.8
- },
- {
-  "id": 112,
-  "name": "Bucky Irving",
-  "pos": "RB",
-  "team": "TB",
-  "bye": null,
-  "proj": 135.8,
-  "sd": 39.4,
-  "adp": 117.4,
-  "adp_sd": 18.7
- },
- {
-  "id": 113,
-  "name": "Brian Thomas Jr.",
-  "pos": "WR",
-  "team": "JAX",
-  "bye": null,
-  "proj": 131.8,
-  "sd": 38.7,
-  "adp": 118.5,
-  "adp_sd": 16.2
- },
- {
-  "id": 114,
-  "name": "Kyle Monangai",
-  "pos": "RB",
-  "team": "CHI",
-  "bye": null,
-  "proj": 147.6,
-  "sd": 41.6,
-  "adp": 119.1,
-  "adp_sd": 18.6
- },
- {
-  "id": 115,
-  "name": "Rashee Rice",
-  "pos": "WR",
-  "team": "KC",
-  "bye": null,
-  "proj": 136.1,
-  "sd": 39.5,
-  "adp": 119.5,
-  "adp_sd": 18.5
- },
- {
-  "id": 116,
-  "name": "AJ Barner",
-  "pos": "TE",
-  "team": "SEA",
-  "bye": null,
-  "proj": 136.6,
-  "sd": 39.6,
-  "adp": 119.6,
-  "adp_sd": 16.6
- },
- {
-  "id": 117,
-  "name": "Khalil Shakir",
-  "pos": "WR",
-  "team": "BUF",
-  "bye": null,
-  "proj": 141.1,
-  "sd": 40.4,
-  "adp": 120.2,
-  "adp_sd": 17.1
- },
- {
-  "id": 118,
-  "name": "Jordan Mason",
-  "pos": "RB",
-  "team": "MIN",
-  "bye": null,
-  "proj": 133.7,
-  "sd": 39.1,
-  "adp": 120.7,
-  "adp_sd": 17.8
- },
- {
-  "id": 119,
-  "name": "Mac Jones",
-  "pos": "QB",
-  "team": "SF",
-  "bye": null,
-  "proj": 141.5,
-  "sd": 40.5,
-  "adp": 122.7,
-  "adp_sd": 18.7
- },
- {
-  "id": 120,
-  "name": "Woody Marks",
-  "pos": "RB",
-  "team": "HOU",
-  "bye": null,
-  "proj": 146.3,
-  "sd": 41.3,
-  "adp": 123.2,
-  "adp_sd": 19.2
- },
- {
-  "id": 121,
-  "name": "Kimani Vidal",
-  "pos": "RB",
-  "team": "LAC",
-  "bye": null,
-  "proj": 120.9,
-  "sd": 36.8,
-  "adp": 125.9,
-  "adp_sd": 19.6
- },
- {
-  "id": 122,
-  "name": "Blake Corum",
-  "pos": "RB",
-  "team": "LA",
-  "bye": null,
-  "proj": 130.2,
-  "sd": 38.4,
-  "adp": 127.0,
-  "adp_sd": 17.5
- },
- {
-  "id": 123,
-  "name": "Rashid Shaheed",
-  "pos": "WR",
-  "team": "SEA",
-  "bye": null,
-  "proj": 130.4,
-  "sd": 38.5,
-  "adp": 127.4,
-  "adp_sd": 17.3
- },
- {
-  "id": 124,
-  "name": "Marvin Harrison Jr.",
-  "pos": "WR",
-  "team": "ARI",
-  "bye": null,
-  "proj": 120.3,
-  "sd": 36.7,
-  "adp": 128.1,
-  "adp_sd": 18.3
- },
- {
-  "id": 125,
-  "name": "Chuba Hubbard",
-  "pos": "RB",
-  "team": "CAR",
-  "bye": null,
-  "proj": 124.1,
-  "sd": 37.3,
-  "adp": 129.3,
-  "adp_sd": 18.6
- },
- {
-  "id": 126,
-  "name": "Omarion Hampton",
-  "pos": "RB",
-  "team": "LAC",
-  "bye": null,
-  "proj": 130.9,
-  "sd": 38.6,
-  "adp": 129.9,
-  "adp_sd": 19.0
- },
- {
-  "id": 127,
-  "name": "Oronde Gadsden II",
-  "pos": "TE",
-  "team": "LAC",
-  "bye": null,
-  "proj": 120.9,
-  "sd": 36.8,
-  "adp": 130.2,
-  "adp_sd": 17.3
- },
- {
-  "id": 128,
-  "name": "Colby Parkinson",
-  "pos": "TE",
-  "team": "LA",
-  "bye": null,
-  "proj": 120.3,
-  "sd": 36.7,
-  "adp": 131.4,
-  "adp_sd": 19.1
- },
- {
-  "id": 129,
-  "name": "Jayden Higgins",
-  "pos": "WR",
-  "team": "HOU",
-  "bye": null,
-  "proj": 123.0,
-  "sd": 37.1,
-  "adp": 132.0,
-  "adp_sd": 20.0
- },
- {
-  "id": 130,
-  "name": "Josh Downs",
-  "pos": "WR",
-  "team": "IND",
-  "bye": null,
-  "proj": 123.5,
-  "sd": 37.2,
-  "adp": 132.1,
-  "adp_sd": 20.0
- },
- {
-  "id": 131,
-  "name": "Marquise Brown",
-  "pos": "WR",
-  "team": "KC",
-  "bye": null,
-  "proj": 127.7,
-  "sd": 38.0,
-  "adp": 133.0,
-  "adp_sd": 20.1
- },
- {
-  "id": 132,
-  "name": "Jordan Addison",
-  "pos": "WR",
-  "team": "MIN",
-  "bye": null,
-  "proj": 127.6,
-  "sd": 38.0,
-  "adp": 133.1,
-  "adp_sd": 20.1
- },
- {
-  "id": 133,
-  "name": "Christian Watson",
-  "pos": "WR",
-  "team": "GB",
-  "bye": null,
-  "proj": 128.9,
-  "sd": 38.2,
-  "adp": 134.0,
-  "adp_sd": 20.3
- },
- {
-  "id": 134,
-  "name": "J.J. McCarthy",
-  "pos": "QB",
-  "team": "MIN",
-  "bye": null,
-  "proj": 134.4,
-  "sd": 39.2,
-  "adp": 134.6,
-  "adp_sd": 17.6
- },
- {
-  "id": 135,
-  "name": "Cam Skattebo",
-  "pos": "RB",
-  "team": "NYG",
-  "bye": null,
-  "proj": 126.2,
-  "sd": 37.7,
-  "adp": 134.6,
-  "adp_sd": 20.2
- },
- {
-  "id": 136,
-  "name": "Kayshon Boutte",
-  "pos": "WR",
-  "team": "NE",
-  "bye": null,
-  "proj": 121.1,
-  "sd": 36.8,
-  "adp": 138.1,
-  "adp_sd": 18.6
- },
- {
-  "id": 137,
-  "name": "Tyler Allgeier",
-  "pos": "RB",
-  "team": "ATL",
-  "bye": null,
-  "proj": 126.5,
-  "sd": 37.8,
-  "adp": 138.3,
-  "adp_sd": 18.8
- },
- {
-  "id": 138,
-  "name": "J.K. Dobbins",
-  "pos": "RB",
-  "team": "DEN",
-  "bye": null,
-  "proj": 119.7,
-  "sd": 36.5,
-  "adp": 138.8,
-  "adp_sd": 19.3
- },
- {
-  "id": 139,
-  "name": "Aaron Jones",
-  "pos": "RB",
-  "team": "MIN",
-  "bye": null,
-  "proj": 116.2,
-  "sd": 35.9,
-  "adp": 139.0,
-  "adp_sd": 20.8
- },
- {
-  "id": 140,
-  "name": "Tucker Kraft",
-  "pos": "TE",
-  "team": "GB",
-  "bye": null,
-  "proj": 112.2,
-  "sd": 35.2,
-  "adp": 139.2,
-  "adp_sd": 19.7
- },
- {
-  "id": 141,
-  "name": "Mark Andrews",
-  "pos": "TE",
-  "team": "BAL",
-  "bye": null,
-  "proj": 120.8,
-  "sd": 36.7,
-  "adp": 140.4,
-  "adp_sd": 19.1
- },
- {
-  "id": 142,
-  "name": "Theo Johnson",
-  "pos": "TE",
-  "team": "NYG",
-  "bye": null,
-  "proj": 117.8,
-  "sd": 36.2,
-  "adp": 142.1,
-  "adp_sd": 19.3
- },
- {
-  "id": 143,
-  "name": "Brenton Strange",
-  "pos": "TE",
-  "team": "JAX",
-  "bye": null,
-  "proj": 109.0,
-  "sd": 34.6,
-  "adp": 142.2,
-  "adp_sd": 20.9
- },
- {
-  "id": 144,
-  "name": "Chig Okonkwo",
-  "pos": "TE",
-  "team": "TEN",
-  "bye": null,
-  "proj": 108.0,
-  "sd": 34.4,
-  "adp": 142.5,
-  "adp_sd": 20.7
- },
- {
-  "id": 145,
-  "name": "Jerry Jeudy",
-  "pos": "WR",
-  "team": "CLE",
-  "bye": null,
-  "proj": 111.5,
-  "sd": 35.1,
-  "adp": 145.2,
-  "adp_sd": 18.9
- },
- {
-  "id": 146,
-  "name": "Zach Ertz",
-  "pos": "TE",
-  "team": "WAS",
-  "bye": null,
-  "proj": 111.9,
-  "sd": 35.1,
-  "adp": 145.3,
-  "adp_sd": 19.3
- },
- {
-  "id": 147,
-  "name": "Dalton Kincaid",
-  "pos": "TE",
-  "team": "BUF",
-  "bye": null,
-  "proj": 120.1,
-  "sd": 36.6,
-  "adp": 145.4,
-  "adp_sd": 19.7
- },
- {
-  "id": 148,
-  "name": "Terry McLaurin",
-  "pos": "WR",
-  "team": "WAS",
-  "bye": null,
-  "proj": 111.7,
-  "sd": 35.1,
-  "adp": 148.0,
-  "adp_sd": 19.5
- },
- {
-  "id": 149,
-  "name": "Luther Burden III",
-  "pos": "WR",
-  "team": "CHI",
-  "bye": null,
-  "proj": 119.1,
-  "sd": 36.4,
-  "adp": 148.3,
-  "adp_sd": 20.5
- },
- {
-  "id": 150,
-  "name": "Pat Freiermuth",
-  "pos": "TE",
-  "team": "PIT",
-  "bye": null,
-  "proj": 103.6,
-  "sd": 33.6,
-  "adp": 149.2,
-  "adp_sd": 19.6
- },
- {
-  "id": 151,
-  "name": "Elic Ayomanor",
-  "pos": "WR",
-  "team": "TEN",
-  "bye": null,
-  "proj": 111.0,
-  "sd": 35.0,
-  "adp": 150.0,
-  "adp_sd": 20.7
- },
- {
-  "id": 152,
-  "name": "Ryan Flournoy",
-  "pos": "WR",
-  "team": "DAL",
-  "bye": null,
-  "proj": 109.0,
-  "sd": 34.6,
-  "adp": 154.1,
-  "adp_sd": 22.2
- },
- {
-  "id": 153,
-  "name": "Devin Singletary",
-  "pos": "RB",
-  "team": "NYG",
-  "bye": null,
-  "proj": 106.6,
-  "sd": 34.2,
-  "adp": 154.7,
-  "adp_sd": 22.0
- },
- {
-  "id": 154,
-  "name": "Malik Washington",
-  "pos": "WR",
-  "team": "MIA",
-  "bye": null,
-  "proj": 97.7,
-  "sd": 32.6,
-  "adp": 156.8,
-  "adp_sd": 20.0
- },
- {
-  "id": 155,
-  "name": "Sam LaPorta",
-  "pos": "TE",
-  "team": "DET",
-  "bye": null,
-  "proj": 98.4,
-  "sd": 32.7,
-  "adp": 157.7,
-  "adp_sd": 20.4
- },
- {
-  "id": 156,
-  "name": "Cade Otton",
-  "pos": "TE",
-  "team": "TB",
-  "bye": null,
-  "proj": 105.2,
-  "sd": 33.9,
-  "adp": 162.0,
-  "adp_sd": 21.4
- },
- {
-  "id": 157,
-  "name": "Ty Johnson",
-  "pos": "RB",
-  "team": "BUF",
-  "bye": null,
-  "proj": 93.8,
-  "sd": 31.9,
-  "adp": 164.9,
-  "adp_sd": 22.4
- },
- {
-  "id": 158,
-  "name": "Keon Coleman",
-  "pos": "WR",
-  "team": "BUF",
-  "bye": null,
-  "proj": 95.5,
-  "sd": 32.2,
-  "adp": 165.5,
-  "adp_sd": 21.7
- },
- {
-  "id": 159,
-  "name": "Mack Hollins",
-  "pos": "WR",
-  "team": "NE",
-  "bye": null,
-  "proj": 104.4,
-  "sd": 33.8,
-  "adp": 165.7,
-  "adp_sd": 21.3
- },
- {
-  "id": 160,
-  "name": "Xavier Worthy",
-  "pos": "WR",
-  "team": "KC",
-  "bye": null,
-  "proj": 100.9,
-  "sd": 33.2,
-  "adp": 166.5,
-  "adp_sd": 21.7
- },
- {
-  "id": 161,
-  "name": "Sean Tucker",
-  "pos": "RB",
-  "team": "TB",
-  "bye": null,
-  "proj": 93.4,
-  "sd": 31.8,
-  "adp": 167.7,
-  "adp_sd": 21.4
- },
- {
-  "id": 162,
-  "name": "T.J. Hockenson",
-  "pos": "TE",
-  "team": "MIN",
-  "bye": null,
-  "proj": 98.3,
-  "sd": 32.7,
-  "adp": 168.1,
-  "adp_sd": 23.4
- },
- {
-  "id": 163,
-  "name": "Michael Carter",
-  "pos": "RB",
-  "team": "ARI",
-  "bye": null,
-  "proj": 93.2,
-  "sd": 31.8,
-  "adp": 168.7,
-  "adp_sd": 23.0
- },
- {
-  "id": 164,
-  "name": "Chris Rodriguez Jr.",
-  "pos": "RB",
-  "team": "WAS",
-  "bye": null,
-  "proj": 99.0,
-  "sd": 32.8,
-  "adp": 170.1,
-  "adp_sd": 22.2
- },
- {
-  "id": 165,
-  "name": "Chimere Dike",
-  "pos": "WR",
-  "team": "TEN",
-  "bye": null,
-  "proj": 100.1,
-  "sd": 33.0,
-  "adp": 170.6,
-  "adp_sd": 23.2
- },
- {
-  "id": 166,
-  "name": "Cooper Kupp",
-  "pos": "WR",
-  "team": "SEA",
-  "bye": null,
-  "proj": 103.8,
-  "sd": 33.7,
-  "adp": 171.1,
-  "adp_sd": 22.7
- },
- {
-  "id": 167,
-  "name": "Jalen Nailor",
-  "pos": "WR",
-  "team": "MIN",
-  "bye": null,
-  "proj": 96.0,
-  "sd": 32.3,
-  "adp": 171.6,
-  "adp_sd": 22.7
- },
- {
-  "id": 168,
-  "name": "Xavier Hutchinson",
-  "pos": "WR",
-  "team": "HOU",
-  "bye": null,
-  "proj": 90.5,
-  "sd": 31.3,
-  "adp": 171.9,
-  "adp_sd": 22.3
- },
- {
-  "id": 169,
-  "name": "Evan Engram",
-  "pos": "TE",
-  "team": "DEN",
-  "bye": null,
-  "proj": 87.3,
-  "sd": 30.7,
-  "adp": 173.3,
-  "adp_sd": 22.8
- },
- {
-  "id": 170,
-  "name": "Dawson Knox",
-  "pos": "TE",
-  "team": "BUF",
-  "bye": null,
-  "proj": 95.2,
-  "sd": 32.1,
-  "adp": 175.4,
-  "adp_sd": 24.5
- },
- {
-  "id": 171,
-  "name": "Bam Knight",
-  "pos": "RB",
-  "team": "ARI",
-  "bye": null,
-  "proj": 92.2,
-  "sd": 31.6,
-  "adp": 175.8,
-  "adp_sd": 23.9
- },
- {
-  "id": 172,
-  "name": "Tez Johnson",
-  "pos": "WR",
-  "team": "TB",
-  "bye": null,
-  "proj": 86.4,
-  "sd": 30.6,
-  "adp": 176.7,
-  "adp_sd": 24.2
- },
- {
-  "id": 173,
-  "name": "Alvin Kamara",
-  "pos": "RB",
-  "team": "NO",
-  "bye": null,
-  "proj": 93.0,
-  "sd": 31.7,
-  "adp": 176.8,
-  "adp_sd": 22.1
- },
- {
-  "id": 174,
-  "name": "Emanuel Wilson",
-  "pos": "RB",
-  "team": "GB",
-  "bye": null,
-  "proj": 95.5,
-  "sd": 32.2,
-  "adp": 177.1,
-  "adp_sd": 23.2
- },
- {
-  "id": 175,
-  "name": "Garrett Wilson",
-  "pos": "WR",
-  "team": "NYJ",
-  "bye": null,
-  "proj": 89.9,
-  "sd": 31.2,
-  "adp": 178.6,
-  "adp_sd": 23.0
- },
- {
-  "id": 176,
-  "name": "Tyjae Spears",
-  "pos": "RB",
-  "team": "TEN",
-  "bye": null,
-  "proj": 98.2,
-  "sd": 32.7,
-  "adp": 179.3,
-  "adp_sd": 22.2
- },
- {
-  "id": 177,
-  "name": "Andrei Iosivas",
-  "pos": "WR",
-  "team": "CIN",
-  "bye": null,
-  "proj": 85.4,
-  "sd": 30.4,
-  "adp": 181.2,
-  "adp_sd": 23.3
- },
- {
-  "id": 178,
-  "name": "Kendrick Bourne",
-  "pos": "WR",
-  "team": "SF",
-  "bye": null,
-  "proj": 87.1,
-  "sd": 30.7,
-  "adp": 181.3,
-  "adp_sd": 22.4
- },
- {
-  "id": 179,
-  "name": "Bhayshul Tuten",
-  "pos": "RB",
-  "team": "JAX",
-  "bye": null,
-  "proj": 90.9,
-  "sd": 31.4,
-  "adp": 184.2,
-  "adp_sd": 23.1
- },
- {
-  "id": 180,
-  "name": "Tyquan Thornton",
-  "pos": "WR",
-  "team": "KC",
-  "bye": null,
-  "proj": 78.8,
-  "sd": 29.2,
-  "adp": 184.5,
-  "adp_sd": 24.8
- },
- {
-  "id": 181,
-  "name": "Darius Slayton",
-  "pos": "WR",
-  "team": "NYG",
-  "bye": null,
-  "proj": 87.8,
-  "sd": 30.8,
-  "adp": 185.5,
-  "adp_sd": 24.6
- },
- {
-  "id": 182,
-  "name": "DeMario Douglas",
-  "pos": "WR",
-  "team": "NE",
-  "bye": null,
-  "proj": 89.3,
-  "sd": 31.1,
-  "adp": 187.3,
-  "adp_sd": 24.8
- },
- {
-  "id": 183,
-  "name": "Gunnar Helm",
-  "pos": "TE",
-  "team": "TEN",
-  "bye": null,
-  "proj": 78.2,
-  "sd": 29.1,
-  "adp": 187.6,
-  "adp_sd": 23.0
- },
- {
-  "id": 184,
-  "name": "Nick Chubb",
-  "pos": "RB",
-  "team": "HOU",
-  "bye": null,
-  "proj": 87.3,
-  "sd": 30.7,
-  "adp": 188.3,
-  "adp_sd": 23.3
- },
- {
-  "id": 185,
-  "name": "Jake Tonges",
-  "pos": "TE",
-  "team": "SF",
-  "bye": null,
-  "proj": 86.8,
-  "sd": 30.6,
-  "adp": 188.3,
-  "adp_sd": 22.9
- },
- {
-  "id": 186,
-  "name": "Ricky Pearsall",
-  "pos": "WR",
-  "team": "SF",
-  "bye": null,
-  "proj": 86.6,
-  "sd": 30.6,
-  "adp": 188.8,
-  "adp_sd": 23.2
- },
- {
-  "id": 187,
-  "name": "Darren Waller",
-  "pos": "TE",
-  "team": "MIA",
-  "bye": null,
-  "proj": 86.5,
-  "sd": 30.6,
-  "adp": 189.5,
-  "adp_sd": 23.3
- },
- {
-  "id": 188,
-  "name": "Samaje Perine",
-  "pos": "RB",
-  "team": "CIN",
-  "bye": null,
-  "proj": 79.9,
-  "sd": 29.4,
-  "adp": 190.6,
-  "adp_sd": 25.9
- },
- {
-  "id": 189,
-  "name": "Mike Evans",
-  "pos": "WR",
-  "team": "TB",
-  "bye": null,
-  "proj": 81.3,
-  "sd": 29.6,
-  "adp": 191.0,
-  "adp_sd": 25.8
- },
- {
-  "id": 190,
-  "name": "Darnell Mooney",
-  "pos": "WR",
-  "team": "ATL",
-  "bye": null,
-  "proj": 78.8,
-  "sd": 29.2,
-  "adp": 192.2,
-  "adp_sd": 23.8
- },
- {
-  "id": 191,
-  "name": "Isaac TeSlaa",
-  "pos": "WR",
-  "team": "DET",
-  "bye": null,
-  "proj": 74.9,
-  "sd": 28.5,
-  "adp": 193.2,
-  "adp_sd": 24.1
- },
- {
-  "id": 192,
-  "name": "Isiah Pacheco",
-  "pos": "RB",
-  "team": "KC",
-  "bye": null,
-  "proj": 86.6,
-  "sd": 30.6,
-  "adp": 196.2,
-  "adp_sd": 26.5
- },
- {
-  "id": 193,
-  "name": "KaVontae Turpin",
-  "pos": "WR",
-  "team": "DAL",
-  "bye": null,
-  "proj": 80.2,
-  "sd": 29.4,
-  "adp": 196.7,
-  "adp_sd": 25.4
- },
- {
-  "id": 194,
-  "name": "Jalen Coker",
-  "pos": "WR",
-  "team": "CAR",
-  "bye": null,
-  "proj": 83.0,
-  "sd": 29.9,
-  "adp": 196.9,
-  "adp_sd": 24.8
- },
- {
-  "id": 195,
-  "name": "Sterling Shepard",
-  "pos": "WR",
-  "team": "TB",
-  "bye": null,
-  "proj": 71.8,
-  "sd": 27.9,
-  "adp": 197.0,
-  "adp_sd": 25.1
- },
- {
-  "id": 196,
-  "name": "Dontayvion Wicks",
-  "pos": "WR",
-  "team": "GB",
-  "bye": null,
-  "proj": 71.3,
-  "sd": 27.8,
-  "adp": 198.7,
-  "adp_sd": 24.7
- },
- {
-  "id": 197,
-  "name": "Xavier Legette",
-  "pos": "WR",
-  "team": "CAR",
-  "bye": null,
-  "proj": 80.8,
-  "sd": 29.5,
-  "adp": 201.8,
-  "adp_sd": 25.9
- },
- {
-  "id": 198,
-  "name": "Adonai Mitchell",
-  "pos": "WR",
-  "team": "NYJ",
-  "bye": null,
-  "proj": 78.9,
-  "sd": 29.2,
-  "adp": 204.4,
-  "adp_sd": 26.6
- },
- {
-  "id": 199,
-  "name": "Chris Godwin Jr.",
-  "pos": "WR",
-  "team": "TB",
-  "bye": null,
-  "proj": 75.0,
-  "sd": 28.5,
-  "adp": 205.0,
-  "adp_sd": 26.0
- },
- {
-  "id": 200,
-  "name": "Dylan Sampson",
-  "pos": "RB",
-  "team": "CLE",
-  "bye": null,
-  "proj": 78.1,
-  "sd": 29.1,
-  "adp": 206.4,
-  "adp_sd": 27.1
- },
- {
-  "id": 201,
-  "name": "Pat Bryant",
-  "pos": "WR",
-  "team": "DEN",
-  "bye": null,
-  "proj": 70.3,
-  "sd": 27.7,
-  "adp": 206.6,
-  "adp_sd": 25.0
- },
- {
-  "id": 202,
-  "name": "Justice Hill",
-  "pos": "RB",
-  "team": "BAL",
-  "bye": null,
-  "proj": 58.7,
-  "sd": 25.6,
-  "adp": 207.3,
-  "adp_sd": 26.5
- },
- {
-  "id": 203,
-  "name": "Marvin Mims Jr.",
-  "pos": "WR",
-  "team": "DEN",
-  "bye": null,
-  "proj": 76.2,
-  "sd": 28.7,
-  "adp": 209.6,
-  "adp_sd": 27.9
- },
- {
-  "id": 204,
-  "name": "Brian Robinson",
-  "pos": "RB",
-  "team": "SF",
-  "bye": null,
-  "proj": 64.0,
-  "sd": 26.5,
-  "adp": 210.1,
-  "adp_sd": 25.5
- },
- {
-  "id": 205,
-  "name": "Ray Davis",
-  "pos": "RB",
-  "team": "BUF",
-  "bye": null,
-  "proj": 60.4,
-  "sd": 25.9,
-  "adp": 213.0,
-  "adp_sd": 26.8
- },
- {
-  "id": 206,
-  "name": "Olamide Zaccheaus",
-  "pos": "WR",
-  "team": "CHI",
-  "bye": null,
-  "proj": 73.0,
-  "sd": 28.1,
-  "adp": 213.1,
-  "adp_sd": 27.2
- },
- {
-  "id": 207,
-  "name": "JuJu Smith-Schuster",
-  "pos": "WR",
-  "team": "KC",
-  "bye": null,
-  "proj": 66.5,
-  "sd": 27.0,
-  "adp": 213.2,
-  "adp_sd": 26.3
- },
- {
-  "id": 208,
-  "name": "Tank Bigsby",
-  "pos": "RB",
-  "team": "PHI",
-  "bye": null,
-  "proj": 57.3,
-  "sd": 25.3,
-  "adp": 214.0,
-  "adp_sd": 28.3
- },
- {
-  "id": 209,
-  "name": "Calvin Austin III",
-  "pos": "WR",
-  "team": "PIT",
-  "bye": null,
-  "proj": 78.2,
-  "sd": 29.1,
-  "adp": 214.4,
-  "adp_sd": 26.9
- },
- {
-  "id": 210,
-  "name": "Jeremy McNichols",
-  "pos": "RB",
-  "team": "WAS",
-  "bye": null,
-  "proj": 66.7,
-  "sd": 27.0,
-  "adp": 215.6,
-  "adp_sd": 27.0
- },
- {
-  "id": 211,
-  "name": "Devin Neal",
-  "pos": "RB",
-  "team": "NO",
-  "bye": null,
-  "proj": 56.2,
-  "sd": 25.1,
-  "adp": 216.2,
-  "adp_sd": 28.3
- },
- {
-  "id": 212,
-  "name": "Emari Demercado",
-  "pos": "RB",
-  "team": "ARI",
-  "bye": null,
-  "proj": 55.6,
-  "sd": 25.0,
-  "adp": 216.3,
-  "adp_sd": 25.7
- },
- {
-  "id": 213,
-  "name": "Brashard Smith",
-  "pos": "RB",
-  "team": "KC",
-  "bye": null,
-  "proj": 55.5,
-  "sd": 25.0,
-  "adp": 217.2,
-  "adp_sd": 28.3
- },
- {
-  "id": 214,
-  "name": "Isaiah Davis",
-  "pos": "RB",
-  "team": "NYJ",
-  "bye": null,
-  "proj": 64.5,
-  "sd": 26.6,
-  "adp": 217.8,
-  "adp_sd": 26.2
- },
- {
-  "id": 215,
-  "name": "Ollie Gordon II",
-  "pos": "RB",
-  "team": "MIA",
-  "bye": null,
-  "proj": 56.4,
-  "sd": 25.1,
-  "adp": 221.4,
-  "adp_sd": 27.3
- },
- {
-  "id": 216,
-  "name": "Kyle Juszczyk",
-  "pos": "RB",
-  "team": "SF",
-  "bye": null,
-  "proj": 50.0,
-  "sd": 24.0,
-  "adp": 222.0,
-  "adp_sd": 27.7
- },
- {
-  "id": 217,
-  "name": "Keaton Mitchell",
-  "pos": "RB",
-  "team": "BAL",
-  "bye": null,
-  "proj": 55.9,
-  "sd": 25.1,
-  "adp": 222.6,
-  "adp_sd": 27.7
- },
- {
-  "id": 218,
-  "name": "Jaylen Wright",
-  "pos": "RB",
-  "team": "MIA",
-  "bye": null,
-  "proj": 50.9,
-  "sd": 24.2,
-  "adp": 222.6,
-  "adp_sd": 26.4
- },
- {
-  "id": 219,
-  "name": "Hunter Luepke",
-  "pos": "RB",
-  "team": "DAL",
-  "bye": null,
-  "proj": 35.0,
-  "sd": 21.3,
-  "adp": 225.9,
-  "adp_sd": 27.5
- },
- {
-  "id": 220,
-  "name": "Malik Davis",
-  "pos": "RB",
-  "team": "DAL",
-  "bye": null,
-  "proj": 42.4,
-  "sd": 22.6,
-  "adp": 226.7,
-  "adp_sd": 27.7
- },
- {
-  "id": 221,
-  "name": "Jerome Ford",
-  "pos": "RB",
-  "team": "CLE",
-  "bye": null,
-  "proj": 33.9,
-  "sd": 21.1,
-  "adp": 226.9,
-  "adp_sd": 29.6
- },
- {
-  "id": 222,
-  "name": "Audric Estim\u00e9",
-  "pos": "RB",
-  "team": "NO",
-  "bye": null,
-  "proj": 46.6,
-  "sd": 23.4,
-  "adp": 228.5,
-  "adp_sd": 29.6
- },
- {
-  "id": 223,
-  "name": "Zavier Scott",
-  "pos": "RB",
-  "team": "MIN",
-  "bye": null,
-  "proj": 37.2,
-  "sd": 21.7,
-  "adp": 238.6,
-  "adp_sd": 29.6
- },
- {"id":300,"name":"Justin Tucker","pos":"K","team":"BAL","bye":null,"proj":158.0,"sd":18.0,"adp":132.0,"adp_sd":13.0},
- {"id":301,"name":"Brandon Aubrey","pos":"K","team":"DAL","bye":null,"proj":154.0,"sd":17.0,"adp":136.0,"adp_sd":12.0},
- {"id":302,"name":"Tyler Bass","pos":"K","team":"BUF","bye":null,"proj":150.0,"sd":17.0,"adp":139.0,"adp_sd":12.0},
- {"id":303,"name":"Jake Elliott","pos":"K","team":"PHI","bye":null,"proj":147.0,"sd":16.0,"adp":142.0,"adp_sd":11.0},
- {"id":304,"name":"Harrison Butker","pos":"K","team":"KC","bye":null,"proj":144.0,"sd":16.0,"adp":145.0,"adp_sd":11.0},
- {"id":305,"name":"Cameron Dicker","pos":"K","team":"LAC","bye":null,"proj":141.0,"sd":15.0,"adp":147.0,"adp_sd":11.0},
- {"id":306,"name":"Jason Sanders","pos":"K","team":"MIA","bye":null,"proj":138.0,"sd":15.0,"adp":150.0,"adp_sd":10.0},
- {"id":307,"name":"Evan McPherson","pos":"K","team":"CIN","bye":null,"proj":135.0,"sd":15.0,"adp":152.0,"adp_sd":10.0},
- {"id":308,"name":"Matt Gay","pos":"K","team":"IND","bye":null,"proj":132.0,"sd":14.0,"adp":154.0,"adp_sd":10.0},
- {"id":309,"name":"Ka'imi Fairbairn","pos":"K","team":"HOU","bye":null,"proj":130.0,"sd":14.0,"adp":156.0,"adp_sd":9.0},
- {"id":310,"name":"Jake Moody","pos":"K","team":"SF","bye":null,"proj":127.0,"sd":14.0,"adp":158.0,"adp_sd":9.0},
- {"id":311,"name":"Chris Boswell","pos":"K","team":"PIT","bye":null,"proj":124.0,"sd":13.0,"adp":160.0,"adp_sd":9.0},
- {"id":312,"name":"Graham Gano","pos":"K","team":"NYG","bye":null,"proj":121.0,"sd":13.0,"adp":162.0,"adp_sd":8.0},
- {"id":313,"name":"Greg Joseph","pos":"K","team":"MIN","bye":null,"proj":118.0,"sd":13.0,"adp":164.0,"adp_sd":8.0},
- {"id":314,"name":"Cairo Santos","pos":"K","team":"CHI","bye":null,"proj":115.0,"sd":12.0,"adp":165.0,"adp_sd":8.0},
- {"id":320,"name":"SF D/ST","pos":"DST","team":"SF","bye":null,"proj":152.0,"sd":22.0,"adp":112.0,"adp_sd":14.0},
- {"id":321,"name":"DAL D/ST","pos":"DST","team":"DAL","bye":null,"proj":145.0,"sd":21.0,"adp":118.0,"adp_sd":13.0},
- {"id":322,"name":"BUF D/ST","pos":"DST","team":"BUF","bye":null,"proj":142.0,"sd":20.0,"adp":122.0,"adp_sd":13.0},
- {"id":323,"name":"PHI D/ST","pos":"DST","team":"PHI","bye":null,"proj":139.0,"sd":20.0,"adp":126.0,"adp_sd":12.0},
- {"id":324,"name":"PIT D/ST","pos":"DST","team":"PIT","bye":null,"proj":136.0,"sd":19.0,"adp":130.0,"adp_sd":12.0},
- {"id":325,"name":"BAL D/ST","pos":"DST","team":"BAL","bye":null,"proj":133.0,"sd":19.0,"adp":133.0,"adp_sd":12.0},
- {"id":326,"name":"KC D/ST","pos":"DST","team":"KC","bye":null,"proj":130.0,"sd":18.0,"adp":136.0,"adp_sd":11.0},
- {"id":327,"name":"CLE D/ST","pos":"DST","team":"CLE","bye":null,"proj":125.0,"sd":18.0,"adp":140.0,"adp_sd":11.0},
- {"id":328,"name":"LAR D/ST","pos":"DST","team":"LAR","bye":null,"proj":122.0,"sd":17.0,"adp":143.0,"adp_sd":11.0},
- {"id":329,"name":"MIN D/ST","pos":"DST","team":"MIN","bye":null,"proj":119.0,"sd":17.0,"adp":146.0,"adp_sd":10.0},
- {"id":330,"name":"CIN D/ST","pos":"DST","team":"CIN","bye":null,"proj":116.0,"sd":17.0,"adp":149.0,"adp_sd":10.0},
- {"id":331,"name":"NYJ D/ST","pos":"DST","team":"NYJ","bye":null,"proj":113.0,"sd":16.0,"adp":152.0,"adp_sd":10.0},
- {"id":332,"name":"IND D/ST","pos":"DST","team":"IND","bye":null,"proj":110.0,"sd":16.0,"adp":155.0,"adp_sd":9.0},
- {"id":333,"name":"HOU D/ST","pos":"DST","team":"HOU","bye":null,"proj":108.0,"sd":15.0,"adp":157.0,"adp_sd":9.0},
- {"id":334,"name":"JAX D/ST","pos":"DST","team":"JAX","bye":null,"proj":105.0,"sd":15.0,"adp":160.0,"adp_sd":9.0},
- {"id":335,"name":"NE D/ST","pos":"DST","team":"NE","bye":null,"proj":102.0,"sd":15.0,"adp":162.0,"adp_sd":8.0}
+  {
+    "id": 4429795,
+    "name": "Jahmyr Gibbs",
+    "pos": "RB",
+    "team": "DET",
+    "bye": null,
+    "proj": 358.5,
+    "sd": 93.2,
+    "adp": 1,
+    "adp_sd": 6.1,
+    "ecr": 1,
+    "tier": 1
+  },
+  {
+    "id": 4430807,
+    "name": "Bijan Robinson",
+    "pos": "RB",
+    "team": "ATL",
+    "bye": null,
+    "proj": 343.5,
+    "sd": 89.3,
+    "adp": 2,
+    "adp_sd": 6.1,
+    "ecr": 2,
+    "tier": 1
+  },
+  {
+    "id": 4362628,
+    "name": "Ja'Marr Chase",
+    "pos": "WR",
+    "team": "CIN",
+    "bye": null,
+    "proj": 312.6,
+    "sd": 71.9,
+    "adp": 3,
+    "adp_sd": 6.2,
+    "ecr": 3,
+    "tier": 1
+  },
+  {
+    "id": 4426515,
+    "name": "Puka Nacua",
+    "pos": "WR",
+    "team": "LAR",
+    "bye": null,
+    "proj": 332.9,
+    "sd": 76.6,
+    "adp": 4,
+    "adp_sd": 6.2,
+    "ecr": 4,
+    "tier": 1
+  },
+  {
+    "id": 3117251,
+    "name": "Christian McCaffrey",
+    "pos": "RB",
+    "team": "SF",
+    "bye": null,
+    "proj": 332.1,
+    "sd": 86.3,
+    "adp": 5,
+    "adp_sd": 6.3,
+    "ecr": 7,
+    "tier": 1
+  },
+  {
+    "id": 4430878,
+    "name": "Jaxon Smith-Njigba",
+    "pos": "WR",
+    "team": "SEA",
+    "bye": null,
+    "proj": 303.6,
+    "sd": 69.8,
+    "adp": 6,
+    "adp_sd": 6.3,
+    "ecr": 5,
+    "tier": 1
+  },
+  {
+    "id": 4242335,
+    "name": "Jonathan Taylor",
+    "pos": "RB",
+    "team": "IND",
+    "bye": null,
+    "proj": 318,
+    "sd": 82.7,
+    "adp": 7,
+    "adp_sd": 6.4,
+    "ecr": 8,
+    "tier": 1
+  },
+  {
+    "id": 4374302,
+    "name": "Amon-Ra St. Brown",
+    "pos": "WR",
+    "team": "DET",
+    "bye": null,
+    "proj": 300.9,
+    "sd": 69.2,
+    "adp": 8,
+    "adp_sd": 6.4,
+    "ecr": 6,
+    "tier": 1
+  },
+  {
+    "id": 4379399,
+    "name": "James Cook III",
+    "pos": "RB",
+    "team": "BUF",
+    "bye": null,
+    "proj": 284.1,
+    "sd": 73.9,
+    "adp": 9,
+    "adp_sd": 6.5,
+    "ecr": 11,
+    "tier": 2
+  },
+  {
+    "id": 4890973,
+    "name": "Ashton Jeanty",
+    "pos": "RB",
+    "team": "LV",
+    "bye": null,
+    "proj": 275.3,
+    "sd": 71.6,
+    "adp": 10,
+    "adp_sd": 6.5,
+    "ecr": 12,
+    "tier": 2
+  },
+  {
+    "id": 4262921,
+    "name": "Justin Jefferson",
+    "pos": "WR",
+    "team": "MIN",
+    "bye": null,
+    "proj": 271.5,
+    "sd": 62.5,
+    "adp": 11,
+    "adp_sd": 6.6,
+    "ecr": 10,
+    "tier": 2
+  },
+  {
+    "id": 4241389,
+    "name": "CeeDee Lamb",
+    "pos": "WR",
+    "team": "DAL",
+    "bye": null,
+    "proj": 273.6,
+    "sd": 62.9,
+    "adp": 12,
+    "adp_sd": 6.7,
+    "ecr": 9,
+    "tier": 2
+  },
+  {
+    "id": 4429160,
+    "name": "De'Von Achane",
+    "pos": "RB",
+    "team": "MIA",
+    "bye": null,
+    "proj": 285.4,
+    "sd": 74.2,
+    "adp": 13,
+    "adp_sd": 6.7,
+    "ecr": 18,
+    "tier": 2
+  },
+  {
+    "id": 3929630,
+    "name": "Saquon Barkley",
+    "pos": "RB",
+    "team": "PHI",
+    "bye": null,
+    "proj": 276,
+    "sd": 71.8,
+    "adp": 14,
+    "adp_sd": 6.8,
+    "ecr": 17,
+    "tier": 2
+  },
+  {
+    "id": 4362238,
+    "name": "Chase Brown",
+    "pos": "RB",
+    "team": "CIN",
+    "bye": null,
+    "proj": 264.4,
+    "sd": 68.7,
+    "adp": 15,
+    "adp_sd": 6.8,
+    "ecr": 14,
+    "tier": 2
+  },
+  {
+    "id": 4685382,
+    "name": "Omarion Hampton",
+    "pos": "RB",
+    "team": "LAC",
+    "bye": null,
+    "proj": 275.7,
+    "sd": 71.7,
+    "adp": 16,
+    "adp_sd": 6.9,
+    "ecr": 20,
+    "tier": 2
+  },
+  {
+    "id": 4426502,
+    "name": "Drake London",
+    "pos": "WR",
+    "team": "ATL",
+    "bye": null,
+    "proj": 249.1,
+    "sd": 57.3,
+    "adp": 17,
+    "adp_sd": 6.9,
+    "ecr": 13,
+    "tier": 2
+  },
+  {
+    "id": 4567048,
+    "name": "Kenneth Walker III",
+    "pos": "RB",
+    "team": "KC",
+    "bye": null,
+    "proj": 271.8,
+    "sd": 70.7,
+    "adp": 18,
+    "adp_sd": 7,
+    "ecr": 23,
+    "tier": 3
+  },
+  {
+    "id": 4361307,
+    "name": "Trey McBride",
+    "pos": "TE",
+    "team": "ARI",
+    "bye": null,
+    "proj": 215.7,
+    "sd": 53.9,
+    "adp": 19,
+    "adp_sd": 7,
+    "ecr": 24,
+    "tier": 3
+  },
+  {
+    "id": 4432665,
+    "name": "Brock Bowers",
+    "pos": "TE",
+    "team": "LV",
+    "bye": null,
+    "proj": 216.2,
+    "sd": 54,
+    "adp": 20,
+    "adp_sd": 7.1,
+    "ecr": 15,
+    "tier": 2
+  },
+  {
+    "id": 3043078,
+    "name": "Derrick Henry",
+    "pos": "RB",
+    "team": "BAL",
+    "bye": null,
+    "proj": 285,
+    "sd": 74.1,
+    "adp": 21,
+    "adp_sd": 7.2,
+    "ecr": 21,
+    "tier": 3
+  },
+  {
+    "id": 3918298,
+    "name": "Josh Allen",
+    "pos": "QB",
+    "team": "BUF",
+    "bye": null,
+    "proj": 400,
+    "sd": 56,
+    "adp": 22,
+    "adp_sd": 7.2,
+    "ecr": 27,
+    "tier": 3
+  },
+  {
+    "id": 4047646,
+    "name": "A.J. Brown",
+    "pos": "WR",
+    "team": "NE",
+    "bye": null,
+    "proj": 231.1,
+    "sd": 53.2,
+    "adp": 23,
+    "adp_sd": 7.3,
+    "ecr": 16,
+    "tier": 2
+  },
+  {
+    "id": 4258173,
+    "name": "Nico Collins",
+    "pos": "WR",
+    "team": "HOU",
+    "bye": null,
+    "proj": 231.8,
+    "sd": 53.3,
+    "adp": 24,
+    "adp_sd": 7.3,
+    "ecr": 19,
+    "tier": 2
+  },
+  {
+    "id": 4426354,
+    "name": "George Pickens",
+    "pos": "WR",
+    "team": "DAL",
+    "bye": null,
+    "proj": 223,
+    "sd": 51.3,
+    "adp": 25,
+    "adp_sd": 7.4,
+    "ecr": 22,
+    "tier": 3
+  },
+  {
+    "id": 4870808,
+    "name": "Jeremiyah Love",
+    "pos": "RB",
+    "team": "ARI",
+    "bye": null,
+    "proj": 271.1,
+    "sd": 70.5,
+    "adp": 26,
+    "adp_sd": 7.4,
+    "ecr": 33,
+    "tier": 3
+  },
+  {
+    "id": 4361370,
+    "name": "Chris Olave",
+    "pos": "WR",
+    "team": "NO",
+    "bye": null,
+    "proj": 226.6,
+    "sd": 52.1,
+    "adp": 27,
+    "adp_sd": 7.5,
+    "ecr": 26,
+    "tier": 3
+  },
+  {
+    "id": 4047365,
+    "name": "Josh Jacobs",
+    "pos": "RB",
+    "team": "GB",
+    "bye": null,
+    "proj": 278.4,
+    "sd": 72.4,
+    "adp": 28,
+    "adp_sd": 7.5,
+    "ecr": 37,
+    "tier": 4
+  },
+  {
+    "id": 4428331,
+    "name": "Rashee Rice",
+    "pos": "WR",
+    "team": "KC",
+    "bye": null,
+    "proj": 251.4,
+    "sd": 57.8,
+    "adp": 29,
+    "adp_sd": 7.6,
+    "ecr": 25,
+    "tier": 3
+  },
+  {
+    "id": 4430737,
+    "name": "Kyren Williams",
+    "pos": "RB",
+    "team": "LAR",
+    "bye": null,
+    "proj": 234.1,
+    "sd": 60.9,
+    "adp": 30,
+    "adp_sd": 7.7,
+    "ecr": 30,
+    "tier": 3
+  },
+  {
+    "id": 4361579,
+    "name": "Javonte Williams",
+    "pos": "RB",
+    "team": "DAL",
+    "bye": null,
+    "proj": 262.3,
+    "sd": 68.2,
+    "adp": 31,
+    "adp_sd": 7.7,
+    "ecr": 40,
+    "tier": 4
+  },
+  {
+    "id": 4427366,
+    "name": "Breece Hall",
+    "pos": "RB",
+    "team": "NYJ",
+    "bye": null,
+    "proj": 270.3,
+    "sd": 70.3,
+    "adp": 32,
+    "adp_sd": 7.8,
+    "ecr": 38,
+    "tier": 4
+  },
+  {
+    "id": 4241478,
+    "name": "DeVonta Smith",
+    "pos": "WR",
+    "team": "PHI",
+    "bye": null,
+    "proj": 220.6,
+    "sd": 50.7,
+    "adp": 33,
+    "adp_sd": 7.8,
+    "ecr": 28,
+    "tier": 3
+  },
+  {
+    "id": 4595348,
+    "name": "Malik Nabers",
+    "pos": "WR",
+    "team": "NYG",
+    "bye": null,
+    "proj": 215.7,
+    "sd": 49.6,
+    "adp": 34,
+    "adp_sd": 7.9,
+    "ecr": 31,
+    "tier": 3
+  },
+  {
+    "id": 4696981,
+    "name": "Cam Skattebo",
+    "pos": "RB",
+    "team": "NYG",
+    "bye": null,
+    "proj": 239.7,
+    "sd": 62.3,
+    "adp": 35,
+    "adp_sd": 7.9,
+    "ecr": 50,
+    "tier": 4
+  },
+  {
+    "id": 4239993,
+    "name": "Tee Higgins",
+    "pos": "WR",
+    "team": "CIN",
+    "bye": null,
+    "proj": 203.8,
+    "sd": 46.9,
+    "adp": 36,
+    "adp_sd": 8,
+    "ecr": 32,
+    "tier": 3
+  },
+  {
+    "id": 3916387,
+    "name": "Lamar Jackson",
+    "pos": "QB",
+    "team": "BAL",
+    "bye": null,
+    "proj": 351.5,
+    "sd": 49.2,
+    "adp": 37,
+    "adp_sd": 8,
+    "ecr": 36,
+    "tier": 4
+  },
+  {
+    "id": 4685472,
+    "name": "Tetairoa McMillan",
+    "pos": "WR",
+    "team": "CAR",
+    "bye": null,
+    "proj": 223.5,
+    "sd": 51.4,
+    "adp": 38,
+    "adp_sd": 8.1,
+    "ecr": 34,
+    "tier": 3
+  },
+  {
+    "id": 4239996,
+    "name": "Travis Etienne Jr.",
+    "pos": "RB",
+    "team": "NO",
+    "bye": null,
+    "proj": 241.5,
+    "sd": 62.8,
+    "adp": 39,
+    "adp_sd": 8.1,
+    "ecr": 46,
+    "tier": 4
+  },
+  {
+    "id": 4429615,
+    "name": "Zay Flowers",
+    "pos": "WR",
+    "team": "BAL",
+    "bye": null,
+    "proj": 223.3,
+    "sd": 51.4,
+    "adp": 40,
+    "adp_sd": 8.2,
+    "ecr": 29,
+    "tier": 3
+  },
+  {
+    "id": 4567750,
+    "name": "Emeka Egbuka",
+    "pos": "WR",
+    "team": "TB",
+    "bye": null,
+    "proj": 215.6,
+    "sd": 49.6,
+    "adp": 41,
+    "adp_sd": 8.3,
+    "ecr": 35,
+    "tier": 4
+  },
+  {
+    "id": 4569618,
+    "name": "Garrett Wilson",
+    "pos": "WR",
+    "team": "NYJ",
+    "bye": null,
+    "proj": 227.9,
+    "sd": 52.4,
+    "adp": 42,
+    "adp_sd": 8.3,
+    "ecr": 39,
+    "tier": 4
+  },
+  {
+    "id": 4723086,
+    "name": "Colston Loveland",
+    "pos": "TE",
+    "team": "CHI",
+    "bye": null,
+    "proj": 186.5,
+    "sd": 46.6,
+    "adp": 43,
+    "adp_sd": 8.4,
+    "ecr": 42,
+    "tier": 4
+  },
+  {
+    "id": 4596448,
+    "name": "Bucky Irving",
+    "pos": "RB",
+    "team": "TB",
+    "bye": null,
+    "proj": 208.8,
+    "sd": 54.3,
+    "adp": 44,
+    "adp_sd": 8.4,
+    "ecr": 57,
+    "tier": 4
+  },
+  {
+    "id": 4612826,
+    "name": "Ladd McConkey",
+    "pos": "WR",
+    "team": "LAC",
+    "bye": null,
+    "proj": 204.2,
+    "sd": 47,
+    "adp": 45,
+    "adp_sd": 8.5,
+    "ecr": 41,
+    "tier": 4
+  },
+  {
+    "id": 4685702,
+    "name": "Quinshon Judkins",
+    "pos": "RB",
+    "team": "CLE",
+    "bye": null,
+    "proj": 232.2,
+    "sd": 60.4,
+    "adp": 46,
+    "adp_sd": 8.5,
+    "ecr": 55,
+    "tier": 4
+  },
+  {
+    "id": 4685278,
+    "name": "Luther Burden III",
+    "pos": "WR",
+    "team": "CHI",
+    "bye": null,
+    "proj": 191.6,
+    "sd": 44.1,
+    "adp": 47,
+    "adp_sd": 8.6,
+    "ecr": 47,
+    "tier": 4
+  },
+  {
+    "id": 4372016,
+    "name": "Jaylen Waddle",
+    "pos": "WR",
+    "team": "DEN",
+    "bye": null,
+    "proj": 197.6,
+    "sd": 45.5,
+    "adp": 48,
+    "adp_sd": 8.6,
+    "ecr": 43,
+    "tier": 4
+  },
+  {
+    "id": 4432710,
+    "name": "TreVeyon Henderson",
+    "pos": "RB",
+    "team": "NE",
+    "bye": null,
+    "proj": 204.6,
+    "sd": 53.2,
+    "adp": 49,
+    "adp_sd": 8.7,
+    "ecr": 61,
+    "tier": 5
+  },
+  {
+    "id": 4035538,
+    "name": "David Montgomery",
+    "pos": "RB",
+    "team": "HOU",
+    "bye": null,
+    "proj": 193.6,
+    "sd": 50.3,
+    "adp": 50,
+    "adp_sd": 8.8,
+    "ecr": 59,
+    "tier": 4
+  },
+  {
+    "id": 3915416,
+    "name": "DJ Moore",
+    "pos": "WR",
+    "team": "BUF",
+    "bye": null,
+    "proj": 196.7,
+    "sd": 45.3,
+    "adp": 51,
+    "adp_sd": 8.8,
+    "ecr": 60,
+    "tier": 5
+  },
+  {
+    "id": 4431452,
+    "name": "Drake Maye",
+    "pos": "QB",
+    "team": "NE",
+    "bye": null,
+    "proj": 349.3,
+    "sd": 48.9,
+    "adp": 52,
+    "adp_sd": 8.9,
+    "ecr": 44,
+    "tier": 4
+  },
+  {
+    "id": 4431459,
+    "name": "Tyler Warren",
+    "pos": "TE",
+    "team": "IND",
+    "bye": null,
+    "proj": 187.5,
+    "sd": 46.9,
+    "adp": 53,
+    "adp_sd": 8.9,
+    "ecr": 56,
+    "tier": 4
+  },
+  {
+    "id": 3915511,
+    "name": "Joe Burrow",
+    "pos": "QB",
+    "team": "CIN",
+    "bye": null,
+    "proj": 332.4,
+    "sd": 46.5,
+    "adp": 54,
+    "adp_sd": 9,
+    "ecr": 48,
+    "tier": 4
+  },
+  {
+    "id": 3121422,
+    "name": "Terry McLaurin",
+    "pos": "WR",
+    "team": "WAS",
+    "bye": null,
+    "proj": 201.5,
+    "sd": 46.3,
+    "adp": 55,
+    "adp_sd": 9,
+    "ecr": 45,
+    "tier": 4
+  },
+  {
+    "id": 4259545,
+    "name": "D'Andre Swift",
+    "pos": "RB",
+    "team": "CHI",
+    "bye": null,
+    "proj": 214,
+    "sd": 55.6,
+    "adp": 56,
+    "adp_sd": 9.1,
+    "ecr": 54,
+    "tier": 4
+  },
+  {
+    "id": 4882093,
+    "name": "Bhayshul Tuten",
+    "pos": "RB",
+    "team": "JAX",
+    "bye": null,
+    "proj": 206.7,
+    "sd": 53.7,
+    "adp": 57,
+    "adp_sd": 9.1,
+    "ecr": 64,
+    "tier": 5
+  },
+  {
+    "id": 16800,
+    "name": "Davante Adams",
+    "pos": "WR",
+    "team": "LAR",
+    "bye": null,
+    "proj": 219,
+    "sd": 50.4,
+    "adp": 58,
+    "adp_sd": 9.2,
+    "ecr": 49,
+    "tier": 4
+  },
+  {
+    "id": 4426388,
+    "name": "Jameson Williams",
+    "pos": "WR",
+    "team": "DET",
+    "bye": null,
+    "proj": 196.3,
+    "sd": 45.2,
+    "adp": 59,
+    "adp_sd": 9.2,
+    "ecr": 51,
+    "tier": 4
+  },
+  {
+    "id": 4426348,
+    "name": "Jayden Daniels",
+    "pos": "QB",
+    "team": "WAS",
+    "bye": null,
+    "proj": 350.9,
+    "sd": 49.1,
+    "adp": 60,
+    "adp_sd": 9.3,
+    "ecr": 53,
+    "tier": 4
+  },
+  {
+    "id": 4685512,
+    "name": "Jadarian Price",
+    "pos": "RB",
+    "team": "SEA",
+    "bye": null,
+    "proj": 197.4,
+    "sd": 51.3,
+    "adp": 61,
+    "adp_sd": 9.4,
+    "ecr": 65,
+    "tier": 5
+  },
+  {
+    "id": 16737,
+    "name": "Mike Evans",
+    "pos": "WR",
+    "team": "SF",
+    "bye": null,
+    "proj": 171.3,
+    "sd": 39.4,
+    "adp": 62,
+    "adp_sd": 9.4,
+    "ecr": 52,
+    "tier": 4
+  },
+  {
+    "id": 4040715,
+    "name": "Jalen Hurts",
+    "pos": "QB",
+    "team": "PHI",
+    "bye": null,
+    "proj": 349.9,
+    "sd": 49,
+    "adp": 63,
+    "adp_sd": 9.5,
+    "ecr": 62,
+    "tier": 5
+  },
+  {
+    "id": 4431299,
+    "name": "Rome Odunze",
+    "pos": "WR",
+    "team": "CHI",
+    "bye": null,
+    "proj": 200.9,
+    "sd": 46.2,
+    "adp": 64,
+    "adp_sd": 9.5,
+    "ecr": 63,
+    "tier": 5
+  },
+  {
+    "id": 4248528,
+    "name": "Christian Watson",
+    "pos": "WR",
+    "team": "GB",
+    "bye": null,
+    "proj": 174.9,
+    "sd": 40.2,
+    "adp": 65,
+    "adp_sd": 9.6,
+    "ecr": 58,
+    "tier": 4
+  },
+  {
+    "id": 5083076,
+    "name": "Harold Fannin Jr.",
+    "pos": "TE",
+    "team": "CLE",
+    "bye": null,
+    "proj": 166.9,
+    "sd": 41.7,
+    "adp": 66,
+    "adp_sd": 9.6,
+    "ecr": 78,
+    "tier": 5
+  },
+  {
+    "id": 4569987,
+    "name": "Jaylen Warren",
+    "pos": "RB",
+    "team": "PIT",
+    "bye": null,
+    "proj": 185.6,
+    "sd": 48.3,
+    "adp": 67,
+    "adp_sd": 9.7,
+    "ecr": 70,
+    "tier": 5
+  },
+  {
+    "id": 4572680,
+    "name": "Tucker Kraft",
+    "pos": "TE",
+    "team": "GB",
+    "bye": null,
+    "proj": 155,
+    "sd": 38.8,
+    "adp": 68,
+    "adp_sd": 9.7,
+    "ecr": 66,
+    "tier": 5
+  },
+  {
+    "id": 4871023,
+    "name": "Carnell Tate",
+    "pos": "WR",
+    "team": "TEN",
+    "bye": null,
+    "proj": 195.5,
+    "sd": 45,
+    "adp": 69,
+    "adp_sd": 9.8,
+    "ecr": 68,
+    "tier": 5
+  },
+  {
+    "id": 4432773,
+    "name": "Brian Thomas Jr.",
+    "pos": "WR",
+    "team": "JAX",
+    "bye": null,
+    "proj": 165.2,
+    "sd": 38,
+    "adp": 70,
+    "adp_sd": 9.8,
+    "ecr": 72,
+    "tier": 5
+  },
+  {
+    "id": 4360248,
+    "name": "Kyle Pitts Sr.",
+    "pos": "TE",
+    "team": "ATL",
+    "bye": null,
+    "proj": 165.4,
+    "sd": 41.3,
+    "adp": 71,
+    "adp_sd": 9.9,
+    "ecr": 82,
+    "tier": 5
+  },
+  {
+    "id": 4569173,
+    "name": "Rhamondre Stevenson",
+    "pos": "RB",
+    "team": "NE",
+    "bye": null,
+    "proj": 187.4,
+    "sd": 48.7,
+    "adp": 72,
+    "adp_sd": 10,
+    "ecr": 75,
+    "tier": 5
+  },
+  {
+    "id": 4568490,
+    "name": "RJ Harvey",
+    "pos": "RB",
+    "team": "DEN",
+    "bye": null,
+    "proj": 156.4,
+    "sd": 40.7,
+    "adp": 73,
+    "adp_sd": 10,
+    "ecr": 94,
+    "tier": 6
+  },
+  {
+    "id": 4430027,
+    "name": "Sam LaPorta",
+    "pos": "TE",
+    "team": "DET",
+    "bye": null,
+    "proj": 169.7,
+    "sd": 42.4,
+    "adp": 74,
+    "adp_sd": 10.1,
+    "ecr": 81,
+    "tier": 5
+  },
+  {
+    "id": 4431611,
+    "name": "Caleb Williams",
+    "pos": "QB",
+    "team": "CHI",
+    "bye": null,
+    "proj": 307.5,
+    "sd": 43,
+    "adp": 75,
+    "adp_sd": 10.1,
+    "ecr": 67,
+    "tier": 5
+  },
+  {
+    "id": 4432708,
+    "name": "Marvin Harrison Jr.",
+    "pos": "WR",
+    "team": "ARI",
+    "bye": null,
+    "proj": 180.1,
+    "sd": 41.4,
+    "adp": 76,
+    "adp_sd": 10.2,
+    "ecr": 71,
+    "tier": 5
+  },
+  {
+    "id": 4241416,
+    "name": "Chuba Hubbard",
+    "pos": "RB",
+    "team": "CAR",
+    "bye": null,
+    "proj": 179.6,
+    "sd": 46.7,
+    "adp": 77,
+    "adp_sd": 10.2,
+    "ecr": 83,
+    "tier": 5
+  },
+  {
+    "id": 4038815,
+    "name": "Rico Dowdle",
+    "pos": "RB",
+    "team": "PIT",
+    "bye": null,
+    "proj": 188.1,
+    "sd": 48.9,
+    "adp": 78,
+    "adp_sd": 10.3,
+    "ecr": 84,
+    "tier": 6
+  },
+  {
+    "id": 4038941,
+    "name": "Justin Herbert",
+    "pos": "QB",
+    "team": "LAC",
+    "bye": null,
+    "proj": 310.5,
+    "sd": 43.5,
+    "adp": 79,
+    "adp_sd": 10.3,
+    "ecr": 69,
+    "tier": 5
+  },
+  {
+    "id": 3916148,
+    "name": "Tony Pollard",
+    "pos": "RB",
+    "team": "TEN",
+    "bye": null,
+    "proj": 193.4,
+    "sd": 50.3,
+    "adp": 80,
+    "adp_sd": 10.4,
+    "ecr": 73,
+    "tier": 5
+  },
+  {
+    "id": 2577417,
+    "name": "Dak Prescott",
+    "pos": "QB",
+    "team": "DAL",
+    "bye": null,
+    "proj": 313.9,
+    "sd": 43.9,
+    "adp": 81,
+    "adp_sd": 10.5,
+    "ecr": 79,
+    "tier": 5
+  },
+  {
+    "id": 4432620,
+    "name": "Parker Washington",
+    "pos": "WR",
+    "team": "JAX",
+    "bye": null,
+    "proj": 174.7,
+    "sd": 40.2,
+    "adp": 82,
+    "adp_sd": 10.5,
+    "ecr": 77,
+    "tier": 5
+  },
+  {
+    "id": 4360310,
+    "name": "Trevor Lawrence",
+    "pos": "QB",
+    "team": "JAX",
+    "bye": null,
+    "proj": 314.9,
+    "sd": 44.1,
+    "adp": 83,
+    "adp_sd": 10.6,
+    "ecr": 74,
+    "tier": 5
+  },
+  {
+    "id": 4047650,
+    "name": "DK Metcalf",
+    "pos": "WR",
+    "team": "PIT",
+    "bye": null,
+    "proj": 182.2,
+    "sd": 41.9,
+    "adp": 84,
+    "adp_sd": 10.6,
+    "ecr": 76,
+    "tier": 5
+  },
+  {
+    "id": 4608686,
+    "name": "Kyle Monangai",
+    "pos": "RB",
+    "team": "CHI",
+    "bye": null,
+    "proj": 178.5,
+    "sd": 46.4,
+    "adp": 85,
+    "adp_sd": 10.7,
+    "ecr": 96,
+    "tier": 6
+  },
+  {
+    "id": 4880281,
+    "name": "Jordyn Tyson",
+    "pos": "WR",
+    "team": "NO",
+    "bye": null,
+    "proj": 174.9,
+    "sd": 40.2,
+    "adp": 86,
+    "adp_sd": 10.7,
+    "ecr": 87,
+    "tier": 6
+  },
+  {
+    "id": 4360078,
+    "name": "Alec Pierce",
+    "pos": "WR",
+    "team": "IND",
+    "bye": null,
+    "proj": 189.8,
+    "sd": 43.6,
+    "adp": 87,
+    "adp_sd": 10.8,
+    "ecr": 80,
+    "tier": 5
+  },
+  {
+    "id": 4360761,
+    "name": "Michael Wilson",
+    "pos": "WR",
+    "team": "ARI",
+    "bye": null,
+    "proj": 162.5,
+    "sd": 37.4,
+    "adp": 88,
+    "adp_sd": 10.8,
+    "ecr": 90,
+    "tier": 6
+  },
+  {
+    "id": 4689114,
+    "name": "Jaxson Dart",
+    "pos": "QB",
+    "team": "NYG",
+    "bye": null,
+    "proj": 330.1,
+    "sd": 46.2,
+    "adp": 89,
+    "adp_sd": 10.9,
+    "ecr": 89,
+    "tier": 6
+  },
+  {
+    "id": 3128429,
+    "name": "Courtland Sutton",
+    "pos": "WR",
+    "team": "DEN",
+    "bye": null,
+    "proj": 190.1,
+    "sd": 43.7,
+    "adp": 90,
+    "adp_sd": 10.9,
+    "ecr": 86,
+    "tier": 6
+  },
+  {
+    "id": 3116165,
+    "name": "Chris Godwin Jr.",
+    "pos": "WR",
+    "team": "TB",
+    "bye": null,
+    "proj": 145.5,
+    "sd": 33.5,
+    "adp": 91,
+    "adp_sd": 11,
+    "ecr": 85,
+    "tier": 6
+  },
+  {
+    "id": 4241985,
+    "name": "J.K. Dobbins",
+    "pos": "RB",
+    "team": "DEN",
+    "bye": null,
+    "proj": 177.8,
+    "sd": 46.2,
+    "adp": 92,
+    "adp_sd": 11.1,
+    "ecr": 88,
+    "tier": 6
+  },
+  {
+    "id": 4429096,
+    "name": "Blake Corum",
+    "pos": "RB",
+    "team": "LAR",
+    "bye": null,
+    "proj": 164,
+    "sd": 42.6,
+    "adp": 93,
+    "adp_sd": 11.1,
+    "ecr": 95,
+    "tier": 6
+  },
+  {
+    "id": 4870795,
+    "name": "Makai Lemon",
+    "pos": "WR",
+    "team": "PHI",
+    "bye": null,
+    "proj": 161.5,
+    "sd": 37.1,
+    "adp": 94,
+    "adp_sd": 11.2,
+    "ecr": 101,
+    "tier": 6
+  },
+  {
+    "id": 4678008,
+    "name": "Jonathon Brooks",
+    "pos": "RB",
+    "team": "CAR",
+    "bye": null,
+    "proj": 161.6,
+    "sd": 42,
+    "adp": 95,
+    "adp_sd": 11.2,
+    "ecr": 110,
+    "tier": 6
+  },
+  {
+    "id": 3040151,
+    "name": "George Kittle",
+    "pos": "TE",
+    "team": "SF",
+    "bye": null,
+    "proj": 160,
+    "sd": 40,
+    "adp": 96,
+    "adp_sd": 11.3,
+    "ecr": 105,
+    "tier": 6
+  },
+  {
+    "id": 15847,
+    "name": "Travis Kelce",
+    "pos": "TE",
+    "team": "KC",
+    "bye": null,
+    "proj": 159,
+    "sd": 39.7,
+    "adp": 97,
+    "adp_sd": 11.3,
+    "ecr": 102,
+    "tier": 6
+  },
+  {
+    "id": 3139477,
+    "name": "Patrick Mahomes",
+    "pos": "QB",
+    "team": "KC",
+    "bye": null,
+    "proj": 316.1,
+    "sd": 44.3,
+    "adp": 98,
+    "adp_sd": 11.4,
+    "ecr": 99,
+    "tier": 6
+  },
+  {
+    "id": 4361741,
+    "name": "Brock Purdy",
+    "pos": "QB",
+    "team": "SF",
+    "bye": null,
+    "proj": 319.6,
+    "sd": 44.7,
+    "adp": 99,
+    "adp_sd": 11.4,
+    "ecr": 92,
+    "tier": 6
+  },
+  {
+    "id": 4385690,
+    "name": "Dalton Kincaid",
+    "pos": "TE",
+    "team": "BUF",
+    "bye": null,
+    "proj": 141.1,
+    "sd": 35.3,
+    "adp": 100,
+    "adp_sd": 11.5,
+    "ecr": 114,
+    "tier": 6
+  },
+  {
+    "id": 4361050,
+    "name": "Isaiah Likely",
+    "pos": "TE",
+    "team": "NYG",
+    "bye": null,
+    "proj": 140.9,
+    "sd": 35.2,
+    "adp": 101,
+    "adp_sd": 11.6,
+    "ecr": 125,
+    "tier": 7
+  },
+  {
+    "id": 4426338,
+    "name": "Bo Nix",
+    "pos": "QB",
+    "team": "DEN",
+    "bye": null,
+    "proj": 324.4,
+    "sd": 45.4,
+    "adp": 102,
+    "adp_sd": 11.6,
+    "ecr": 98,
+    "tier": 6
+  },
+  {
+    "id": 12483,
+    "name": "Matthew Stafford",
+    "pos": "QB",
+    "team": "LAR",
+    "bye": null,
+    "proj": 317.3,
+    "sd": 44.4,
+    "adp": 103,
+    "adp_sd": 11.7,
+    "ecr": 104,
+    "tier": 6
+  },
+  {
+    "id": 4035687,
+    "name": "Michael Pittman Jr.",
+    "pos": "WR",
+    "team": "PIT",
+    "bye": null,
+    "proj": 178.9,
+    "sd": 41.1,
+    "adp": 104,
+    "adp_sd": 11.7,
+    "ecr": 91,
+    "tier": 6
+  },
+  {
+    "id": 4371733,
+    "name": "Kenny Gainwell",
+    "pos": "RB",
+    "team": "TB",
+    "bye": null,
+    "proj": 167.2,
+    "sd": 43.5,
+    "adp": 105,
+    "adp_sd": 11.8,
+    "ecr": 103,
+    "tier": 6
+  },
+  {
+    "id": 4429025,
+    "name": "Quentin Johnston",
+    "pos": "WR",
+    "team": "LAC",
+    "bye": null,
+    "proj": 154.3,
+    "sd": 35.5,
+    "adp": 106,
+    "adp_sd": 11.8,
+    "ecr": 93,
+    "tier": 6
+  },
+  {
+    "id": 4429205,
+    "name": "Jordan Addison",
+    "pos": "WR",
+    "team": "MIN",
+    "bye": null,
+    "proj": 158.5,
+    "sd": 36.4,
+    "adp": 107,
+    "adp_sd": 11.9,
+    "ecr": 106,
+    "tier": 6
+  },
+  {
+    "id": 4575131,
+    "name": "Jacory Croskey-Merritt",
+    "pos": "RB",
+    "team": "WAS",
+    "bye": null,
+    "proj": 158.2,
+    "sd": 41.1,
+    "adp": 108,
+    "adp_sd": 11.9,
+    "ecr": 113,
+    "tier": 6
+  },
+  {
+    "id": 4242355,
+    "name": "Jake Ferguson",
+    "pos": "TE",
+    "team": "DAL",
+    "bye": null,
+    "proj": 149.1,
+    "sd": 37.3,
+    "adp": 109,
+    "adp_sd": 12,
+    "ecr": 117,
+    "tier": 6
+  },
+  {
+    "id": 4697815,
+    "name": "Rachaad White",
+    "pos": "RB",
+    "team": "WAS",
+    "bye": null,
+    "proj": 165.7,
+    "sd": 43.1,
+    "adp": 110,
+    "adp_sd": 12.1,
+    "ecr": 107,
+    "tier": 6
+  },
+  {
+    "id": 3916433,
+    "name": "Jakobi Meyers",
+    "pos": "WR",
+    "team": "JAX",
+    "bye": null,
+    "proj": 168.1,
+    "sd": 38.7,
+    "adp": 111,
+    "adp_sd": 12.1,
+    "ecr": 108,
+    "tier": 6
+  },
+  {
+    "id": 4360569,
+    "name": "Jordan Mason",
+    "pos": "RB",
+    "team": "MIN",
+    "bye": null,
+    "proj": 134.6,
+    "sd": 35,
+    "adp": 112,
+    "adp_sd": 12.2,
+    "ecr": 116,
+    "tier": 6
+  },
+  {
+    "id": 3042519,
+    "name": "Aaron Jones Sr.",
+    "pos": "RB",
+    "team": "MIN",
+    "bye": null,
+    "proj": 182.4,
+    "sd": 47.4,
+    "adp": 113,
+    "adp_sd": 12.2,
+    "ecr": 112,
+    "tier": 6
+  },
+  {
+    "id": 3116365,
+    "name": "Mark Andrews",
+    "pos": "TE",
+    "team": "BAL",
+    "bye": null,
+    "proj": 155.4,
+    "sd": 38.9,
+    "adp": 114,
+    "adp_sd": 12.3,
+    "ecr": 121,
+    "tier": 7
+  },
+  {
+    "id": 3046779,
+    "name": "Jared Goff",
+    "pos": "QB",
+    "team": "DET",
+    "bye": null,
+    "proj": 293.2,
+    "sd": 41,
+    "adp": 115,
+    "adp_sd": 12.3,
+    "ecr": 111,
+    "tier": 6
+  },
+  {
+    "id": 4569587,
+    "name": "Wan'Dale Robinson",
+    "pos": "WR",
+    "team": "TEN",
+    "bye": null,
+    "proj": 158.5,
+    "sd": 36.5,
+    "adp": 116,
+    "adp_sd": 12.4,
+    "ecr": 100,
+    "tier": 6
+  },
+  {
+    "id": 4362249,
+    "name": "Jayden Reed",
+    "pos": "WR",
+    "team": "GB",
+    "bye": null,
+    "proj": 158.6,
+    "sd": 36.5,
+    "adp": 117,
+    "adp_sd": 12.4,
+    "ecr": 109,
+    "tier": 6
+  },
+  {
+    "id": 4688813,
+    "name": "Josh Downs",
+    "pos": "WR",
+    "team": "IND",
+    "bye": null,
+    "proj": 157.7,
+    "sd": 36.3,
+    "adp": 118,
+    "adp_sd": 12.5,
+    "ecr": 97,
+    "tier": 6
+  },
+  {
+    "id": 3121023,
+    "name": "Dallas Goedert",
+    "pos": "TE",
+    "team": "PHI",
+    "bye": null,
+    "proj": 159.5,
+    "sd": 39.9,
+    "adp": 119,
+    "adp_sd": 12.5,
+    "ecr": 118,
+    "tier": 7
+  },
+  {
+    "id": 3953687,
+    "name": "Brandon Aubrey",
+    "pos": "K",
+    "team": "DAL",
+    "bye": null,
+    "proj": 171.6,
+    "sd": 20.6,
+    "adp": 122,
+    "adp_sd": 12.7,
+    "ecr": 216,
+    "tier": 9
+  },
+  {
+    "id": 4683062,
+    "name": "Xavier Worthy",
+    "pos": "WR",
+    "team": "KC",
+    "bye": null,
+    "proj": 162.5,
+    "sd": 37.4,
+    "adp": 123,
+    "adp_sd": 12.8,
+    "ecr": 120,
+    "tier": 7
+  },
+  {
+    "id": 4426385,
+    "name": "Zach Charbonnet",
+    "pos": "RB",
+    "team": "SEA",
+    "bye": null,
+    "proj": 134.8,
+    "sd": 35,
+    "adp": 124,
+    "adp_sd": 12.8,
+    "ecr": 137,
+    "tier": 7
+  },
+  {
+    "id": 3917315,
+    "name": "Kyler Murray",
+    "pos": "QB",
+    "team": "MIN",
+    "bye": null,
+    "proj": 277.3,
+    "sd": 38.8,
+    "adp": 126,
+    "adp_sd": 12.9,
+    "ecr": 115,
+    "tier": 6
+  },
+  {
+    "id": 4036378,
+    "name": "Jordan Love",
+    "pos": "QB",
+    "team": "GB",
+    "bye": null,
+    "proj": 284.8,
+    "sd": 39.9,
+    "adp": 127,
+    "adp_sd": 13,
+    "ecr": 122,
+    "tier": 7
+  },
+  {
+    "id": 3052587,
+    "name": "Baker Mayfield",
+    "pos": "QB",
+    "team": "TB",
+    "bye": null,
+    "proj": 290.9,
+    "sd": 40.7,
+    "adp": 130,
+    "adp_sd": 13.2,
+    "ecr": 119,
+    "tier": 7
+  },
+  {
+    "id": 4242512,
+    "name": "Malik Willis",
+    "pos": "QB",
+    "team": "MIA",
+    "bye": null,
+    "proj": 266.5,
+    "sd": 37.3,
+    "adp": 131,
+    "adp_sd": 13.2,
+    "ecr": 134,
+    "tier": 7
+  },
+  {
+    "id": 4361432,
+    "name": "Romeo Doubs",
+    "pos": "WR",
+    "team": "NE",
+    "bye": null,
+    "proj": 149.2,
+    "sd": 34.3,
+    "adp": 132,
+    "adp_sd": 13.3,
+    "ecr": 127,
+    "tier": 7
+  },
+  {
+    "id": 4241474,
+    "name": "Brian Robinson Jr.",
+    "pos": "RB",
+    "team": "ATL",
+    "bye": null,
+    "proj": 98.7,
+    "sd": 25.7,
+    "adp": 133,
+    "adp_sd": 13.3,
+    "ecr": 151,
+    "tier": 7
+  },
+  {
+    "id": 3046439,
+    "name": "Hunter Henry",
+    "pos": "TE",
+    "team": "NE",
+    "bye": null,
+    "proj": 136.2,
+    "sd": 34,
+    "adp": 134,
+    "adp_sd": 13.4,
+    "ecr": 149,
+    "tier": 7
+  },
+  {
+    "id": 4373626,
+    "name": "Tyler Allgeier",
+    "pos": "RB",
+    "team": "ARI",
+    "bye": null,
+    "proj": 90.8,
+    "sd": 23.6,
+    "adp": 135,
+    "adp_sd": 13.4,
+    "ecr": 132,
+    "tier": 7
+  },
+  {
+    "id": 4360516,
+    "name": "Tyrone Tracy Jr.",
+    "pos": "RB",
+    "team": "NYG",
+    "bye": null,
+    "proj": 88,
+    "sd": 22.9,
+    "adp": 136,
+    "adp_sd": 13.5,
+    "ecr": 126,
+    "tier": 7
+  },
+  {
+    "id": 4870653,
+    "name": "KC Concepcion",
+    "pos": "WR",
+    "team": "CLE",
+    "bye": null,
+    "proj": 150.5,
+    "sd": 34.6,
+    "adp": 137,
+    "adp_sd": 13.5,
+    "ecr": 133,
+    "tier": 7
+  },
+  {
+    "id": 4430539,
+    "name": "Brenton Strange",
+    "pos": "TE",
+    "team": "JAX",
+    "bye": null,
+    "proj": 127.9,
+    "sd": 32,
+    "adp": 138,
+    "adp_sd": 13.6,
+    "ecr": 145,
+    "tier": 7
+  },
+  {
+    "id": 4360689,
+    "name": "Tyler Shough",
+    "pos": "QB",
+    "team": "NO",
+    "bye": null,
+    "proj": 292.9,
+    "sd": 41,
+    "adp": 139,
+    "adp_sd": 13.6,
+    "ecr": 124,
+    "tier": 7
+  },
+  {
+    "id": 4701936,
+    "name": "Matthew Golden",
+    "pos": "WR",
+    "team": "GB",
+    "bye": null,
+    "proj": 172.4,
+    "sd": 39.7,
+    "adp": 141,
+    "adp_sd": 13.8,
+    "ecr": 135,
+    "tier": 7
+  },
+  {
+    "id": 4429059,
+    "name": "Woody Marks",
+    "pos": "RB",
+    "team": "HOU",
+    "bye": null,
+    "proj": 127.4,
+    "sd": 33.1,
+    "adp": 142,
+    "adp_sd": 13.8,
+    "ecr": 131,
+    "tier": 7
+  },
+  {
+    "id": 4032473,
+    "name": "Rashid Shaheed",
+    "pos": "WR",
+    "team": "SEA",
+    "bye": null,
+    "proj": 136.9,
+    "sd": 31.5,
+    "adp": 143,
+    "adp_sd": 13.9,
+    "ecr": 138,
+    "tier": 7
+  },
+  {
+    "id": 3054850,
+    "name": "Alvin Kamara",
+    "pos": "RB",
+    "team": "NO",
+    "bye": null,
+    "proj": 122,
+    "sd": 31.7,
+    "adp": 144,
+    "adp_sd": 13.9,
+    "ecr": 139,
+    "tier": 7
+  },
+  {
+    "id": 2976212,
+    "name": "Stefon Diggs",
+    "pos": "WR",
+    "team": "WAS",
+    "bye": null,
+    "proj": 0,
+    "sd": 0,
+    "adp": 146,
+    "adp_sd": 14,
+    "ecr": 171,
+    "tier": 8
+  },
+  {
+    "id": 3929645,
+    "name": "Juwan Johnson",
+    "pos": "TE",
+    "team": "NO",
+    "bye": null,
+    "proj": 127.3,
+    "sd": 31.8,
+    "adp": 148,
+    "adp_sd": 14.1,
+    "ecr": 141,
+    "tier": 7
+  },
+  {
+    "id": 4362081,
+    "name": "Cameron Dicker",
+    "pos": "K",
+    "team": "LAC",
+    "bye": null,
+    "proj": 161.7,
+    "sd": 19.4,
+    "adp": 150,
+    "adp_sd": 14.3,
+    "ecr": 225,
+    "tier": 9
+  },
+  {
+    "id": 5083315,
+    "name": "Kenyon Sadiq",
+    "pos": "TE",
+    "team": "NYJ",
+    "bye": null,
+    "proj": 146,
+    "sd": 36.5,
+    "adp": 151,
+    "adp_sd": 14.3,
+    "ecr": 177,
+    "tier": 8
+  },
+  {
+    "id": 4373678,
+    "name": "Khalil Shakir",
+    "pos": "WR",
+    "team": "BUF",
+    "bye": null,
+    "proj": 157.3,
+    "sd": 36.2,
+    "adp": 152,
+    "adp_sd": 14.4,
+    "ecr": 129,
+    "tier": 7
+  },
+  {
+    "id": 2971573,
+    "name": "Ka'imi Fairbairn",
+    "pos": "K",
+    "team": "HOU",
+    "bye": null,
+    "proj": 157.7,
+    "sd": 18.9,
+    "adp": 153,
+    "adp_sd": 14.4,
+    "ecr": 218,
+    "tier": 9
+  },
+  {
+    "id": 4877706,
+    "name": "Jayden Higgins",
+    "pos": "WR",
+    "team": "HOU",
+    "bye": null,
+    "proj": 130.3,
+    "sd": 30,
+    "adp": 154,
+    "adp_sd": 14.5,
+    "ecr": 123,
+    "tier": 7
+  },
+  {
+    "id": 4428557,
+    "name": "Tyjae Spears",
+    "pos": "RB",
+    "team": "TEN",
+    "bye": null,
+    "proj": 137.9,
+    "sd": 35.8,
+    "adp": 155,
+    "adp_sd": 14.5,
+    "ecr": 136,
+    "tier": 7
+  },
+  {
+    "id": 4362619,
+    "name": "Chris Rodriguez Jr.",
+    "pos": "RB",
+    "team": "JAX",
+    "bye": null,
+    "proj": 75.5,
+    "sd": 19.6,
+    "adp": 156,
+    "adp_sd": 14.6,
+    "ecr": 128,
+    "tier": 7
+  },
+  {
+    "id": 4361529,
+    "name": "Isiah Pacheco",
+    "pos": "RB",
+    "team": "DET",
+    "bye": null,
+    "proj": 126.3,
+    "sd": 32.8,
+    "adp": 157,
+    "adp_sd": 14.6,
+    "ecr": 144,
+    "tier": 7
+  },
+  {
+    "id": 4432577,
+    "name": "C.J. Stroud",
+    "pos": "QB",
+    "team": "HOU",
+    "bye": null,
+    "proj": 272.1,
+    "sd": 38.1,
+    "adp": 158,
+    "adp_sd": 14.7,
+    "ecr": 142,
+    "tier": 7
+  },
+  {
+    "id": 3126486,
+    "name": "Deebo Samuel Sr.",
+    "pos": "WR",
+    "team": "SF",
+    "bye": null,
+    "proj": 162.2,
+    "sd": 37.3,
+    "adp": 159,
+    "adp_sd": 14.7,
+    "ecr": 162,
+    "tier": 8
+  },
+  {
+    "id": 2473037,
+    "name": "Jason Myers",
+    "pos": "K",
+    "team": "SEA",
+    "bye": null,
+    "proj": 158.5,
+    "sd": 19,
+    "adp": 160,
+    "adp_sd": 14.8,
+    "ecr": 229,
+    "tier": 9
+  },
+  {
+    "id": 4695883,
+    "name": "Jalen Coker",
+    "pos": "WR",
+    "team": "CAR",
+    "bye": null,
+    "proj": 136.9,
+    "sd": 31.5,
+    "adp": 161,
+    "adp_sd": 14.9,
+    "ecr": 130,
+    "tier": 7
+  },
+  {
+    "id": 3886598,
+    "name": "Jauan Jennings",
+    "pos": "WR",
+    "team": "MIN",
+    "bye": null,
+    "proj": 105.2,
+    "sd": 24.2,
+    "adp": 162,
+    "adp_sd": 14.9,
+    "ecr": 153,
+    "tier": 7
+  },
+  {
+    "id": 4688380,
+    "name": "Cam Ward",
+    "pos": "QB",
+    "team": "TEN",
+    "bye": null,
+    "proj": 244.5,
+    "sd": 34.2,
+    "adp": 166,
+    "adp_sd": 15.1,
+    "ecr": 150,
+    "tier": 7
+  },
+  {
+    "id": 4685415,
+    "name": "Travis Hunter",
+    "pos": "WR",
+    "team": "JAX",
+    "bye": null,
+    "proj": 104.7,
+    "sd": 24.1,
+    "adp": 168,
+    "adp_sd": 15.2,
+    "ecr": 169,
+    "tier": 8
+  },
+  {
+    "id": 4686361,
+    "name": "Cam Little",
+    "pos": "K",
+    "team": "JAX",
+    "bye": null,
+    "proj": 146.7,
+    "sd": 17.6,
+    "adp": 169,
+    "adp_sd": 15.3,
+    "ecr": 228,
+    "tier": 9
+  },
+  {
+    "id": 4832800,
+    "name": "Denzel Boston",
+    "pos": "WR",
+    "team": "CLE",
+    "bye": null,
+    "proj": 121.3,
+    "sd": 27.9,
+    "adp": 171,
+    "adp_sd": 15.4,
+    "ecr": 164,
+    "tier": 8
+  },
+  {
+    "id": 5081397,
+    "name": "Dylan Sampson",
+    "pos": "RB",
+    "team": "CLE",
+    "bye": null,
+    "proj": 79.7,
+    "sd": 20.7,
+    "adp": 172,
+    "adp_sd": 15.5,
+    "ecr": 140,
+    "tier": 7
+  },
+  {
+    "id": 4723820,
+    "name": "Omar Cooper Jr.",
+    "pos": "WR",
+    "team": "NYJ",
+    "bye": null,
+    "proj": 97,
+    "sd": 22.3,
+    "adp": 173,
+    "adp_sd": 15.5,
+    "ecr": 165,
+    "tier": 8
+  },
+  {
+    "id": 4036133,
+    "name": "T.J. Hockenson",
+    "pos": "TE",
+    "team": "MIN",
+    "bye": null,
+    "proj": 139.2,
+    "sd": 34.8,
+    "adp": 174,
+    "adp_sd": 15.6,
+    "ecr": 167,
+    "tier": 8
+  },
+  {
+    "id": 4596334,
+    "name": "Keaton Mitchell",
+    "pos": "RB",
+    "team": "LAC",
+    "bye": null,
+    "proj": 63.5,
+    "sd": 16.5,
+    "adp": 176,
+    "adp_sd": 15.7,
+    "ecr": 147,
+    "tier": 7
+  },
+  {
+    "id": 3045147,
+    "name": "James Conner",
+    "pos": "RB",
+    "team": "ARI",
+    "bye": null,
+    "proj": 0,
+    "sd": 0,
+    "adp": 177,
+    "adp_sd": 15.7,
+    "ecr": 184,
+    "tier": 8
+  },
+  {
+    "id": 3917792,
+    "name": "Daniel Jones",
+    "pos": "QB",
+    "team": "IND",
+    "bye": null,
+    "proj": 294.4,
+    "sd": 41.2,
+    "adp": 178,
+    "adp_sd": 15.8,
+    "ecr": 152,
+    "tier": 7
+  },
+  {
+    "id": 4430834,
+    "name": "Jalen McMillan",
+    "pos": "WR",
+    "team": "TB",
+    "bye": null,
+    "proj": 123.9,
+    "sd": 28.5,
+    "adp": 180,
+    "adp_sd": 15.9,
+    "ecr": 159,
+    "tier": 8
+  },
+  {
+    "id": 4429013,
+    "name": "Tank Bigsby",
+    "pos": "RB",
+    "team": "PHI",
+    "bye": null,
+    "proj": 67.7,
+    "sd": 17.6,
+    "adp": 181,
+    "adp_sd": 16,
+    "ecr": 148,
+    "tier": 7
+  },
+  {
+    "id": 4686658,
+    "name": "Mike Washington Jr.",
+    "pos": "RB",
+    "team": "LV",
+    "bye": null,
+    "proj": 67.6,
+    "sd": 17.6,
+    "adp": 182,
+    "adp_sd": 16,
+    "ecr": 211,
+    "tier": 9
+  },
+  {
+    "id": 4570037,
+    "name": "Terrance Ferguson",
+    "pos": "TE",
+    "team": "LAR",
+    "bye": null,
+    "proj": 124.7,
+    "sd": 31.2,
+    "adp": 183,
+    "adp_sd": 16.1,
+    "ecr": 182,
+    "tier": 8
+  },
+  {
+    "id": 4382466,
+    "name": "Jalen Nailor",
+    "pos": "WR",
+    "team": "LV",
+    "bye": null,
+    "proj": 115.1,
+    "sd": 26.5,
+    "adp": 185,
+    "adp_sd": 16.2,
+    "ecr": 178,
+    "tier": 8
+  },
+  {
+    "id": 4574716,
+    "name": "Harrison Mevis",
+    "pos": "K",
+    "team": "LAR",
+    "bye": null,
+    "proj": 159.5,
+    "sd": 19.1,
+    "adp": 188,
+    "adp_sd": 16.3,
+    "ecr": 251,
+    "tier": 9
+  },
+  {
+    "id": 4710714,
+    "name": "De'Zhaun Stribling",
+    "pos": "WR",
+    "team": "SF",
+    "bye": null,
+    "proj": 102.8,
+    "sd": 23.6,
+    "adp": 193,
+    "adp_sd": 16.6,
+    "ecr": 163,
+    "tier": 8
+  },
+  {
+    "id": 4689936,
+    "name": "Jake Bates",
+    "pos": "K",
+    "team": "DET",
+    "bye": null,
+    "proj": 145.9,
+    "sd": 17.5,
+    "adp": 194,
+    "adp_sd": 16.7,
+    "ecr": 239,
+    "tier": 9
+  },
+  {
+    "id": 4697745,
+    "name": "Tyler Loop",
+    "pos": "K",
+    "team": "BAL",
+    "bye": null,
+    "proj": 145.9,
+    "sd": 17.5,
+    "adp": 199,
+    "adp_sd": 16.9,
+    "ecr": 237,
+    "tier": 9
+  },
+  {
+    "id": 4034949,
+    "name": "Eddy Pineiro",
+    "pos": "K",
+    "team": "SF",
+    "bye": null,
+    "proj": 155.3,
+    "sd": 18.6,
+    "adp": 200,
+    "adp_sd": 17,
+    "ecr": 235,
+    "tier": 9
+  },
+  {
+    "id": 4241463,
+    "name": "Jerry Jeudy",
+    "pos": "WR",
+    "team": "CLE",
+    "bye": null,
+    "proj": 127.6,
+    "sd": 29.4,
+    "adp": 202,
+    "adp_sd": 17.1,
+    "ecr": 158,
+    "tier": 7
+  },
+  {
+    "id": 3055899,
+    "name": "Harrison Butker",
+    "pos": "K",
+    "team": "KC",
+    "bye": null,
+    "proj": 148.4,
+    "sd": 17.8,
+    "adp": 203,
+    "adp_sd": 17.2,
+    "ecr": 258,
+    "tier": 9
+  },
+  {
+    "id": 4685247,
+    "name": "Braelon Allen",
+    "pos": "RB",
+    "team": "NYJ",
+    "bye": null,
+    "proj": 76.7,
+    "sd": 20,
+    "adp": 207,
+    "adp_sd": 17.4,
+    "ecr": 173,
+    "tier": 8
+  },
+  {
+    "id": 5081432,
+    "name": "Antonio Williams",
+    "pos": "WR",
+    "team": "WAS",
+    "bye": null,
+    "proj": 107.3,
+    "sd": 24.7,
+    "adp": 215,
+    "adp_sd": 17.8,
+    "ecr": 217,
+    "tier": 9
+  },
+  {
+    "id": 4567104,
+    "name": "Will Reichard",
+    "pos": "K",
+    "team": "MIN",
+    "bye": null,
+    "proj": 142.2,
+    "sd": 17.1,
+    "adp": 221,
+    "adp_sd": 18.2,
+    "ecr": 285,
+    "tier": 10
+  },
+  {
+    "id": 3925357,
+    "name": "Calvin Ridley",
+    "pos": "WR",
+    "team": "TEN",
+    "bye": null,
+    "proj": 134.9,
+    "sd": 31,
+    "adp": 222,
+    "adp_sd": 18.2,
+    "ecr": 181,
+    "tier": 8
+  },
+  {
+    "id": 17427,
+    "name": "Cairo Santos",
+    "pos": "K",
+    "team": "CHI",
+    "bye": null,
+    "proj": 144.5,
+    "sd": 17.3,
+    "adp": 225,
+    "adp_sd": 18.4,
+    "ecr": 242,
+    "tier": 9
+  },
+  {
+    "id": 4597500,
+    "name": "Adonai Mitchell",
+    "pos": "WR",
+    "team": "NYJ",
+    "bye": null,
+    "proj": 117.2,
+    "sd": 27,
+    "adp": 226,
+    "adp_sd": 18.4,
+    "ecr": 156,
+    "tier": 7
+  },
+  {
+    "id": 4366031,
+    "name": "Tank Dell",
+    "pos": "WR",
+    "team": "HOU",
+    "bye": null,
+    "proj": 98.5,
+    "sd": 22.6,
+    "adp": 228,
+    "adp_sd": 18.5,
+    "ecr": 213,
+    "tier": 9
+  },
+  {
+    "id": 4428718,
+    "name": "Tre Tucker",
+    "pos": "WR",
+    "team": "LV",
+    "bye": null,
+    "proj": 128.7,
+    "sd": 29.6,
+    "adp": 229,
+    "adp_sd": 18.6,
+    "ecr": 161,
+    "tier": 8
+  },
+  {
+    "id": 4686612,
+    "name": "Tre' Harris",
+    "pos": "WR",
+    "team": "LAC",
+    "bye": null,
+    "proj": 82.6,
+    "sd": 19,
+    "adp": 232,
+    "adp_sd": 18.8,
+    "ecr": 166,
+    "tier": 8
+  },
+  {
+    "id": 4429501,
+    "name": "Ray Davis",
+    "pos": "RB",
+    "team": "BUF",
+    "bye": null,
+    "proj": 37.3,
+    "sd": 9.7,
+    "adp": 234,
+    "adp_sd": 18.9,
+    "ecr": 176,
+    "tier": 8
+  },
+  {
+    "id": 4870612,
+    "name": "Zachariah Branch",
+    "pos": "WR",
+    "team": "ATL",
+    "bye": null,
+    "proj": 93.2,
+    "sd": 21.4,
+    "adp": 235,
+    "adp_sd": 18.9,
+    "ecr": 227,
+    "tier": 9
+  },
+  {
+    "id": 4038441,
+    "name": "Justice Hill",
+    "pos": "RB",
+    "team": "BAL",
+    "bye": null,
+    "proj": 103.7,
+    "sd": 27,
+    "adp": 247,
+    "adp_sd": 19.6,
+    "ecr": 240,
+    "tier": 9
+  },
+  {
+    "id": 4040655,
+    "name": "Darnell Mooney",
+    "pos": "WR",
+    "team": "NYG",
+    "bye": null,
+    "proj": 85.8,
+    "sd": 19.7,
+    "adp": 257,
+    "adp_sd": 20.1,
+    "ecr": 193,
+    "tier": 8
+  },
+  {
+    "id": 5083754,
+    "name": "Ryan Flournoy",
+    "pos": "WR",
+    "team": "DAL",
+    "bye": null,
+    "proj": 82.9,
+    "sd": 19.1,
+    "adp": 259,
+    "adp_sd": 20.2,
+    "ecr": 172,
+    "tier": 8
+  },
+  {
+    "id": 4685261,
+    "name": "Germie Bernard",
+    "pos": "WR",
+    "team": "PIT",
+    "bye": null,
+    "proj": 117.6,
+    "sd": 27,
+    "adp": 267,
+    "adp_sd": 20.7,
+    "ecr": 244,
+    "tier": 9
+  },
+  {
+    "id": 4685397,
+    "name": "Jordan James",
+    "pos": "RB",
+    "team": "SF",
+    "bye": null,
+    "proj": 62.6,
+    "sd": 16.3,
+    "adp": 269,
+    "adp_sd": 20.8,
+    "ecr": 241,
+    "tier": 9
+  },
+  {
+    "id": 4360939,
+    "name": "Rashod Bateman",
+    "pos": "WR",
+    "team": "BAL",
+    "bye": null,
+    "proj": 115.1,
+    "sd": 26.5,
+    "adp": 292,
+    "adp_sd": 22.1,
+    "ecr": 197,
+    "tier": 8
+  },
+  {
+    "id": -16007,
+    "name": "Broncos D/ST",
+    "pos": "DST",
+    "team": "DEN",
+    "bye": null,
+    "proj": 130.7,
+    "sd": 31.4,
+    "adp": 999,
+    "adp_sd": 60.9,
+    "ecr": 999,
+    "tier": 99
+  },
+  {
+    "id": -16005,
+    "name": "Browns D/ST",
+    "pos": "DST",
+    "team": "CLE",
+    "bye": null,
+    "proj": 104.3,
+    "sd": 25,
+    "adp": 999,
+    "adp_sd": 60.9,
+    "ecr": 999,
+    "tier": 99
+  },
+  {
+    "id": -16024,
+    "name": "Chargers D/ST",
+    "pos": "DST",
+    "team": "LAC",
+    "bye": null,
+    "proj": 93.8,
+    "sd": 22.5,
+    "adp": 999,
+    "adp_sd": 60.9,
+    "ecr": 999,
+    "tier": 99
+  },
+  {
+    "id": -16012,
+    "name": "Chiefs D/ST",
+    "pos": "DST",
+    "team": "KC",
+    "bye": null,
+    "proj": 100.6,
+    "sd": 24.1,
+    "adp": 999,
+    "adp_sd": 60.9,
+    "ecr": 999,
+    "tier": 99
+  },
+  {
+    "id": -16021,
+    "name": "Eagles D/ST",
+    "pos": "DST",
+    "team": "PHI",
+    "bye": null,
+    "proj": 106.9,
+    "sd": 25.6,
+    "adp": 999,
+    "adp_sd": 60.9,
+    "ecr": 999,
+    "tier": 99
+  },
+  {
+    "id": -16008,
+    "name": "Lions D/ST",
+    "pos": "DST",
+    "team": "DET",
+    "bye": null,
+    "proj": 107.8,
+    "sd": 25.9,
+    "adp": 999,
+    "adp_sd": 60.9,
+    "ecr": 999,
+    "tier": 99
+  },
+  {
+    "id": -16017,
+    "name": "Patriots D/ST",
+    "pos": "DST",
+    "team": "NE",
+    "bye": null,
+    "proj": 100.3,
+    "sd": 24.1,
+    "adp": 999,
+    "adp_sd": 60.9,
+    "ecr": 999,
+    "tier": 99
+  },
+  {
+    "id": -16014,
+    "name": "Rams D/ST",
+    "pos": "DST",
+    "team": "LAR",
+    "bye": null,
+    "proj": 123.3,
+    "sd": 29.6,
+    "adp": 999,
+    "adp_sd": 60.9,
+    "ecr": 999,
+    "tier": 99
+  },
+  {
+    "id": -16033,
+    "name": "Ravens D/ST",
+    "pos": "DST",
+    "team": "BAL",
+    "bye": null,
+    "proj": 120,
+    "sd": 28.8,
+    "adp": 999,
+    "adp_sd": 60.9,
+    "ecr": 999,
+    "tier": 99
+  },
+  {
+    "id": 4428209,
+    "name": "Ricky Pearsall",
+    "pos": "WR",
+    "team": "SF",
+    "bye": null,
+    "proj": 0,
+    "sd": 0,
+    "adp": 999,
+    "adp_sd": 60.9,
+    "ecr": 999,
+    "tier": 99
+  },
+  {
+    "id": -16026,
+    "name": "Seahawks D/ST",
+    "pos": "DST",
+    "team": "SEA",
+    "bye": null,
+    "proj": 119.4,
+    "sd": 28.7,
+    "adp": 999,
+    "adp_sd": 60.9,
+    "ecr": 999,
+    "tier": 99
+  },
+  {
+    "id": -16023,
+    "name": "Steelers D/ST",
+    "pos": "DST",
+    "team": "PIT",
+    "bye": null,
+    "proj": 126.3,
+    "sd": 30.3,
+    "adp": 999,
+    "adp_sd": 60.9,
+    "ecr": 999,
+    "tier": 99
+  },
+  {
+    "id": -16034,
+    "name": "Texans D/ST",
+    "pos": "DST",
+    "team": "HOU",
+    "bye": null,
+    "proj": 128,
+    "sd": 30.7,
+    "adp": 999,
+    "adp_sd": 60.9,
+    "ecr": 999,
+    "tier": 99
+  }
 ];
 
 // ── extended constants ───────────────────────────────────────────
-const CAPS={QB:4,RB:8,WR:8,TE:3};   // max at each position (per league rules)
+const CAPS={QB:4,RB:8,WR:8,TE:3,K:3,DST:3}; // max at each position (per league rules)
 const KDST_ROUND=13;                  // K and DST go in rounds 13-14
+// Sources: ESPN’s public 2026 projection feed plus FantasyPros 2026 half-PPR
+// ECR and half-PPR ADP, refreshed 2026-08-07.
+// Skill-position totals start from ESPN’s PPR projection, then use this league’s
+// 0.5 PPR and the supplied empirical first-down rates. SD is a position/rank
+// uncertainty proxy for ceiling weighting, not a vendor-supplied standard deviation.
 
 // ── state ────────────────────────────────────────────────────────
-let slot=6, lambda=0.40, picks=[], posFilter='';
+let slot=5, lambda=0.40, picks=[], autoPickNos=[], posFilter='', view='prep', sortBy='gain', visibleRows=[], mockPicks=[], mockMode='adp', mockRandom=false, roomKeys=false;
 const byId=new Map(PLAYERS.map(p=>[p.id,p]));
 
 // restore from localStorage
 (function(){try{
-  const s=JSON.parse(localStorage.getItem('ff26')||'{}');
+  const s=JSON.parse(localStorage.getItem('ff26-v3')||'{}');
   if(Array.isArray(s.picks))picks=s.picks;
+  if(Array.isArray(s.autoPickNos))autoPickNos=s.autoPickNos.filter(n=>Number.isInteger(n)&&n>=1&&n<=picks.length);
   if(s.slot!=null)slot=Math.max(1,Math.min(12,+s.slot));
   if(s.lambda!=null)lambda=+s.lambda;
 }catch(e){}}());
-function save(){localStorage.setItem('ff26',JSON.stringify({picks,slot,lambda}));}
+function save(){localStorage.setItem('ff26-v3',JSON.stringify({picks,autoPickNos,slot,lambda}));}
 
 const $=s=>document.querySelector(s);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+function setRoomKeys(active){
+  roomKeys=active;
+  $('#roomcol').classList.toggle('keyboard-active',active);
+  $('#roomhint').textContent=active?'undo active':'click for undo';
+}
 
 // normal CDF (Hart approximation)
 function Phi(z){const t=1/(1+.2316419*Math.abs(z));
@@ -2714,13 +2987,136 @@ const isKDST=()=>curRound()>=KDST_ROUND;
 function fmtPick(n){const r=Math.ceil(n/TEAMS), p=n-(r-1)*TEAMS; return r+'.'+String(p).padStart(2,'0');}
 function nextMyPick(){return myPicks().find(p=>p>=curPick())??null;}
 function pickAfterNext(){const m=myPicks().filter(p=>p>=curPick());return m[1]??null;}
+const pickForTeam=(round,team)=>overallOf(round,round%2?team:TEAMS-team+1);
 
-// exclude K/DST from skill-position board, only show them in rounds 13-14
-const remaining=()=>PLAYERS.filter(p=>{
-  if(picks.includes(p.id))return false;
-  const kd=['K','DST'].includes(p.pos);
-  return isKDST()?kd:!kd;
-});
+// Planning-only board. Default modes follow the selected source exactly;
+// Randomize is deliberately opt-in and only perturbs that source ranking.
+// Recorded real picks are seeded but are never changed by this display.
+function mockNoise(){
+  const u=Math.max(Math.random(),1e-9),v=Math.max(Math.random(),1e-9);
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)*4;
+}
+function mockMetric(p,mode,meta){
+  if(mode==='model'||mode==='needs')return meta.modelRank.get(p.id)||999;
+  if(mode==='ecr')return p.ecr||999;
+  return p.adp||999;
+}
+function mockMetricLabel(){
+  if(mockMode==='model')return 'MODEL';
+  if(mockMode==='needs')return 'MODEL + NEED';
+  return mockMode.toUpperCase();
+}
+const teamAtPick=n=>{
+  const round=Math.ceil(n/TEAMS), inRound=(n-1)%TEAMS+1;
+  return round%2?inRound:TEAMS-inRound+1;
+};
+function mockNeedAdjustment(p,roster,round){
+  const count=pos=>roster.filter(x=>x.pos===pos).length;
+  const rb=count('RB'), wr=count('WR'), te=count('TE');
+  const flex=Math.max(0,rb-2)+Math.max(0,wr-2)+Math.max(0,te-1);
+  if(p.pos==='K')return count('K')?120:(round>=13?-1000:90);
+  if(p.pos==='DST')return count('DST')?120:(round>=14?-1000:90);
+  // One-QB leagues should not produce a round-four QB stampede. Elite QBs can
+  // still win on Model value, but unmet QB need only becomes a real nudge late.
+  if(p.pos==='QB'){
+    if(count('QB')===0){
+      if(round<=5)return 30;
+      if(round<=6)return 20;
+      if(round<=7)return 5;
+      if(round<=8)return -8;
+      return -25;
+    }
+    return 80; // no routine backup-QB picks in a 14-round, one-QB build
+  }
+  if(p.pos==='TE'){
+    if(te===0){
+      if(round<=4)return 20;
+      if(round<=6)return 8;
+      if(round<=7)return 0;
+      if(round<=8)return -8;
+      return -14;
+    }
+    return 45; // a backup TE is a rare late luxury, not a default need
+  }
+  const have=p.pos==='RB'?rb:wr;
+  if(have<2)return -18;
+  if(flex===0)return -10;
+  return round<=10?-4:10;
+}
+function mockEligible(p,roster,needsOnly=false){
+  const count=roster.filter(x=>x.pos===p.pos).length;
+  if(needsOnly&&['QB','TE','K','DST'].includes(p.pos)&&count>=1)return false;
+  return count<(CAPS[p.pos]||0);
+}
+function chooseNeedAware(candidates,roster,round,meta,randomized=false){
+  const scores=new Map(candidates.map(p=>[p.id,
+    mockMetric(p,'needs',meta)+mockNeedAdjustment(p,roster,round)+(randomized?mockNoise():0)]));
+  return [...candidates].sort((a,b)=>scores.get(a.id)-scores.get(b.id)||a.name.localeCompare(b.name))[0]||null;
+}
+function rostersFromDraft(){
+  const rosters=Array.from({length:TEAMS},()=>[]);
+  picks.forEach((id,i)=>{const p=byId.get(id);if(p)rosters[teamAtPick(i+1)-1].push(p);});
+  return rosters;
+}
+function autoToMyPick(){
+  const total=TEAMS*ROUNDS, meta=modelMeta(), rosters=rostersFromDraft();
+  while(picks.length<total&&!myPicks().includes(curPick())){
+    const n=curPick(), round=Math.ceil(n/TEAMS), team=teamAtPick(n), roster=rosters[team-1];
+    let candidates=remaining().filter(p=>mockEligible(p,roster,true));
+    if(!candidates.length)candidates=remaining();
+    const pick=chooseNeedAware(candidates,roster,round,meta);
+    if(!pick)break;
+    picks.push(pick.id); autoPickNos.push(n); roster.push(pick);
+  }
+  save(); render();
+}
+function runMock(mode='adp',randomized=false){
+  mockMode=mode; mockRandom=randomized;
+  const total=TEAMS*ROUNDS, used=new Set(), out=[];
+  const meta=modelMeta();
+  const rosters=Array.from({length:TEAMS},()=>[]);
+  for(let n=1;n<=total;n++){
+    const round=Math.ceil(n/TEAMS);
+    const team=teamAtPick(n), roster=rosters[team-1];
+    let id=picks[n-1];
+    if(!id){
+      const allowed=mode==='needs'?['QB','RB','WR','TE','K','DST']:(round===13?['K']:round===14?['DST']:POS);
+      let candidates=PLAYERS.filter(p=>!used.has(p.id)&&allowed.includes(p.pos)&&mockEligible(p,roster,mode==='needs'));
+      if(!candidates.length)candidates=PLAYERS.filter(p=>!used.has(p.id)&&allowed.includes(p.pos));
+      if(mode==='needs')id=chooseNeedAware(candidates,roster,round,meta,randomized)?.id;
+      else{
+        const scores=new Map(candidates.map(p=>[p.id,mockMetric(p,mode,meta)+(randomized?mockNoise():0)]));
+        candidates.sort((a,b)=>scores.get(a.id)-scores.get(b.id)||a.name.localeCompare(b.name));
+        id=candidates[0]?.id;
+      }
+    }
+    if(!byId.has(id))continue;
+    used.add(id); out[n-1]=id; roster.push(byId.get(id));
+  }
+  mockPicks=out; render();
+}
+function renderSnake(){
+  const meta=modelMeta(), metricLabel=mockMetricLabel();
+  const cells=['<div class="snakegrid"><div class="snakecorner">RD</div>'];
+  for(let t=1;t<=TEAMS;t++)cells.push(`<div class="snakehead ${t===slot?'mine':''}">S${t}${t===slot?' · YOU':''}</div>`);
+  for(let r=1;r<=ROUNDS;r++){
+    cells.push(`<div class="snake-round">R${r}${r%2?' →':' ←'}</div>`);
+    for(let team=1;team<=TEAMS;team++){
+      const n=pickForTeam(r,team), actual=picks[n-1], id=actual||mockPicks[n-1], p=byId.get(id);
+      const classes=`snakecell ${team===slot?'mine':''} ${actual?'real':p?'mock':''}`;
+      const metric=mockMetric(p||{},mockMode,meta);
+      cells.push(`<div class="${classes}"><span class="pick">${fmtPick(n)}${team===slot?' · YOU':''}</span>${p?`<span class="sname">${p.name}</span><span class="spos">${p.pos} · ${metricLabel} ${metric<900?metric:'—'}</span>`:`<span class="sname snakeempty">—</span>`}</div>`);
+    }
+  }
+  cells.push('</div>'); $('#board').innerHTML=cells.join('');
+}
+
+// Keep the whole undrafted pool visible. K/DST are simply prioritized in the
+// final two rounds; this also lets the pick log record an opponent's late dart.
+const remaining=()=>PLAYERS.filter(p=>!picks.includes(p.id));
+const skillPool=()=>PLAYERS.filter(p=>POS.includes(p.pos));
+// ECR is applied once, in modelMeta's explicit 80/20 rank blend. Keeping it
+// out of this value avoids letting consensus also alter replacement levels.
 const value=p=>p.proj+lambda*p.sd;
 
 // ── replacement level (12 QB / 24 RB / 24 WR / 12 TE + 12 flex) ──
@@ -2756,7 +3152,7 @@ function expBestAt(pos,k,pool,ranked){
 
 const myRoster=()=>myPicks().filter(p=>p<curPick()).map(p=>byId.get(picks[p-1])).filter(Boolean);
 
-// needFactor: 1 = starter need, 0.85 = flex need, 0.55 = depth, 0 = at cap
+// Need priority: starters first, then RB/WR bench depth, then backup QB/TE.
 function needFactor(pos){
   const mine=myRoster();
   const have=mine.filter(p=>p.pos===pos).length;
@@ -2765,30 +3161,97 @@ function needFactor(pos){
   const flexOK=(pos!=='QB');
   if(have<base) return 1;
   if(have<base+(flexOK?1:0)) return 0.85;
-  return 0.55;
+  const bench=benchSlotsFilled(mine);
+  if(bench>=5) return 0.20;
+  if(pos==='RB'||pos==='WR') return 0.65;
+  if(pos==='TE') return bench>=3?0.40:0.18;
+  return bench>=3?0.30:0.12; // QB: do not force a backup early
+}
+
+function openStarterSlots(mine){
+  const count=k=>mine.filter(p=>p.pos===k).length;
+  const open={QB:Math.max(0,1-count('QB')),RB:Math.max(0,2-count('RB')),
+    WR:Math.max(0,2-count('WR')),TE:Math.max(0,1-count('TE')),
+    K:Math.max(0,1-count('K')),DST:Math.max(0,1-count('DST'))};
+  const flexFilled=Math.max(0,count('RB')-2)+Math.max(0,count('WR')-2)+Math.max(0,count('TE')-1);
+  open.FLEX=Math.max(0,1-flexFilled);
+  return open;
+}
+
+function benchSlotsFilled(mine){
+  const open=openStarterSlots(mine);
+  const startersFilled=9-Object.values(open).reduce((sum,n)=>sum+n,0);
+  return clamp(mine.length-startersFilled,0,5);
+}
+
+function modelMeta(){
+  const pool=skillPool(), {rep}=replacement(pool);
+  const core=[...pool].sort((a,b)=>(value(b)-(rep[b.pos]||0))-(value(a)-(rep[a.pos]||0)));
+  const coreRank=new Map(core.map((p,i)=>[p.id,i+1]));
+  const blended=[...pool].sort((a,b)=>{
+    const ar=.8*(coreRank.get(a.id)||999)+.2*(a.ecr>500?(coreRank.get(a.id)||999):a.ecr);
+    const br=.8*(coreRank.get(b.id)||999)+.2*(b.ecr>500?(coreRank.get(b.id)||999):b.ecr);
+    return ar-br;
+  });
+  const modelRank=new Map(blended.map((p,i)=>[p.id,i+1]));
+  return {coreRank,modelRank};
+}
+
+function rankText(n){return n&&n<900?String(n):'—';}
+function why(r){
+  const open=openStarterSlots(myRoster());
+  const need=open[r.p.pos]||(['RB','WR','TE'].includes(r.p.pos)&&open.FLEX?1:0);
+  const diff=r.p.ecr>500?0:r.p.ecr-r.modelRank;
+  const timing=r.surv<.45?'likely gone next turn':r.surv<.7?'at risk by next turn':'reasonable wait';
+  const valueFlag=Math.abs(diff)>=10?(diff>0?`model ${diff} ahead of ECR`:`ECR ${-diff} ahead of model`):timing;
+  return `${need?'starter need · ':''}${valueFlag}`;
+}
+
+function planText(mine){
+  const open=openStarterSlots(mine), core=['RB','WR'].reduce((n,k)=>n+mine.filter(p=>p.pos===k).length,0);
+  if(curRound()<=4)return core<3
+    ? `Build the core: aim to leave Round 4 with <b>three RB/WR</b>. Fill a glaring starter need before taking optional QB/TE.`
+    : `Core is taking shape. Prioritize the best VONA at RB/WR/TE; do not force a position with no tier break.`;
+  if(curRound()<=8)return `Add starters and depth. Open: <b>${Object.entries(open).filter(([,n])=>n).map(([k,n])=>`${k} ${n}`).join(' · ')||'starters set'}</b>.`;
+  if(curRound()<=12)return `Round out depth and any remaining starters. Protect weekly floor, then chase ceiling on the bench.`;
+  const special=[open.K?'K':'',open.DST?'D/ST':''].filter(Boolean).join(' · ')||'best available depth';
+  return `Finish special teams: take <b>${special}</b>.`;
+}
+function nextTurnTargets(){
+  const nxt=pickAfterNext();
+  if(!nxt||isKDST())return '';
+  const targets=computeBoard().filter(r=>!r.isSpecial&&r.surv<.45).slice(0,3);
+  if(!targets.length)return '';
+  return `<div class="runbox"><div class="eyebrow" style="margin-bottom:5px">At risk before ${fmtPick(nxt)}</div><div class="t">${targets.map(r=>`${r.p.name} <b>${r.p.pos}</b> ${Math.round(r.surv*100)}%`).join(' · ')}</div></div>`;
 }
 
 // ── the board ────────────────────────────────────────────────────
 function computeBoard(){
   const pool=remaining();
-  if(isKDST()){
-    // rounds 13-14: sort K/DST by proj, no VONA math
-    return pool.map(p=>({p,v:p.proj,vor:0,gain:p.proj,surv:0})).sort((a,b)=>b.gain-a.gain);
-  }
-  const {rep}=replacement(pool);
+  const meta=modelMeta();
+  const skill=pool.filter(p=>POS.includes(p.pos));
+  const {rep}=replacement(skill);
   const nxt=pickAfterNext();
   const ranked=new Map();
   [...pool].sort((a,b)=>a.adp-b.adp).forEach((p,i)=>ranked.set(p.id,curPick()+i));
 
   const rows=pool.map(p=>{
+    const isSpecial=['K','DST'].includes(p.pos);
+    // Special teams are excluded from VONA and the skill-player model. Their
+    // late-round order is projection-only, but they remain searchable/selectable.
+    if(isSpecial)return {p,v:p.proj,vor:0,gain:0,surv:nxt?survives(p,nxt,ranked):0,
+      modelRank:999,isSpecial:true};
     const v=value(p);
     const vor=v-(rep[p.pos]||0);
     const eNext=nxt?expBestAt(p.pos,nxt,pool,ranked):0;
     const gain=nxt?(v-eNext)*needFactor(p.pos):vor*needFactor(p.pos);
     const surv=nxt?survives(p,nxt,ranked):0;
-    return {p,v,vor,gain,surv};
+    return {p,v,vor,gain,surv,modelRank:meta.modelRank.get(p.id)||999};
   });
-  rows.sort((a,b)=>b.gain-a.gain);
+  rows.sort((a,b)=>isKDST()
+    ? (Number(!!b.isSpecial)-Number(!!a.isSpecial) || (b.isSpecial&&a.isSpecial
+      ? b.p.proj-a.p.proj : b.gain-a.gain))
+    : (b.gain-a.gain||a.modelRank-b.modelRank));
   return rows;
 }
 
@@ -2811,6 +3274,16 @@ function render(){
   const nm=nextMyPick();
   $('#nextpick').textContent=nm?fmtPick(nm):'—';
   $('#until').textContent=nm?(nm-curPick()===0?'NOW':String(nm-curPick())):'—';
+  const autoButtons=[$('#auto'),$('#autoTop')], total=TEAMS*ROUNDS;
+  let autoLabel='Auto to my pick', autoDisabled=false;
+  if(curPick()>total){autoDisabled=true;autoLabel='Draft complete';}
+  else if(isOTC){autoDisabled=true;autoLabel='Your pick';}
+  else{
+    const count=(nm??(total+1))-curPick();
+    autoLabel=nm?`Auto ${count} to ${fmtPick(nm)}`:`Auto final ${count}`;
+  }
+  autoButtons.forEach(b=>{b.disabled=autoDisabled;b.textContent=autoLabel;});
+  $('#autoTop').hidden=view==='plan';
   $('#lamv').textContent=lambda.toFixed(2);
 
   // roster rail (QB RB RB WR WR TE FLEX K DST + bench)
@@ -2831,50 +3304,100 @@ function render(){
   $('#slots').innerHTML=rows.join('');
   $('#rcount').textContent=mine.length+'/14';
 
-  // needs: show position caps with color coding
+  // needs: caps are legal limits, not recommended roster targets
   const posLine=POS.map(k=>{
     const have=mine.filter(p=>p.pos===k).length;
     const cap=CAPS[k], base=STARTERS[k]||0;
     const col=have>=cap?'var(--red)':have>=base?'var(--amber)':'inherit';
     return `<span style="color:${col}">${k}</span> <span>${have}/${cap}</span>`;
   }).join(' · ');
-  const kLine=`K <span>${mine.filter(p=>p.pos==='K').length}</span>/1`;
-  const dLine=`DST <span>${mine.filter(p=>p.pos==='DST').length}</span>/1`;
+  const kLine=`K <span>${mine.filter(p=>p.pos==='K').length}</span>/${CAPS.K}`;
+  const dLine=`DST <span>${mine.filter(p=>p.pos==='DST').length}</span>/${CAPS.DST}`;
+  const open=openStarterSlots(mine);
+  const bench=benchSlotsFilled(mine);
+  const openLine=['QB','RB','WR','TE','FLEX','K','DST'].filter(k=>open[k]).map(k=>`${k} ${open[k]}`).join(' · ')||'starters set';
   const kdNote=kdst?`<br><span style="color:var(--amber)">▶ Pick K + D/ST now</span>`:`<br>K + D/ST: <span>rds 13–14</span>`;
-  $('#needs').innerHTML=posLine+' · '+kLine+' · '+dLine+kdNote;
+  $('#needs').innerHTML=`Caps: ${posLine} · ${kLine} · ${dLine}<br>Starter slots left: <span>${openLine}</span><br>Bench: <span>${bench}/5</span> · roster spots left: <span>${ROUNDS-mine.length}</span>`+kdNote;
 
   // board
+  if(view==='plan'){
+    visibleRows=[];
+    const mockName=mockMetricLabel()+(mockRandom?' + RANDOM':'');
+    $('#poolcount').textContent=mockPicks.length?mockName+' board':'choose a source';
+    $('#boardtitle').textContent=mockPicks.length?'Expected snake board — '+mockName:'Expected snake board — choose a source';
+    $('#mode').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.view===view));
+    $('#filt').style.display='none';
+    $('#sort').style.display='none';
+    $('#planbar').classList.add('on');
+    $('#mocknote').textContent=mockPicks.length
+      ? (mockMode==='needs'
+        ? `${mockRandom?'Randomized ':''}Need-aware board — each team follows Model value while filling QB/RB/WR/TE starters, FLEX, depth, and late K/DST. Real picks always override it.`
+        : (mockRandom
+          ? `Randomized ${mockMetricLabel()} board — selected source rank plus small variation. K and D/ST remain in rounds 13–14; this never changes real picks.`
+          : `${mockMetricLabel()} board — exact selected-source order, with K and D/ST held for rounds 13–14. This never changes real picks.`))
+      : 'Choose Model, ECR, or ADP for an exact ranking board, or Need-aware to simulate team roster needs. Randomize adds variation; neither changes real draft state.';
+    $('#planbar').querySelectorAll('button[data-mock]').forEach(b=>b.classList.toggle('on',mockPicks.length&&b.dataset.mock===mockMode));
+    $('#randommock').classList.toggle('on',mockPicks.length&&mockRandom);
+    document.querySelector('.thead').style.display='none';
+    $('#board').classList.add('snakeboard');
+    document.querySelector('main').classList.add('snake-mode');
+    renderSnake();
+  }else{
   let rows2=computeBoard();
-  if(!kdst){
-    if(posFilter) rows2=rows2.filter(r=>r.p.pos===posFilter);
-  }
+  if(posFilter) rows2=rows2.filter(r=>r.p.pos===posFilter);
   if(q) rows2=rows2.filter(r=>r.p.name.toLowerCase().includes(q)||r.p.team?.toLowerCase()===q);
-  $('#poolcount').textContent=remaining().length+' left';
-  $('#boardtitle').textContent=kdst?'K / D·ST — pick now':(q?'Matches':'Best available — by gain');
-  $('#filt').style.display=kdst?'none':'flex';
+  if(view==='prep'){
+    const order={gain:(a,b)=>b.gain-a.gain||a.modelRank-b.modelRank,
+      model:(a,b)=>a.modelRank-b.modelRank,
+      proj:(a,b)=>b.p.proj-a.p.proj,
+      ecr:(a,b)=>(a.p.ecr||999)-(b.p.ecr||999),
+      adp:(a,b)=>a.p.adp-b.p.adp};
+    rows2.sort(order[sortBy]);
+  }
+  visibleRows=rows2;
+  $('#poolcount').textContent=view==='prep'?rows2.length+' shown · click to record':remaining().length+' left';
+  const sortLabel={gain:'VONA',model:'Model',proj:'Points',ecr:'ECR',adp:'ADP'}[sortBy];
+  $('#boardtitle').textContent=q?'Matches':(kdst?'Special teams window — full board':`Full rankings — by ${sortLabel}`);
+  $('#mode').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.view===view));
+  $('#filt').style.display='flex';
   $('#filt').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.pos===posFilter));
+  $('#sort').style.display=view==='prep'?'flex':'none';
+  $('#sort').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.sort===sortBy));
+  $('#planbar').classList.remove('on');
+  document.querySelector('.thead').style.display='grid';
+  $('#board').classList.remove('snakeboard');
+  document.querySelector('main').classList.remove('snake-mode');
 
-  const show=rows2.slice(0,8);
+  const show=rows2.slice(0,view==='prep'?rows2.length:8);
   const gmax=Math.max(...show.map(r=>Math.abs(r.gain)),1);
   $('#board').innerHTML=show.length?show.map((r,i)=>{
-    const c=kdst?'var(--cyan)':urgency(r);
-    const gainTxt=kdst?r.p.proj.toFixed(0):(r.gain>0?'+':'')+r.gain.toFixed(1);
-    const survTxt=kdst?r.p.team:(r.surv*100).toFixed(0)+'%';
-    const survCol=kdst?'var(--dim)':(r.surv>.7?'var(--green)':r.surv>.4?'var(--amber)':'var(--red)');
+    const c=r.isSpecial?'var(--cyan)':urgency(r);
+    const gainTxt=r.isSpecial?'—':(r.gain>0?'+':'')+r.gain.toFixed(1);
+    const survTxt=(r.surv*100).toFixed(0)+'%';
+    const survCol=r.surv>.7?'var(--green)':r.surv>.4?'var(--amber)':'var(--red)';
+    const delta=r.p.ecr>500?'—':(r.p.ecr-r.modelRank);
+    const deltaTxt=delta==='—'?'—':(delta>0?'+':'')+delta;
+    const deltaCol=delta==='—'?'var(--dimmer)':delta>=10?'var(--green)':delta<=-10?'var(--amber)':'var(--dim)';
     return `<div class="brow" data-id="${r.p.id}">
       <div class="bar" style="width:${clamp(Math.abs(r.gain)/gmax*100,0,100)}%;background:${c}"></div>
       <div class="rk">${i+1}</div>
       <div class="nmwrap"><div class="nm">${r.p.name}</div>
-        <div class="sub">${r.p.pos} · ${r.p.team||'—'}${r.p.bye?' · BYE '+r.p.bye:''}</div></div>
+        <div class="sub">${r.p.pos} · ${r.p.team||'—'} · T${r.p.tier||'—'}${r.p.bye?' · BYE '+r.p.bye:''}</div>
+        ${view==='prep'?`<div class="why">${r.isSpecial?'K/DST: projection-only; excluded from VONA':why(r)}</div>`:''}</div>
       <div class="num">${r.p.proj.toFixed(0)}</div>
       <div class="num gain" style="color:${c}">${gainTxt}</div>
+      <div class="num">${rankText(r.modelRank)}</div>
+      <div class="num">${rankText(r.p.ecr)}</div>
       <div class="num" style="color:var(--dim)">${r.p.adp.toFixed(0)}</div>
+      <div class="num" style="color:${deltaCol}">${deltaTxt}</div>
       <div class="num" style="color:${survCol}">${survTxt}</div>
     </div>`;
   }).join('')
     :`<div class="empty-state">No player matches "${q}".<br>Check spelling or press Esc to clear.</div>`;
+  }
 
   // positional runs (skill positions only)
+  $('#plan').innerHTML=`<div class="runbox"><div class="t">${planText(mine)}</div></div>`+nextTurnTargets();
   const last8=picks.slice(-8).map(id=>byId.get(id)).filter(p=>p&&!['K','DST'].includes(p.pos));
   const counts={}; last8.forEach(p=>counts[p.pos]=(counts[p.pos]||0)+1);
   const hot=Object.entries(counts).filter(([,n])=>n>=4);
@@ -2885,7 +3408,7 @@ function render(){
   // pick log
   $('#log').innerHTML=picks.slice(-14).reverse().map((id,i)=>{
     const n=picks.length-i; const p=byId.get(id);
-    return `<div class="logrow ${myPicks().includes(n)?'mine':''}"><span class="p">${fmtPick(n)}</span><span class="n">${p?p.name:'?'}</span></div>`;
+    return `<div class="logrow ${myPicks().includes(n)?'mine':''} ${autoPickNos.includes(n)?'auto':''}"><span class="p">${fmtPick(n)}${autoPickNos.includes(n)?'~':''}</span><span class="n">${p?p.name:'?'}</span></div>`;
   }).join('')||`<div class="logrow"><span class="n" style="color:var(--dimmer)">Nothing recorded yet.</span></div>`;
 }
 
@@ -2897,11 +3420,12 @@ function draft(id){
 }
 function undo(){
   if(!picks.length)return;
+  autoPickNos=autoPickNos.filter(n=>n!==picks.length);
   picks.pop(); save(); render();
 }
 function resetDraft(){
   if(!confirm('Clear all picks and start over?'))return;
-  picks=[]; save(); render();
+  picks=[]; autoPickNos=[]; mockPicks=[]; mockRandom=false; save(); render();
 }
 
 // ── state export (paste into Claude for a top-3 sanity check) ────
@@ -2910,7 +3434,11 @@ function buildState(){
   const L=[];
   L.push(`DRAFT STATE — on the clock ${fmtPick(curPick())} (round ${curRound()} of ${ROUNDS})`);
   L.push(`My slot ${slot}/${TEAMS} · ceiling weight lambda ${lambda.toFixed(2)}`);
+  L.push('Model: custom league scoring, ceiling weighting, replacement value, then an 80/20 half-PPR ECR sanity check; ADP is used for survival/timing.');
   L.push(`My next pick ${nm?fmtPick(nm):'—'}${nxt?`, then ${fmtPick(nxt)}`:' (last pick)'}`);
+  const open=openStarterSlots(mine);
+  L.push(`Starter slots still open: ${Object.entries(open).filter(([,n])=>n).map(([k,n])=>`${k} ${n}`).join(', ')||'none'} · bench ${benchSlotsFilled(mine)}/5 · roster spots left ${ROUNDS-mine.length}`);
+  L.push('K/DST policy: excluded from VONA; wait until rounds 13–14 unless the draft forces a change.');
   L.push('');
 
   const order=['QB','RB','RB','WR','WR','TE','FLEX','K','DST'];
@@ -2927,8 +3455,8 @@ function buildState(){
   L.push(`MY ROSTER (${mine.length}/${ROUNDS})`);
   L.push('  '+slots.join(' | '));
   const bench=mine.filter(p=>!used.has(p.id));
-  if(bench.length)L.push('  BENCH '+bench.map(p=>`${p.name} (${p.pos})`).join(', '));
-  L.push('  counts '+POS.map(k=>`${k} ${mine.filter(p=>p.pos===k).length}/${CAPS[k]}`).join(', '));
+  if(bench.length)L.push(`  BENCH (${bench.length}/5) `+bench.map(p=>`${p.name} (${p.pos})`).join(', '));
+  L.push('  caps '+POS.map(k=>`${k} ${mine.filter(p=>p.pos===k).length}/${CAPS[k]}`).join(', '));
   L.push('');
 
   const rows=computeBoard().slice(0,8);
@@ -2936,19 +3464,18 @@ function buildState(){
   L.push(`(survives = P(still on board at ${nxt?fmtPick(nxt):'next pick'}), using ADP re-ranked among remaining)`);
   rows.forEach((r,i)=>L.push(
     `  ${String(i+1).padStart(2)}. ${r.p.name.padEnd(22)} ${r.p.pos.padEnd(3)} ${(r.p.team||'—').padEnd(4)}`+
-    ` proj ${r.p.proj.toFixed(0).padStart(3)} · gain ${(r.gain>0?'+':'')+r.gain.toFixed(1)} · survives ${(r.surv*100).toFixed(0)}%`));
+    ` pts ${r.p.proj.toFixed(0).padStart(3)} · gain ${(r.gain>0?'+':'')+r.gain.toFixed(1)} · model ${rankText(r.modelRank)} · ECR ${rankText(r.p.ecr)} · ADP ${r.p.adp.toFixed(0)} · survives ${(r.surv*100).toFixed(0)}%`));
   L.push('');
 
-  const recent=picks.slice(-12);
-  if(recent.length){
-    L.push('RECENTLY TAKEN (oldest first)');
-    L.push('  '+recent.map((id,i)=>{
-      const n=picks.length-recent.length+i+1, p=byId.get(id);
-      return `${fmtPick(n)} ${p?p.name:'?'}${myPicks().includes(n)?'*':''}`;
-    }).join(' · ')+'   (* = mine)');
+  if(picks.length){
+    L.push('FULL PICK LEDGER (oldest first)');
+    L.push('  '+picks.map((id,i)=>{
+      const n=i+1, p=byId.get(id);
+      return `${fmtPick(n)} ${p?p.name:'?'}${myPicks().includes(n)?'*':''}${autoPickNos.includes(n)?'~':''}`;
+    }).join(' · ')+'   (* = mine, ~ = need-aware auto-pick)');
   }
   L.push('');
-  L.push(`${remaining().length} players left in pool.`);
+  L.push(`${remaining().length} players left in the active draft pool.`);
   L.push('Which of these should I take, and why? Give a top 3 with one line each.');
   return L.join('\n');
 }
@@ -2964,14 +3491,33 @@ async function copyState(){
     try{ ok=document.execCommand('copy'); }catch(e2){ ok=false; }
     document.body.removeChild(ta);
   }
-  btn.textContent=ok?'Copied':'Copy failed';
+  if(!ok)window.prompt('Copy the draft state below:',txt);
+  btn.textContent=ok?'Copied':'Copy manually';
   btn.classList.toggle('ok',ok);
   setTimeout(()=>{btn.textContent='Copy state';btn.classList.remove('ok');},1400);
-  $('#q').focus();
+  if(matchMedia('(pointer:fine)').matches)$('#q').focus();
+}
+
+async function shareState(){
+  const btn=$('#share');
+  if(!navigator.share){copyState();return;}
+  try{
+    await navigator.share({title:'Fantasy draft state',text:buildState()});
+    btn.textContent='Shared';btn.classList.add('ok');
+    setTimeout(()=>{btn.textContent='Share state';btn.classList.remove('ok');},1400);
+  }catch(e){
+    if(e.name!=='AbortError')copyState();
+  }
 }
 
 // ── event listeners ──────────────────────────────────────────────
 $('#q').addEventListener('input',render);
+$('#mobilenav').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-panel]');
+  if(!b)return;
+  document.querySelectorAll('main>.col').forEach(col=>col.classList.toggle('mobile-on',col.id===b.dataset.panel));
+  $('#mobilenav').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+});
 $('#q').addEventListener('keydown',e=>{
   if(e.key==='Enter'){
     const val=$('#q').value.trim();
@@ -2979,29 +3525,55 @@ $('#q').addEventListener('keydown',e=>{
     const r=computeBoard().filter(r=>r.p.name.toLowerCase().includes(val.toLowerCase()));
     if(r.length)draft(r[0].p.id);
   }
-  if(e.key==='Escape'){$('#q').value='';render();}
 });
 document.addEventListener('keydown',e=>{
-  if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();undo();return;}
-  if(e.target===$('#q')||e.target===$('#slot'))return;
-  // 1-8: draft that rank from the board
-  if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&e.key>='1'&&e.key<='8'){
-    const row=computeBoard()[+e.key-1]; if(row)draft(row.p.id); return;
+  if(e.key==='Escape'){
+    if($('#help').classList.contains('on')){$('#help').classList.remove('on');return;}
+    if(!roomKeys)return;
+    e.preventDefault();
+    $('#q').value=''; render(); return;
   }
-  if(e.key==='Backspace'){undo();return;}
+  if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();undo();return;}
+  if(e.key==='Backspace'){
+    // Let Backspace edit an active search; on an empty command field it is Undo.
+    if(e.target===$('#q')&&$('#q').value)return;
+    if(e.target===$('#slot'))return;
+    if(!roomKeys){e.preventDefault();return;}
+    e.preventDefault(); undo(); return;
+  }
+  if(e.target===$('#q')||e.target===$('#slot'))return;
   if(e.key.length===1)$('#q').focus();
 });
 $('#board').addEventListener('click',e=>{const row=e.target.closest('.brow'); if(row)draft(+row.dataset.id);});
+document.addEventListener('pointerdown',e=>setRoomKeys(!!e.target.closest('#roomcol')),true);
+$('#roomcol').addEventListener('focusin',()=>setRoomKeys(true));
 $('#slot').addEventListener('input',e=>{slot=clamp(parseInt(e.target.value)||1,1,TEAMS);save();render();});
 $('#lam').addEventListener('input',e=>{lambda=parseFloat(e.target.value);save();render();});
 $('#filt').addEventListener('click',e=>{
   const b=e.target.closest('button[data-pos]'); if(!b)return;
   posFilter=b.dataset.pos; render();
 });
+$('#mode').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-view]'); if(!b)return;
+  view=b.dataset.view; render();
+});
+$('#sort').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-sort]'); if(!b)return;
+  sortBy=b.dataset.sort; render();
+});
+$('#planbar').addEventListener('click',e=>{const b=e.target.closest('button[data-mock]');if(b)runMock(b.dataset.mock,false);});
+$('#randommock').addEventListener('click',()=>runMock(mockMode,true));
+$('#clearmock').addEventListener('click',()=>{mockPicks=[];mockRandom=false;render();});
+$('#helpbtn').addEventListener('click',()=>$('#help').classList.add('on'));
+$('#helpclose').addEventListener('click',()=>$('#help').classList.remove('on'));
+$('#help').addEventListener('click',e=>{if(e.target===$('#help'))$('#help').classList.remove('on');});
 $('#reset').addEventListener('click',resetDraft);
+$('#auto').addEventListener('click',autoToMyPick);
+$('#autoTop').addEventListener('click',autoToMyPick);
 $('#copy').addEventListener('click',copyState);
+$('#share').addEventListener('click',shareState);
 
-setInterval(()=>{if(document.activeElement!==$('#slot'))$('#q').focus();},1200);
+setInterval(()=>{if(matchMedia('(pointer:fine)').matches&&document.activeElement!==$('#slot'))$('#q').focus();},1200);
 
 // sync inputs with loaded state, then render
 $('#slot').value=slot;
