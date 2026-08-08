@@ -52,8 +52,6 @@ main.snake-mode>.col:first-child,main.snake-mode>.col:last-child{display:none}
 .mode{display:flex;align-self:stretch;margin:-8px -12px -7px 0}
 .mode button{padding:0 10px;border-left:1px solid var(--rule);font-family:var(--sans);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dimmer)}
 .mode button.on{background:var(--panel2);color:var(--amber)}
-.autohead{align-self:stretch;padding:0 10px;border-left:1px solid var(--rule);font:600 9px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
-.autohead:hover{color:var(--amber);background:var(--panel2)}.autohead:disabled{color:var(--dimmer);cursor:default;background:none}
 
 /* roster rail */
 .slots{padding:6px 8px;overflow:auto}
@@ -194,7 +192,6 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
   #q{grid-column:1/-1;width:100%;padding:10px 6px;border-bottom:1px solid var(--rule);font-size:16px}
   .fbtn{min-height:44px;padding:0 5px;border-left:0;border-right:1px solid var(--rule);font-size:8.5px;line-height:1.15}
   #auto{margin-left:0!important}
-  #autoTop{display:none!important}
   #reset{border-right:0}
   .mobile-nav{display:flex;background:var(--panel);border-top:1px solid var(--rule);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
   .mobile-nav button{flex:1;min-height:44px;border-right:1px solid var(--rule);font:600 10px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
@@ -233,7 +230,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
     </div>
 
     <div class="col mobile-on" id="boardcol">
-      <div class="chead"><span class="eyebrow" id="boardtitle">Full rankings — by gain</span><div class="mode" id="mode"><button class="on" data-view="prep">Draft</button><button data-view="plan">Snake</button></div><button id="autoTop" class="autohead">Auto to my pick</button><span class="eyebrow" id="poolcount"></span></div>
+      <div class="chead"><span class="eyebrow" id="boardtitle">Full rankings — by gain</span><div class="mode" id="mode"><button class="on" data-view="prep">Draft</button><button data-view="plan">Snake</button></div><span class="eyebrow" id="poolcount"></span></div>
       <div class="filt" id="filt">
         <button class="on" data-pos="">All</button>
         <button data-pos="QB">QB</button>
@@ -270,7 +267,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
     <span class="caret">›</span>
     <input id="q" placeholder="Type a name, press Enter to record the pick on the clock" autocomplete="off" spellcheck="false">
     <div class="keys">
-      <span><b>Enter</b> record</span><span><b>Room:</b> Bksp undo · Esc clear search</span>
+      <span><b>Enter</b> record · <b>⌘/Ctrl Enter</b> auto</span><span><b>Room:</b> Bksp undo · Esc clear search</span>
     </div>
     <button id="auto" class="fbtn" style="margin-left:auto">Auto to my pick</button>
     <button id="copy" class="fbtn">Copy state</button>
@@ -279,7 +276,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
     <button id="reset" class="fbtn">Reset draft</button>
   </footer>
 </div>
-<div class="help" id="help"><div class="helpbox"><button id="helpclose" aria-label="Close help">×</button><h2>Draft terminal guide</h2><p><b>VONA</b> is the ceiling-adjusted value lost if you wait until your next pick. Players within 7.5 VONA points share a tier, then Model rank breaks the near-tie. <b>Survives</b> is the chance the player is still available then.</p><p><b>Model</b> uses custom league scoring, ceiling weighting, value over replacement, and a 20% half-PPR ECR sanity check. <b>Δ</b> is Model rank versus ECR: a positive number means the model is higher on the player.</p><p><b>Draft</b> shows the full available pool and lets you sort by VONA, Model, Points, ECR, or ADP. <b>Auto to my pick</b> records varied need-aware opponent selections until your next turn; <b>~</b> marks those picks in the log and copied state. <b>Snake</b> is a separate full-width board. Model, ECR, and ADP follow their source exactly; <b>Need-aware</b> simulates each team filling starters, FLEX, depth, and late special teams. Randomize adds optional variation. Snake never records picks.</p><p>Record every real pick here. Copy state on your turn and paste it to Codex or Claude for a reasoned top three. K/DST stay out of VONA, are prioritized in rounds 13–14, and remain visible/selectable throughout the draft.</p></div></div>
+<div class="help" id="help"><div class="helpbox"><button id="helpclose" aria-label="Close help">×</button><h2>Draft terminal guide</h2><p><b>VONA</b> is the ceiling-adjusted value lost if you wait until your next pick. Players within 7.5 VONA points share a tier, then Model rank breaks the near-tie. <b>Survives</b> is the chance the player is still available then.</p><p><b>Model</b> uses custom league scoring, ceiling weighting, value over replacement, and a 20% half-PPR ECR sanity check. <b>Δ</b> is Model rank versus ECR: a positive number means the model is higher on the player.</p><p><b>Draft</b> shows the full available pool and lets you sort by VONA, Model, Points, ECR, or ADP. <b>Auto to my pick</b> records varied need-aware opponent selections until your next turn; use the footer button or press <b>⌘ Enter</b> on Mac / <b>Ctrl Enter</b> on Windows. <b>~</b> marks those picks in the log and copied state. <b>Snake</b> is a separate full-width board. Model, ECR, and ADP follow their source exactly; <b>Need-aware</b> simulates each team filling starters, FLEX, depth, and late special teams. Randomize adds optional variation. Snake never records picks.</p><p>Record every real pick here. Copy state on your turn and paste it to Codex or Claude for a reasoned top three. K/DST stay out of VONA, are prioritized in rounds 13–14, and remain visible/selectable throughout the draft.</p></div></div>
 
 <script>
 // ── league constants ─────────────────────────────────────────────
@@ -2965,7 +2962,7 @@ const VONA_TIE_BAND=7.5;              // near-ties use Model rank as the tiebrea
 // uncertainty proxy for ceiling weighting, not a vendor-supplied standard deviation.
 
 // ── state ────────────────────────────────────────────────────────
-let slot=5, lambda=0.40, picks=[], autoPickNos=[], posFilter='', view='prep', sortBy='gain', visibleRows=[], mockPicks=[], mockMode='adp', mockRandom=false, roomKeys=false;
+let slot=3, lambda=0.40, picks=[], autoPickNos=[], posFilter='', view='prep', sortBy='gain', visibleRows=[], mockPicks=[], mockMode='adp', mockRandom=false, roomKeys=false;
 const byId=new Map(PLAYERS.map(p=>[p.id,p]));
 
 // restore from localStorage
@@ -3308,7 +3305,7 @@ function render(){
   const nm=nextMyPick();
   $('#nextpick').textContent=nm?fmtPick(nm):'—';
   $('#until').textContent=nm?(nm-curPick()===0?'NOW':String(nm-curPick())):'—';
-  const autoButtons=[$('#auto'),$('#autoTop')], total=TEAMS*ROUNDS;
+  const autoButtons=[$('#auto')], total=TEAMS*ROUNDS;
   let autoLabel='Auto to my pick', autoDisabled=false;
   if(curPick()>total){autoDisabled=true;autoLabel='Draft complete';}
   else if(isOTC){autoDisabled=true;autoLabel='Your pick';}
@@ -3321,7 +3318,6 @@ function render(){
   back.disabled=picks.length===0;
   back.textContent=picks.length?`Back ${fmtPick(picks.length)}`:'Back pick';
   back.title=picks.length?`Remove pick ${fmtPick(picks.length)} and return it to the board`:'No picks to undo';
-  $('#autoTop').hidden=view==='plan';
   $('#lamv').textContent=lambda.toFixed(2);
 
   // roster rail (QB RB RB WR WR TE FLEX K DST + bench)
@@ -3545,6 +3541,9 @@ $('#mobilenav').addEventListener('click',e=>{
   $('#mobilenav').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
 });
 $('#q').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){
+    e.preventDefault(); e.stopPropagation(); autoToMyPick(); return;
+  }
   if(e.key==='Enter'){
     const val=$('#q').value.trim();
     if(!val)return;
@@ -3553,6 +3552,9 @@ $('#q').addEventListener('keydown',e=>{
   }
 });
 document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){
+    e.preventDefault(); autoToMyPick(); return;
+  }
   if(e.key==='Escape'){
     if($('#help').classList.contains('on')){$('#help').classList.remove('on');return;}
     if(!roomKeys)return;
@@ -3595,7 +3597,6 @@ $('#helpclose').addEventListener('click',()=>$('#help').classList.remove('on'));
 $('#help').addEventListener('click',e=>{if(e.target===$('#help'))$('#help').classList.remove('on');});
 $('#reset').addEventListener('click',resetDraft);
 $('#auto').addEventListener('click',autoToMyPick);
-$('#autoTop').addEventListener('click',autoToMyPick);
 $('#copy').addEventListener('click',copyState);
 $('#backpick').addEventListener('click',undo);
 
