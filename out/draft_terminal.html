@@ -46,7 +46,7 @@ header{border-bottom:1px solid var(--rule);background:var(--panel);
 main{display:grid;grid-template-columns:230px 1fr 260px;min-height:0}
 main.snake-mode{grid-template-columns:1fr}
 main.snake-mode>.col:first-child,main.snake-mode>.col:last-child{display:none}
-.col{min-height:0;display:flex;flex-direction:column}
+.col{min-width:0;min-height:0;display:flex;flex-direction:column}
 .col+.col{border-left:1px solid var(--rule)}
 .chead{padding:8px 12px 7px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:baseline}
 .mode{display:flex;align-self:stretch;margin:-8px -12px -7px 0}
@@ -125,6 +125,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
 .planbar.on{display:flex}.planbar span{flex:1}.planbtn{padding:4px 8px;border:1px solid var(--rule);border-radius:3px;color:var(--text);font:600 9px var(--sans);letter-spacing:.08em;text-transform:uppercase}.planbtn:hover,.planbtn.on{border-color:var(--amber);color:var(--amber);background:#2b2113}
 .snakeboard{padding:0;overflow:auto;background:#10151d}
 .snakegrid{display:grid;grid-template-columns:30px repeat(12,minmax(0,1fr));min-width:0}
+.snake-mobile{display:none}
 .snakehead,.snakecorner{position:sticky;top:0;z-index:2;background:var(--panel);border-bottom:1px solid var(--rule);padding:7px 4px;text-align:center;color:var(--dim);font:600 9px var(--sans);letter-spacing:.1em;text-transform:uppercase}
 .snakecorner{left:0;z-index:3}.snakehead.mine{color:var(--amber);background:#2b2113}.snake-round{position:sticky;left:0;z-index:1;display:flex;align-items:center;justify-content:center;min-height:52px;background:var(--panel);border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);color:var(--dimmer);font:600 9px var(--sans);letter-spacing:.08em}
 .snakecell{min-height:52px;padding:6px 7px;border-right:1px solid #242c38;border-bottom:1px solid #242c38;background:#151a22;overflow:hidden}.snakecell.mock{background:#171e28}.snakecell.real{background:#1b2530}.snakecell.mine{box-shadow:inset 0 0 0 1px var(--amber);background:#302515}.snakecell .pick{display:block;color:var(--dimmer);font:9px var(--sans);letter-spacing:.06em}.snakecell .sname{display:block;margin-top:3px;color:var(--text);font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.snakecell.mine .sname{color:#ffce85}.snakecell .spos{display:block;margin-top:2px;color:var(--dim);font-size:9px}.snakeempty{color:#4b5769}
@@ -157,12 +158,12 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
   .hcell.big .v{font-size:21px}
   .hcell:nth-child(4),.hcell.grow{display:none}
   main,main.snake-mode{display:block;min-height:0}
-  main>.col,main.snake-mode>.col{display:none;border-left:0;height:100%}
+  main>.col,main.snake-mode>.col{display:none;border-left:0;width:100%;max-width:100vw;height:100%}
   main>.col.mobile-on,main.snake-mode>.col.mobile-on{display:flex}
   .chead{min-height:36px;padding:7px 9px;gap:6px}
   .mode{margin:-7px -9px -7px 0}
   .mode button,.filt button,.sort button{min-height:40px;padding-left:11px;padding-right:11px}
-  .filt,.sort,.planbar{overflow-x:auto;flex:none;scrollbar-width:none}
+  .filt,.sort,.planbar{width:100%;min-width:0;overflow-x:auto;flex:none;scrollbar-width:none}
   .filt::-webkit-scrollbar,.sort::-webkit-scrollbar,.planbar::-webkit-scrollbar{display:none}
   .planbar{align-items:stretch;padding:5px 8px}
   .planbar span{display:none}
@@ -174,14 +175,26 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
   .nm{font-size:14px}.why{font-size:8.5px}.num{font-size:12px}.num.gain{font-size:13px}
   .slots{padding:8px}.slotrow{min-height:38px;font-size:14px}.needs{font-size:12px}
   .rr{padding:10px;overscroll-behavior:contain}
-  .snakegrid{grid-template-columns:30px repeat(12,76px);min-width:942px}
+  .snakegrid{display:none}
+  .snake-mobile{display:block;padding:0 8px 12px}
+  .snake-mobile-round{padding-top:8px}
+  .snake-mobile-rhead{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;min-height:32px;padding:5px 8px;background:#10151d;border-bottom:1px solid var(--rule);color:var(--dim);font:600 10px var(--sans);letter-spacing:.1em;text-transform:uppercase}
+  .snake-mobile-rhead span:last-child{color:var(--dimmer);font-weight:500}
+  .snake-mobile-picks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding-top:6px}
+  .snake-mobile-pick{min-height:64px;padding:7px 8px;border:1px solid var(--rule);border-radius:4px;background:var(--panel);overflow:hidden}
+  .snake-mobile-pick.real{background:#1b2530}.snake-mobile-pick.mock{background:#171e28}
+  .snake-mobile-pick.mine{border-color:var(--amber);background:#302515}
+  .snake-mobile-pick .pick{display:flex;justify-content:space-between;gap:5px;color:var(--dimmer);font:9px var(--sans);letter-spacing:.06em}
+  .snake-mobile-pick.mine .pick,.snake-mobile-pick.mine .sname{color:#ffce85}
+  .snake-mobile-pick .sname{display:block;margin-top:5px;color:var(--text);font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .snake-mobile-pick .spos{display:block;margin-top:3px;color:var(--dim);font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .snake-mode #poolcount{display:none}
   footer{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;padding:0 max(6px,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(6px,env(safe-area-inset-left))}
   footer .caret,.keys{display:none}
   #q{grid-column:1/-1;width:100%;padding:10px 6px;border-bottom:1px solid var(--rule);font-size:16px}
   .fbtn{min-height:44px;padding:0 5px;border-left:0;border-right:1px solid var(--rule);font-size:8.5px;line-height:1.15}
   #auto{margin-left:0!important}
   #autoTop{display:none!important}
-  #share{display:block!important}
   #reset{border-right:0}
   .mobile-nav{display:flex;background:var(--panel);border-top:1px solid var(--rule);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
   .mobile-nav button{flex:1;min-height:44px;border-right:1px solid var(--rule);font:600 10px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
@@ -261,7 +274,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
     </div>
     <button id="auto" class="fbtn" style="margin-left:auto">Auto to my pick</button>
     <button id="copy" class="fbtn">Copy state</button>
-    <button id="share" class="fbtn" style="display:none">Share state</button>
+    <button id="backpick" class="fbtn" aria-label="Undo the most recent pick" disabled>Back pick</button>
     <button id="helpbtn" class="fbtn">Help</button>
     <button id="reset" class="fbtn">Reset draft</button>
   </footer>
@@ -3098,6 +3111,7 @@ function runMock(mode='adp',randomized=false){
 function renderSnake(){
   const meta=modelMeta(), metricLabel=mockMetricLabel();
   const cells=['<div class="snakegrid"><div class="snakecorner">RD</div>'];
+  const mobile=['<div class="snake-mobile">'];
   for(let t=1;t<=TEAMS;t++)cells.push(`<div class="snakehead ${t===slot?'mine':''}">S${t}${t===slot?' · YOU':''}</div>`);
   for(let r=1;r<=ROUNDS;r++){
     cells.push(`<div class="snake-round">R${r}${r%2?' →':' ←'}</div>`);
@@ -3107,8 +3121,18 @@ function renderSnake(){
       const metric=mockMetric(p||{},mockMode,meta);
       cells.push(`<div class="${classes}"><span class="pick">${fmtPick(n)}${team===slot?' · YOU':''}</span>${p?`<span class="sname">${p.name}</span><span class="spos">${p.pos} · ${metricLabel} ${metric<900?metric:'—'}</span>`:`<span class="sname snakeempty">—</span>`}</div>`);
     }
+    mobile.push(`<section class="snake-mobile-round"><div class="snake-mobile-rhead"><span>Round ${r}</span><span>${r%2?'Slots 1 → 12':'Slots 12 → 1'}</span></div><div class="snake-mobile-picks">`);
+    for(let inRound=1;inRound<=TEAMS;inRound++){
+      const team=r%2?inRound:TEAMS-inRound+1, n=overallOf(r,inRound);
+      const actual=picks[n-1], id=actual||mockPicks[n-1], p=byId.get(id);
+      const metric=mockMetric(p||{},mockMode,meta);
+      const classes=`snake-mobile-pick ${team===slot?'mine':''} ${actual?'real':p?'mock':''}`;
+      mobile.push(`<div class="${classes}"><span class="pick"><span>${fmtPick(n)}</span><span>S${team}${team===slot?' · YOU':''}</span></span>${p?`<span class="sname">${p.name}</span><span class="spos">${p.pos} · ${metricLabel} ${metric<900?metric:'—'}</span>`:`<span class="sname snakeempty">Available</span><span class="spos">Awaiting source or real pick</span>`}</div>`);
+    }
+    mobile.push('</div></section>');
   }
-  cells.push('</div>'); $('#board').innerHTML=cells.join('');
+  cells.push('</div>'); mobile.push('</div>');
+  $('#board').innerHTML=cells.join('')+mobile.join('');
 }
 
 // Keep the whole undrafted pool visible. K/DST are simply prioritized in the
@@ -3283,6 +3307,10 @@ function render(){
     autoLabel=nm?`Auto ${count} to ${fmtPick(nm)}`:`Auto final ${count}`;
   }
   autoButtons.forEach(b=>{b.disabled=autoDisabled;b.textContent=autoLabel;});
+  const back=$('#backpick');
+  back.disabled=picks.length===0;
+  back.textContent=picks.length?`Back ${fmtPick(picks.length)}`:'Back pick';
+  back.title=picks.length?`Remove pick ${fmtPick(picks.length)} and return it to the board`:'No picks to undo';
   $('#autoTop').hidden=view==='plan';
   $('#lamv').textContent=lambda.toFixed(2);
 
@@ -3498,18 +3526,6 @@ async function copyState(){
   if(matchMedia('(pointer:fine)').matches)$('#q').focus();
 }
 
-async function shareState(){
-  const btn=$('#share');
-  if(!navigator.share){copyState();return;}
-  try{
-    await navigator.share({title:'Fantasy draft state',text:buildState()});
-    btn.textContent='Shared';btn.classList.add('ok');
-    setTimeout(()=>{btn.textContent='Share state';btn.classList.remove('ok');},1400);
-  }catch(e){
-    if(e.name!=='AbortError')copyState();
-  }
-}
-
 // ── event listeners ──────────────────────────────────────────────
 $('#q').addEventListener('input',render);
 $('#mobilenav').addEventListener('click',e=>{
@@ -3571,7 +3587,7 @@ $('#reset').addEventListener('click',resetDraft);
 $('#auto').addEventListener('click',autoToMyPick);
 $('#autoTop').addEventListener('click',autoToMyPick);
 $('#copy').addEventListener('click',copyState);
-$('#share').addEventListener('click',shareState);
+$('#backpick').addEventListener('click',undo);
 
 setInterval(()=>{if(matchMedia('(pointer:fine)').matches&&document.activeElement!==$('#slot'))$('#q').focus();},1200);
 
