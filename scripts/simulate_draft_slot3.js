@@ -1,14 +1,21 @@
 /* Offline Monte Carlo harness for out/draft_terminal.html. Does not alter the app.
-   Set DRAFT_MARKET=espn|blend|conservative to stress-test player timing. */
+   Set DRAFT_MARKET=espn|blend|conservative to stress-test player timing.
+   Seed picks before slot 3 with DRAFT_SEED='Puka Nacua|Jahmyr Gibbs'. */
 const fs=require('fs'), vm=require('vm');
 const html=fs.readFileSync(process.env.DRAFT_HTML||'out/draft_terminal.html','utf8');
 const start=html.indexOf('const TEAMS=12, ROUNDS=14;');
 const end=html.indexOf('// ── render ───────────────────────────────────────');
 if(start<0||end<0) throw new Error('Could not locate the draft engine');
 
-const market=process.env.DRAFT_MARKET||'espn';
+const market=process.env.DRAFT_MARKET||'blend';
 if(!['espn','blend','conservative'].includes(market))throw new Error('DRAFT_MARKET must be espn, blend, or conservative');
-const timingSource="const timingMetric=p=>roomMetric(p)+ADP_TREND_WEIGHT*clamp(adpTrend(p),-20,20);";
+const seed=(process.env.DRAFT_SEED||'').split('|').map(name=>name.trim()).filter(Boolean);
+if(seed.length>2)throw new Error('DRAFT_SEED can contain at most the two picks before slot 3');
+const timingSource=`function timingMetric(p){
+  const espn=roomMetric(p)+ADP_TREND_WEIGHT*clamp(adpTrend(p),-20,20);
+  const fantasyPros=(p?.fp_adp??999)<500?p.fp_adp:((p?.ecr??999)<500?p.ecr:espn);
+  return (1-MARKET_FP_WEIGHT)*espn+MARKET_FP_WEIGHT*fantasyPros;
+}`;
 const timingScenario=`const timingMetric=p=>{
   const espn=roomMetric(p)+ADP_TREND_WEIGHT*clamp(adpTrend(p),-20,20);
   const fantasyPros=(p?.fp_adp??999)<500?p.fp_adp:((p?.ecr??999)<500?p.ecr:espn);
@@ -20,6 +27,16 @@ const originalEngine=html.slice(start,end);
 if(!originalEngine.includes(timingSource))throw new Error('Could not locate timing metric');
 const engine=originalEngine.replace(timingSource,timingScenario);
 const harness=`
+function initialPicks(){
+  const ids=[];
+  for(const name of SIM_SEED_NAMES){
+    const p=PLAYERS.find(player=>player.name===name);
+    if(!p)throw new Error('Seed player not found: '+name);
+    if(ids.includes(p.id))throw new Error('Duplicate seed player: '+name);
+    ids.push(p.id);
+  }
+  return ids;
+}
 function autoOppUntilMine(){
   const total=TEAMS*ROUNDS, meta=modelMeta(), rosters=rostersFromDraft();
   while(picks.length<total&&!myPicks().includes(curPick())){
@@ -45,7 +62,7 @@ function simulate(n,randomized){
   const totals=[], myAdp=[], oppReach=[], signatures=new Set(); let exactRecommended=0;
   const baseRep=replacement(skillPool()).rep;
   for(let d=0;d<n;d++){
-    picks=[]; autoPickNos=[]; slot=3; lambda=.40; autoOppUntilMine();
+    picks=initialPicks(); autoPickNos=[]; slot=3; lambda=.40; autoOppUntilMine();
     const mine=[];
     for(let r=1;r<=14;r++){
       const pre=new Set(remaining().map(p=>p.id));
@@ -84,8 +101,8 @@ const samples=SIM_SAMPLES;
 globalThis.RESULT_RANDOM=simulate(samples,true);
 globalThis.RESULT_CONTROL=simulate(Math.max(1,Math.round(samples/30)),false);
 `;
-const context={console, Math, Map, Set, Array, Object, JSON, SIM_RANDOM:true, SIM_MARKET:market,
+const context={console, Math, Map, Set, Array, Object, JSON, SIM_RANDOM:true, SIM_MARKET:market, SIM_SEED_NAMES:seed,
   SIM_SAMPLES:Number(process.argv[2]||6000), SIM_TRACE:process.argv[4]==='trace', localStorage:{getItem:()=>null,setItem:()=>{}}, document:{querySelector:()=>({classList:{toggle:()=>{}},textContent:'',innerHTML:'',value:'',style:{}})}};
 vm.createContext(context); vm.runInContext(engine+'\n'+harness,context,{timeout:300000});
-fs.writeFileSync(process.argv[3]||'out/draft_slot3_simulation_raw.json',JSON.stringify({market,random:context.RESULT_RANDOM,control:context.RESULT_CONTROL},null,2));
-console.log(JSON.stringify({market,random:context.RESULT_RANDOM,control:context.RESULT_CONTROL}));
+fs.writeFileSync(process.argv[3]||'out/draft_slot3_simulation_raw.json',JSON.stringify({market,seed,random:context.RESULT_RANDOM,control:context.RESULT_CONTROL},null,2));
+console.log(JSON.stringify({market,seed,random:context.RESULT_RANDOM,control:context.RESULT_CONTROL}));

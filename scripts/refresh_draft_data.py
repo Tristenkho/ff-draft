@@ -266,7 +266,7 @@ def render_report(players: list[dict], before: list[dict]) -> str:
 
 ## Model boundaries
 
-- ESPN room rank/ADP controls opponent timing and survival; FantasyPros ECR remains the model sanity check.
+- Opponent timing and survival blend 60% ESPN room rank/ADP with 40% FantasyPros half-PPR ADP; FantasyPros ECR remains the model sanity check.
 - Status is visible and zero-projection/long-term unavailable players are not automatically recommended, but every player remains clickable for accurate bookkeeping.
 - Bye week is informational; elite players are not downgraded for sharing a bye.
 """
@@ -347,7 +347,7 @@ def main() -> None:
         output = re.sub(
             r'<b>2026 RANKINGS</b><span>.*?</span>',
             f'<b>2026 RANKINGS</b><span>{len(players)}-player pool, refreshed {dt.date.today():%b %-d}. '
-            'Projections: median of ESPN, CBS, and FFToday; room timing: ESPN ADP/rank; ECR: FantasyPros.</span>',
+            'Projections: median of ESPN, CBS, and FFToday; timing: 60% ESPN room + 40% FantasyPros ADP.</span>',
             output, count=1,
         )
         output = re.sub(

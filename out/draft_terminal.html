@@ -208,7 +208,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
 <body>
 <div id="app">
   <div class="warn" id="warn">
-    <b>2026 RANKINGS</b><span>280-player pool, refreshed Aug 9. Projections: median of ESPN, CBS, and FFToday; room timing: ESPN ADP/rank; ECR: FantasyPros.</span>
+    <b>2026 RANKINGS</b><span>280-player pool, refreshed Aug 9. Projections: median of ESPN, CBS, and FFToday; timing: 60% ESPN room + 40% FantasyPros ADP.</span>
   </div>
 
   <header>
@@ -285,7 +285,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
     <button id="reset" class="fbtn">Reset draft</button>
   </footer>
 </div>
-<div class="help" id="help"><div class="helpbox"><button id="helpclose" aria-label="Close help">×</button><h2>Draft terminal guide</h2><p><b>VONA</b> is the ceiling-adjusted value lost if you wait until your next pick. Its tier band expands from 4 to 12 points with projection uncertainty, then a conservative Model/ECR rank breaks the near-tie. <b>Survives</b> is the chance the player is still available then; recent ESPN ADP movement adjusts that timing.</p><p><b>Points</b> is the median of ESPN, CBS, and FFToday when available. CBS and FFToday raw stat lines are rescored locally using player-specific 2023–24 first-down rates regressed toward position averages; rookies and unmatched players use the position rate. ADP and ECR never enter the projection. The source count, range, and confidence appear under each recommendation. Low-confidence projections are not automatically recommended. <b>Model</b> ranks custom projected points after subtracting 80% of the position replacement projection, then blends that core rank with half-PPR ECR. Lower is better: <b>blend = (1 − ECR guardrail) × core rank + guardrail × ECR</b>. A 25+ rank disagreement uses the more conservative rank as the VONA tiebreak. <b>Δ</b> is Model rank versus ECR: positive means the model is higher.</p><p><b>Ceiling weight</b> defaults to Auto: 0.15 in Rounds 1–2, 0.30 in Rounds 3–5, 0.40 in Rounds 6–8, and 0.70 in Rounds 9–12. Moving the slider switches to a manual override. Forecast disagreement remains confidence—not upside.</p><p><b>Availability</b> comes from ESPN. Injured players stay searchable so every real pick can be recorded, while zero-projection and long-term unavailable players are excluded from automatic recommendations. Bye weeks are informational.</p><p><b>Winning build</b> is QB1, TE1, ten RB/WR, K1 and D/ST1. It starts with three RB/WR through Round 4, fills RB2/WR2/FLEX by Round 8, TE by Round 9, QB by Round 10, and takes K/D/ST in Rounds 13–14. QB2 and TE2 are waiver positions in this shallow format.</p><p><b>Draft</b> shows the full available pool and lets you sort by VONA, Model, Points, ECR, or ADP. <b>Auto to my pick</b> records varied need-aware opponent selections until your next turn; use the footer button or press <b>⌘ Enter</b> on Mac / <b>Ctrl Enter</b> on Windows. <b>~</b> marks those picks in the log and copied state. <b>Snake</b> is a separate full-width board. Need-aware timing follows the current ESPN room market plus recent movement and roster needs. D/ST and K use the existing early-week streaming boards. Snake never records picks.</p><p>Record every real pick here. Copy state on your turn and paste it to Codex or Claude for a reasoned top three. K/DST stay out of VONA and are prioritized in rounds 13–14.</p></div></div>
+<div class="help" id="help"><div class="helpbox"><button id="helpclose" aria-label="Close help">×</button><h2>Draft terminal guide</h2><p><b>VONA</b> is the ceiling-adjusted value lost if you wait until your next pick. Its tier band expands from 4 to 12 points with projection uncertainty, then a conservative Model/ECR rank breaks the near-tie. <b>Survives</b> is the chance the player is still available then; timing blends 60% of the current ESPN room with 40% of FantasyPros half-PPR ADP, after recent ESPN movement.</p><p><b>Points</b> is the median of ESPN, CBS, and FFToday when available. CBS and FFToday raw stat lines are rescored locally using player-specific 2023–24 first-down rates regressed toward position averages; rookies and unmatched players use the position rate. ADP and ECR never enter the projection. The source count, range, and confidence appear under each recommendation. Low-confidence projections are not automatically recommended. <b>Model</b> ranks custom projected points after subtracting 80% of the position replacement projection, then blends that core rank with half-PPR ECR. Lower is better: <b>blend = (1 − ECR guardrail) × core rank + guardrail × ECR</b>. A 25+ rank disagreement uses the more conservative rank as the VONA tiebreak. <b>Δ</b> is Model rank versus ECR: positive means the model is higher.</p><p><b>Ceiling weight</b> defaults to Auto: 0.15 in Rounds 1–2, 0.30 in Rounds 3–5, 0.40 in Rounds 6–8, and 0.70 in Rounds 9–12. Moving the slider switches to a manual override. Forecast disagreement remains confidence—not upside.</p><p><b>Availability</b> is ESPN-primary but guarded by FantasyPros market cost. Injured players stay searchable so every real pick can be recorded, while zero-projection, low-confidence, OUT and long-term unavailable players are excluded from automatic recommendations. Bye weeks are informational.</p><p><b>Winning build</b> is QB1, TE1, ten RB/WR, K1 and D/ST1. It starts with three RB/WR through Round 4, fills RB2/WR2/FLEX by Round 8, TE by Round 9, QB by Round 10, and takes K/D/ST in Rounds 13–14. QB2 and TE2 are waiver positions in this shallow format.</p><p><b>Draft</b> shows the full available pool and lets you sort by VONA, Model, Points, ECR, or ADP. <b>Auto to my pick</b> records varied need-aware opponent selections until your next turn; use the footer button or press <b>⌘ Enter</b> on Mac / <b>Ctrl Enter</b> on Windows. <b>~</b> marks those picks in the log and copied state. <b>Snake</b> is a separate full-width board. Need-aware timing follows the blended market plus roster needs. D/ST and K use the existing early-week streaming boards. Snake never records picks.</p><p>Record every real pick here. Copy state on your turn and paste it to Codex or Claude for a reasoned top three. K/DST stay out of VONA and are prioritized in rounds 13–14.</p></div></div>
 
 <script>
 // ── league constants ─────────────────────────────────────────────
@@ -11237,6 +11237,7 @@ const KDST_ROUND=13;                  // K and DST go in rounds 13-14
 const VONA_TIER_MIN=4,VONA_TIER_MAX=12,VONA_UNCERTAINTY_SCALE=.12;
 const MODEL_REPLACEMENT_WEIGHT=.80;   // intentionally lighter than full VOR for Model rank
 const ADP_TREND_WEIGHT=.50;           // carry half of recent ESPN movement into timing
+const MARKET_FP_WEIGHT=.40;           // guard ESPN timing with cross-platform half-PPR cost
 const OPPONENT={modelWeight:0,needWeight:.20,noiseScale:.65};
 const PROJECTION_META={sources:['ESPN','CBS','FFToday'],method:'median',updated:'2026-08-09'};
 const STRATEGY={
@@ -11245,9 +11246,9 @@ const STRATEGY={
   teDeadline:9,qbDeadline:10,         // exploit deep onesie tiers without forcing them
   coreTotal:10, minCoreEach:4         // QB1 TE1 + ten RB/WR through round 12
 };
-// Projections: robust median of ESPN, CBS, and FFToday, refreshed 2026-08-08.
+// Projections: robust median of ESPN, CBS, and FFToday, refreshed 2026-08-09.
 // CBS and FFToday raw stat lines are rescored locally for the league. ESPN
-// room ADP/rank controls timing; FantasyPros half-PPR ECR is a sanity check.
+// ESPN remains the primary room signal; FantasyPros ADP guards availability.
 // Forecast confidence remains separate from the existing upside/ceiling SD.
 
 // ── state ────────────────────────────────────────────────────────
@@ -11301,7 +11302,11 @@ function mockNoise(p){
 }
 const roomMetric=p=>p?.room_rank??p?.adp??999;
 const adpTrend=p=>Number.isFinite(p?.adp_delta)?p.adp_delta:0;
-const timingMetric=p=>roomMetric(p)+ADP_TREND_WEIGHT*clamp(adpTrend(p),-20,20);
+function timingMetric(p){
+  const espn=roomMetric(p)+ADP_TREND_WEIGHT*clamp(adpTrend(p),-20,20);
+  const fantasyPros=(p?.fp_adp??999)<500?p.fp_adp:((p?.ecr??999)<500?p.ecr:espn);
+  return (1-MARKET_FP_WEIGHT)*espn+MARKET_FP_WEIGHT*fantasyPros;
+}
 function mockMetric(p,mode,meta){
   if(mode==='model'||mode==='needs')return meta.modelRank.get(p.id)||999;
   if(mode==='ecr')return p.ecr||999;
@@ -11309,7 +11314,7 @@ function mockMetric(p,mode,meta){
 }
 function mockMetricLabel(){
   if(mockMode==='model')return 'MODEL';
-  if(mockMode==='needs')return 'ESPN ROOM + NEED';
+  if(mockMode==='needs')return 'BLENDED ROOM + NEED';
   if(mockMode==='adp')return 'ESPN ROOM';
   return mockMode.toUpperCase();
 }
@@ -11533,7 +11538,7 @@ function recommendationEligibility(p,mine=myRoster(),round=recommendationRound()
   if(have[p.pos]>=(CAPS[p.pos]||0))return {ok:false,reason:`${p.pos} cap reached`};
   if(POS.includes(p.pos)&&p.proj<=0)return {ok:false,reason:`no current projection${p.status&&p.status!=='ACTIVE'?' · '+p.status.replaceAll('_',' '):''}`};
   if(POS.includes(p.pos)&&p.proj_reliability==='low')return {ok:false,reason:'low projection confidence'};
-  if(['INJURY_RESERVE','PHYSICALLY_UNABLE_TO_PERFORM','SUSPENSION'].includes(p.status))
+  if(['OUT','INJURY_RESERVE','PHYSICALLY_UNABLE_TO_PERFORM','SUSPENSION'].includes(p.status))
     return {ok:false,reason:p.status.replaceAll('_',' ').toLowerCase()};
 
   if(round>=KDST_ROUND){
@@ -11868,7 +11873,7 @@ function buildState(){
   L.push(`DRAFT STATE — on the clock ${fmtPick(curPick())} (round ${curRound()} of ${ROUNDS})`);
   L.push(`My slot ${slot}/${TEAMS} · ceiling weight lambda ${currentLambda().toFixed(2)} (${lambdaAuto?'automatic by round':'manual'}) · ECR guardrail ${Math.round(ecrWeight*100)}%`);
   L.push(`Projection: ${PROJECTION_META.method} of ${PROJECTION_META.sources.join(', ')} where available, each rescored for league settings using regressed 2023-24 player first-down rates (position fallback for rookies/unmatched players); source disagreement is tracked separately from upside; ADP/ECR are not projection inputs.`);
-  L.push(`Model: core rank = custom projected points − ${(MODEL_REPLACEMENT_WEIGHT*100).toFixed(0)}% of that position's replacement projection; generic ceiling SD is excluded. Blend score (lower is better) = ${(1-ecrWeight).toFixed(2)} × core rank + ${ecrWeight.toFixed(2)} × half-PPR ECR, then re-ranked into Model. VONA tiers use a ${VONA_TIER_MIN}–${VONA_TIER_MAX}-point uncertainty-aware band; 25+ rank Model/ECR gaps use the more conservative rank as the tiebreak. ESPN room timing includes ${Math.round(ADP_TREND_WEIGHT*100)}% of movement since the prior refresh.`);
+  L.push(`Model: core rank = custom projected points − ${(MODEL_REPLACEMENT_WEIGHT*100).toFixed(0)}% of that position's replacement projection; generic ceiling SD is excluded. Blend score (lower is better) = ${(1-ecrWeight).toFixed(2)} × core rank + ${ecrWeight.toFixed(2)} × half-PPR ECR, then re-ranked into Model. VONA tiers use a ${VONA_TIER_MIN}–${VONA_TIER_MAX}-point uncertainty-aware band; 25+ rank Model/ECR gaps use the more conservative rank as the tiebreak. Timing is ${Math.round((1-MARKET_FP_WEIGHT)*100)}% ESPN room (including recent movement) + ${Math.round(MARKET_FP_WEIGHT*100)}% FantasyPros half-PPR ADP.`);
   L.push('Build guardrails: QB1/TE1 only; three RB/WR by Round 4; RB2/WR2/FLEX by Round 8; TE by Round 9; QB by Round 10; ten RB/WR with at least four each; K + D/ST in Rounds 13–14.');
   L.push(`My next pick ${nm?fmtPick(nm):'—'}${nxt?`, then ${fmtPick(nxt)}`:' (last pick)'}`);
   const open=openStarterSlots(mine);
@@ -11896,7 +11901,7 @@ function buildState(){
 
   const rows=computeBoard().slice(0,8);
   L.push(`TOP CANDIDATES — VONA = value lost if I wait until ${nxt?fmtPick(nxt):'my next pick'}; tier bands expand with projection uncertainty (${VONA_TIER_MIN}–${VONA_TIER_MAX} points)`);
-  L.push(`(survives = P(still on board at ${nxt?fmtPick(nxt):'next pick'}), using current ESPN room timing plus half of recent ADP movement, re-ranked among remaining)`);
+  L.push(`(survives = P(still on board at ${nxt?fmtPick(nxt):'next pick'}), using ${Math.round((1-MARKET_FP_WEIGHT)*100)}% ESPN room timing + ${Math.round(MARKET_FP_WEIGHT*100)}% FantasyPros ADP, re-ranked among remaining)`);
   rows.forEach((r,i)=>L.push(
     `  ${String(i+1).padStart(2)}. ${r.p.name.padEnd(22)} ${r.p.pos.padEnd(3)} ${(r.p.team||'—').padEnd(4)}`+
     ` pts ${r.p.proj.toFixed(0).padStart(3)} (${r.p.proj_n||0}src ${(r.p.proj_reliability||'medium').toUpperCase()} ${r.p.proj_low?.toFixed(0)??'—'}–${r.p.proj_high?.toFixed(0)??'—'}) · VONA T${r.vonaTier} ${(r.gain>0?'+':'')+r.gain.toFixed(1)} · model ${rankText(r.modelRank)} [core ${r.coreRank}, ECR ${r.ecrRank}, blend ${r.blendScore.toFixed(1)}${r.needsReview?', REVIEW '+r.decisionRank:''}] · ESPN ADP ${r.p.adp.toFixed(0)} (${adpTrend(r.p)>0?'+':''}${adpTrend(r.p).toFixed(1)}) / timing ${timingMetric(r.p).toFixed(0)}${r.p.status&&r.p.status!=='ACTIVE'?' · '+r.p.status.replaceAll('_',' '):''} · survives ${(r.surv*100).toFixed(0)}%`));
