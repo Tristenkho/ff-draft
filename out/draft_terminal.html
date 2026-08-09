@@ -220,6 +220,11 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
         <input type="range" id="lam" min="0" max="1" step="0.05" value="0.4">
         <span class="v" id="lamv">0.40</span>
       </div>
+      <div class="lam">
+        <span class="eyebrow">ECR guardrail</span>
+        <input type="range" id="ecrw" min="0" max="0.5" step="0.05" value="0.2">
+        <span class="v" id="ecrwv">20%</span>
+      </div>
     </div>
   </header>
 
@@ -277,7 +282,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
     <button id="reset" class="fbtn">Reset draft</button>
   </footer>
 </div>
-<div class="help" id="help"><div class="helpbox"><button id="helpclose" aria-label="Close help">×</button><h2>Draft terminal guide</h2><p><b>VONA</b> is the ceiling-adjusted value lost if you wait until your next pick. Players within 7.5 VONA points share a tier, then Model rank breaks the near-tie. <b>Survives</b> is the chance the player is still available then.</p><p><b>Points</b> is the median of ESPN, CBS, and FFToday when available. CBS and FFToday raw stat lines are rescored locally for this league; ADP and ECR never enter the projection. The source range appears under each recommendation. <b>Model</b> adds replacement value, the existing ceiling/upside weighting, and a 20% half-PPR ECR sanity check. Projection uncertainty is tracked separately so disagreement is not mistaken for upside. <b>Δ</b> is Model rank versus ECR: a positive number means the model is higher on the player.</p><p><b>Availability</b> comes from ESPN. Injured players stay searchable so every real pick can be recorded, while zero-projection and long-term unavailable players are excluded from automatic recommendations. Bye weeks come from the official NFL schedule and are informational—not a reason to pass on an elite player.</p><p><b>Winning build</b> defaults to one QB, one TE, and ten RB/WR. It starts with three RB/WR through Round 4, completes every skill starter by Round 8, and takes K and D/ST in Rounds 13–14. One late QB2 or TE2 may replace a depth pick only when it beats the best legal RB/WR by a full value threshold; TE has the lower hurdle because it can fill FLEX. Players that would block the path stay searchable but rank below eligible recommendations.</p><p><b>Draft</b> shows the full available pool and lets you sort by VONA, Model, Points, ECR, or ADP. <b>Auto to my pick</b> records varied need-aware opponent selections until your next turn; use the footer button or press <b>⌘ Enter</b> on Mac / <b>Ctrl Enter</b> on Windows. <b>~</b> marks those picks in the log and copied state. <b>Snake</b> is a separate full-width board. Model and ECR follow their source; <b>Need-aware</b> follows a 65% ESPN ADP, 25% ESPN draft-room rank, 10% ECR timing blend while adjusting for each team's roster. Its randomness scales with observed ADP dispersion, calibrated on 2018–2024 draft markets. D/ST is an early-season streaming board weighted 55% Week 1, 25% Week 2, 10% Week 3, 7.5% season projection, and 2.5% ECR. Kicker uses 40% Week 1, 20% Week 2, 10% Week 3, 22.5% season projection, and 7.5% ECR so strong holds stay high while the fallback list remains matchup-aware. Snake never records picks.</p><p>Record every real pick here. Copy state on your turn and paste it to Codex or Claude for a reasoned top three. K/DST stay out of VONA, are prioritized in rounds 13–14, and remain visible/selectable throughout the draft.</p></div></div>
+<div class="help" id="help"><div class="helpbox"><button id="helpclose" aria-label="Close help">×</button><h2>Draft terminal guide</h2><p><b>VONA</b> is the ceiling-adjusted value lost if you wait until your next pick. Players within 7.5 VONA points share a tier, then Model rank breaks the near-tie. <b>Survives</b> is the chance the player is still available then.</p><p><b>Points</b> is the median of ESPN, CBS, and FFToday when available. CBS and FFToday raw stat lines are rescored locally for this league; ADP and ECR never enter the projection. The source range appears under each recommendation. <b>Model</b> first ranks ceiling value above position replacement, then blends that rank with half-PPR ECR. Lower is better: <b>blend = (1 − ECR guardrail) × core rank + guardrail × ECR</b>; the resulting blend score is ranked again into Model. The row explanation shows all three inputs, and the live guardrail slider lets you audit its effect. Projection uncertainty is tracked separately so disagreement is not mistaken for upside. <b>Δ</b> is Model rank versus ECR: a positive number means the model is higher on the player.</p><p><b>Availability</b> comes from ESPN. Injured players stay searchable so every real pick can be recorded, while zero-projection and long-term unavailable players are excluded from automatic recommendations. Bye weeks come from the official NFL schedule and are informational—not a reason to pass on an elite player.</p><p><b>Winning build</b> defaults to one QB, one TE, and ten RB/WR. It starts with three RB/WR through Round 4, completes every skill starter by Round 8, and takes K and D/ST in Rounds 13–14. One late QB2 or TE2 may replace a depth pick only when it beats the best legal RB/WR by a full value threshold; TE has the lower hurdle because it can fill FLEX. Players that would block the path stay searchable but rank below eligible recommendations.</p><p><b>Draft</b> shows the full available pool and lets you sort by VONA, Model, Points, ECR, or ADP. <b>Auto to my pick</b> records varied need-aware opponent selections until your next turn; use the footer button or press <b>⌘ Enter</b> on Mac / <b>Ctrl Enter</b> on Windows. <b>~</b> marks those picks in the log and copied state. <b>Snake</b> is a separate full-width board. Model and ECR follow their source; <b>Need-aware</b> follows a 65% ESPN ADP, 25% ESPN draft-room rank, 10% ECR timing blend while adjusting for each team's roster. Its randomness scales with observed ADP dispersion, calibrated on 2018–2024 draft markets. D/ST is an early-season streaming board weighted 55% Week 1, 25% Week 2, 10% Week 3, 7.5% season projection, and 2.5% ECR. Kicker uses 40% Week 1, 20% Week 2, 10% Week 3, 22.5% season projection, and 7.5% ECR so strong holds stay high while the fallback list remains matchup-aware. Snake never records picks.</p><p>Record every real pick here. Copy state on your turn and paste it to Codex or Claude for a reasoned top three. K/DST stay out of VONA, are prioritized in rounds 13–14, and remain visible/selectable throughout the draft.</p></div></div>
 
 <script>
 // ── league constants ─────────────────────────────────────────────
@@ -8721,7 +8726,7 @@ const STRATEGY={
 // Forecast confidence remains separate from the existing upside/ceiling SD.
 
 // ── state ────────────────────────────────────────────────────────
-let slot=3, lambda=0.40, picks=[], autoPickNos=[], posFilter='', view='prep', sortBy='gain', visibleRows=[], mockPicks=[], mockMode='adp', mockRandom=false, roomKeys=false;
+let slot=3, lambda=0.40, ecrWeight=.20, picks=[], autoPickNos=[], posFilter='', view='prep', sortBy='gain', visibleRows=[], mockPicks=[], mockMode='adp', mockRandom=false, roomKeys=false;
 const byId=new Map(PLAYERS.map(p=>[p.id,p]));
 
 // restore from localStorage
@@ -8731,8 +8736,9 @@ const byId=new Map(PLAYERS.map(p=>[p.id,p]));
   if(Array.isArray(s.autoPickNos))autoPickNos=s.autoPickNos.filter(n=>Number.isInteger(n)&&n>=1&&n<=picks.length);
   if(s.slot!=null)slot=Math.max(1,Math.min(12,+s.slot));
   if(s.lambda!=null)lambda=+s.lambda;
+  if(s.ecrWeight!=null)ecrWeight=Math.max(0,Math.min(.5,+s.ecrWeight));
 }catch(e){}}());
-function save(){localStorage.setItem('ff26-v3',JSON.stringify({picks,autoPickNos,slot,lambda}));}
+function save(){localStorage.setItem('ff26-v3',JSON.stringify({picks,autoPickNos,slot,lambda,ecrWeight}));}
 
 const $=s=>document.querySelector(s);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -9055,13 +9061,11 @@ function modelMeta(){
   const pool=skillPool(), {rep}=replacement(pool);
   const core=[...pool].sort((a,b)=>(value(b)-(rep[b.pos]||0))-(value(a)-(rep[a.pos]||0)));
   const coreRank=new Map(core.map((p,i)=>[p.id,i+1]));
-  const blended=[...pool].sort((a,b)=>{
-    const ar=.8*(coreRank.get(a.id)||999)+.2*(a.ecr>500?(coreRank.get(a.id)||999):a.ecr);
-    const br=.8*(coreRank.get(b.id)||999)+.2*(b.ecr>500?(coreRank.get(b.id)||999):b.ecr);
-    return ar-br;
-  });
+  const ecrRank=p=>p.ecr>500?(coreRank.get(p.id)||999):p.ecr;
+  const blendScore=p=>(1-ecrWeight)*(coreRank.get(p.id)||999)+ecrWeight*ecrRank(p);
+  const blended=[...pool].sort((a,b)=>blendScore(a)-blendScore(b));
   const modelRank=new Map(blended.map((p,i)=>[p.id,i+1]));
-  return {coreRank,modelRank};
+  return {coreRank,modelRank,ecrRank,blendScore};
 }
 
 function rankText(n){return n&&n<900?String(n):'—';}
@@ -9072,16 +9076,17 @@ function projectionText(p){
 }
 function statusText(p){return p.status&&p.status!=='ACTIVE'?`${p.status.replaceAll('_',' ').toLowerCase()} · `:'';}
 function why(r){
+  const audit=r.isSpecial?'':` · core ${r.coreRank} × ${(1-ecrWeight).toFixed(2)} + ECR ${r.ecrRank} × ${ecrWeight.toFixed(2)} = ${r.blendScore.toFixed(1)}`;
   if(!r.eligible)return `not recommended · ${r.blockedReason}`;
   if(r.luxury){const edge=r.p.pos==='TE'?STRATEGY.te2Edge:STRATEGY.qb2Edge;
     return `${statusText(r.p)}late ${r.p.pos} value exception · clears RB/WR by ${edge.toFixed(1)}+ ${r.p.pos==='TE'?'ceiling points':'VONA'} · ${projectionText(r.p)}`;}
   const open=openStarterSlots(myRoster());
   const need=open[r.p.pos]||(['RB','WR','TE'].includes(r.p.pos)&&open.FLEX?1:0);
-  if(r.vonaTier===1)return `${statusText(r.p)}${need?'starter need · ':''}VONA T1 · Model ${rankText(r.modelRank)} tiebreak · ${projectionText(r.p)}`;
+  if(r.vonaTier===1)return `${statusText(r.p)}${need?'starter need · ':''}VONA T1 · Model ${rankText(r.modelRank)} tiebreak${audit} · ${projectionText(r.p)}`;
   const diff=r.p.ecr>500?0:r.p.ecr-r.modelRank;
   const timing=r.surv<.45?'likely gone next turn':r.surv<.7?'at risk by next turn':'reasonable wait';
   const valueFlag=Math.abs(diff)>=10?(diff>0?`model ${diff} ahead of ECR`:`ECR ${-diff} ahead of model`):timing;
-  return `${statusText(r.p)}${need?'starter need · ':''}${valueFlag} · ${projectionText(r.p)}`;
+  return `${statusText(r.p)}${need?'starter need · ':''}${valueFlag}${audit} · ${projectionText(r.p)}`;
 }
 
 function planText(mine){
@@ -9119,7 +9124,7 @@ function computeBoard(){
     // Special teams are excluded from VONA and the skill-player model. Their
     // late-round order is projection-only, but they remain searchable/selectable.
     if(isSpecial)return {p,v:p.proj,vor:0,gain:0,surv:nxt?survives(p,nxt,ranked):0,
-      modelRank:999,isSpecial:true,eligible:eligibility.ok,blockedReason:eligibility.reason,
+      modelRank:999,coreRank:999,ecrRank:999,blendScore:999,isSpecial:true,eligible:eligibility.ok,blockedReason:eligibility.reason,
       luxury:!!eligibility.luxury};
     const v=value(p);
     const vor=v-(rep[p.pos]||0);
@@ -9127,6 +9132,7 @@ function computeBoard(){
     const gain=nxt?(v-eNext)*needFactor(p.pos):vor*needFactor(p.pos);
     const surv=nxt?survives(p,nxt,ranked):0;
     return {p,v,vor,gain,surv,modelRank:meta.modelRank.get(p.id)||999,
+      coreRank:meta.coreRank.get(p.id)||999,ecrRank:meta.ecrRank(p),blendScore:meta.blendScore(p),
       eligible:eligibility.ok,blockedReason:eligibility.reason,luxury:!!eligibility.luxury};
   });
   const eligibleCore=rows.filter(r=>r.eligible&&['RB','WR'].includes(r.p.pos));
@@ -9190,6 +9196,7 @@ function render(){
   back.textContent=picks.length?`Back ${fmtPick(picks.length)}`:'Back pick';
   back.title=picks.length?`Remove pick ${fmtPick(picks.length)} and return it to the board`:'No picks to undo';
   $('#lamv').textContent=lambda.toFixed(2);
+  $('#ecrwv').textContent=Math.round(ecrWeight*100)+'%';
 
   // roster rail (QB RB RB WR WR TE FLEX K DST + bench)
   const mine=myRoster();
@@ -9346,9 +9353,9 @@ function buildState(){
   const mine=myRoster(), nm=nextMyPick(), nxt=pickAfterNext();
   const L=[];
   L.push(`DRAFT STATE — on the clock ${fmtPick(curPick())} (round ${curRound()} of ${ROUNDS})`);
-  L.push(`My slot ${slot}/${TEAMS} · ceiling weight lambda ${lambda.toFixed(2)}`);
+  L.push(`My slot ${slot}/${TEAMS} · ceiling weight lambda ${lambda.toFixed(2)} · ECR guardrail ${Math.round(ecrWeight*100)}%`);
   L.push(`Projection: ${PROJECTION_META.method} of ${PROJECTION_META.sources.join(', ')} where available, each rescored for league settings; source disagreement is tracked separately from upside; ADP/ECR are not projection inputs.`);
-  L.push(`Model: custom league scoring, ceiling weighting, replacement value, then an 80/20 half-PPR ECR sanity check; VONA gaps under ${VONA_TIE_BAND.toFixed(1)} points share a tier and use Model rank as the tiebreak; ESPN room ADP/rank controls survival/timing.`);
+  L.push(`Model: core rank = ceiling-adjusted custom points above position replacement. Blend score (lower is better) = ${(1-ecrWeight).toFixed(2)} × core rank + ${ecrWeight.toFixed(2)} × half-PPR ECR, then re-ranked into Model. VONA gaps under ${VONA_TIE_BAND.toFixed(1)} points share a tier and use Model rank as the tiebreak; ESPN room ADP/rank controls survival/timing.`);
   L.push('Build guardrails: default QB1/TE1; three RB/WR by Round 4; all skill starters by Round 8; ten RB/WR with at least four each; one late QB2 or TE2 only when it clears the position-appropriate RB/WR value threshold; K + D/ST in Rounds 13–14.');
   L.push(`My next pick ${nm?fmtPick(nm):'—'}${nxt?`, then ${fmtPick(nxt)}`:' (last pick)'}`);
   const open=openStarterSlots(mine);
@@ -9379,7 +9386,7 @@ function buildState(){
   L.push(`(survives = P(still on board at ${nxt?fmtPick(nxt):'next pick'}), using ESPN room timing re-ranked among remaining)`);
   rows.forEach((r,i)=>L.push(
     `  ${String(i+1).padStart(2)}. ${r.p.name.padEnd(22)} ${r.p.pos.padEnd(3)} ${(r.p.team||'—').padEnd(4)}`+
-    ` pts ${r.p.proj.toFixed(0).padStart(3)} (${r.p.proj_n||0}src ${r.p.proj_low?.toFixed(0)??'—'}–${r.p.proj_high?.toFixed(0)??'—'}) · VONA T${r.vonaTier} ${(r.gain>0?'+':'')+r.gain.toFixed(1)} · model ${rankText(r.modelRank)} · ECR ${rankText(r.p.ecr)} · ESPN ADP ${r.p.adp.toFixed(0)} / room ${roomMetric(r.p).toFixed(0)}${r.p.status&&r.p.status!=='ACTIVE'?' · '+r.p.status.replaceAll('_',' '):''} · survives ${(r.surv*100).toFixed(0)}%`));
+    ` pts ${r.p.proj.toFixed(0).padStart(3)} (${r.p.proj_n||0}src ${r.p.proj_low?.toFixed(0)??'—'}–${r.p.proj_high?.toFixed(0)??'—'}) · VONA T${r.vonaTier} ${(r.gain>0?'+':'')+r.gain.toFixed(1)} · model ${rankText(r.modelRank)} [core ${r.coreRank}, ECR ${r.ecrRank}, blend ${r.blendScore.toFixed(1)}] · ESPN ADP ${r.p.adp.toFixed(0)} / room ${roomMetric(r.p).toFixed(0)}${r.p.status&&r.p.status!=='ACTIVE'?' · '+r.p.status.replaceAll('_',' '):''} · survives ${(r.surv*100).toFixed(0)}%`));
   L.push('');
 
   if(picks.length){
@@ -9458,6 +9465,7 @@ document.addEventListener('pointerdown',e=>setRoomKeys(!!e.target.closest('#room
 $('#roomcol').addEventListener('focusin',()=>setRoomKeys(true));
 $('#slot').addEventListener('input',e=>{slot=clamp(parseInt(e.target.value)||1,1,TEAMS);save();render();});
 $('#lam').addEventListener('input',e=>{lambda=parseFloat(e.target.value);save();render();});
+$('#ecrw').addEventListener('input',e=>{ecrWeight=parseFloat(e.target.value);save();render();});
 $('#filt').addEventListener('click',e=>{
   const b=e.target.closest('button[data-pos]'); if(!b)return;
   posFilter=b.dataset.pos; render();
@@ -9486,6 +9494,7 @@ setInterval(()=>{if(matchMedia('(pointer:fine)').matches&&document.activeElement
 // sync inputs with loaded state, then render
 $('#slot').value=slot;
 $('#lam').value=lambda;
+$('#ecrw').value=ecrWeight;
 render();
 </script>
 </body>
