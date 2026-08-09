@@ -27,6 +27,7 @@ CREDS = ROOT / ".espn.json"
 CACHE = ROOT / ".cache" / "draft-data-2026"
 RAW = ROOT / "out" / "draft_data_refresh_raw.json"
 REPORT = ROOT / "out" / "draft_data_refresh_analysis.md"
+SPECIAL_REPORT = ROOT / "out" / "special_teams_streaming_analysis.md"
 FP_URL = "https://www.fantasypros.com/nfl/rankings/half-point-ppr-cheatsheets.php"
 
 POSITION_ID = {1: "QB", 2: "RB", 3: "WR", 4: "TE", 5: "K", 16: "DST"}
@@ -62,18 +63,19 @@ def fetch(url: str, path: Path, refresh: bool, headers: dict | None = None) -> s
     return path.read_text(errors="replace")
 
 
-def espn_rows(refresh: bool) -> list[dict]:
+def espn_rows(refresh: bool, scoring_period: int = 0) -> list[dict]:
     creds = json.loads(CREDS.read_text())
     url = ("https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl"
            f"/seasons/{creds.get('season', 2026)}/segments/0/leagues/{creds['league_id']}"
-           "?scoringPeriodId=0&view=kona_player_info")
+           f"?scoringPeriodId={scoring_period}&view=kona_player_info")
     fantasy_filter = {"players": {"limit": 1000, "sortPercOwned": {"sortPriority": 1, "sortAsc": False},
                                    "filterActive": {"value": True}}}
     headers = {
         "Cookie": f"espn_s2={creds['espn_s2']}; SWID={creds['swid']}",
         "Accept": "application/json", "x-fantasy-filter": json.dumps(fantasy_filter),
     }
-    return json.loads(fetch(url, CACHE / "espn_players.json", refresh, headers))["players"]
+    cache_name = "espn_players.json" if scoring_period == 0 else f"espn_players_week_{scoring_period}.json"
+    return json.loads(fetch(url, CACHE / cache_name, refresh, headers))["players"]
 
 
 def fantasypros(refresh: bool) -> dict[str, dict]:
@@ -86,10 +88,38 @@ def fantasypros(refresh: bool) -> dict[str, dict]:
     return {ensemble.normalize(player["player_name"]): player for player in players}
 
 
+def espn_schedule(refresh: bool) -> dict[int, dict[str, str]]:
+    aliases = {"JAC": "JAX", "WSH": "WAS"}
+    result = {}
+    for week in (1, 2, 3):
+        url = ("https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
+               f"?dates=2026&seasontype=2&week={week}&limit=100")
+        payload = json.loads(fetch(url, CACHE / f"espn_schedule_week_{week}.json", refresh,
+                                   {"User-Agent": "Python-urllib/3.14"}))
+        matchups = {}
+        for event in payload.get("events", []):
+            competitors = event["competitions"][0]["competitors"]
+            if len(competitors) != 2:
+                continue
+            for team, opponent in ((competitors[0], competitors[1]), (competitors[1], competitors[0])):
+                abbreviation = aliases.get(team["team"]["abbreviation"], team["team"]["abbreviation"])
+                other = aliases.get(opponent["team"]["abbreviation"], opponent["team"]["abbreviation"])
+                matchups[abbreviation] = ("vs " if team["homeAway"] == "home" else "@ ") + other
+        result[week] = matchups
+    return result
+
+
 def season_projection(player: dict) -> float:
     values = [stat.get("appliedTotal", 0) for stat in player.get("stats", [])
               if stat.get("seasonId") == 2026 and stat.get("scoringPeriodId") == 0
               and stat.get("statSourceId") == 1 and stat.get("statSplitTypeId") == 0]
+    return float(values[0]) if values else 0.0
+
+
+def weekly_projection(player: dict, scoring_period: int) -> float:
+    values = [stat.get("appliedTotal", 0) for stat in player.get("stats", [])
+              if stat.get("seasonId") == 2026 and stat.get("scoringPeriodId") == scoring_period
+              and stat.get("statSourceId") == 1 and stat.get("statSplitTypeId") == 1]
     return float(values[0]) if values else 0.0
 
 
@@ -166,13 +196,37 @@ def choose_pool(candidates: list[dict]) -> list[dict]:
     return output
 
 
+def add_weekly_projections(players: list[dict], weekly_rows: dict[int, list[dict]], schedule: dict[int, dict[str, str]]) -> None:
+    weekly_by_period = {
+        period: {row["player"]["id"]: row["player"] for row in rows}
+        for period, rows in weekly_rows.items()
+    }
+    for player in players:
+        if player["pos"] not in ("K", "DST"):
+            continue
+        for period in (1, 2, 3):
+            weekly = weekly_by_period[period].get(player["id"], {})
+            player[f"week{period}_proj"] = round(weekly_projection(weekly, period), 1)
+            player[f"week{period}_opp"] = schedule[period].get(player["team"], "TBD")
+
+
 def add_special_ranks(players: list[dict]) -> None:
     for position in ("K", "DST"):
         group = [p for p in players if p["pos"] == position]
-        projection_rank = {p["id"]: index + 1 for index, p in enumerate(sorted(group, key=lambda p: -p["proj"]))}
+        ranks = {
+            field: {p["id"]: index + 1 for index, p in enumerate(
+                sorted(group, key=lambda p: (-p[field], -p["proj"], p["name"])))}
+            for field in ("week1_proj", "week2_proj", "week3_proj", "proj")
+        }
+        weights = ({"week1_proj": .40, "week2_proj": .20, "week3_proj": .10, "proj": .225, "ecr": .075}
+                   if position == "K" else
+                   {"week1_proj": .55, "week2_proj": .25, "week3_proj": .10, "proj": .075, "ecr": .025})
         for player in group:
-            player["special_score"] = round(.75 * projection_rank[player["id"]] + .25 * min(player["ecr_pos"], 32), 2)
-        ordered = sorted(group, key=lambda p: (p["special_score"], -p["proj"]))
+            score = sum(weight * ranks[field][player["id"]] for field, weight in weights.items() if field != "ecr")
+            score += weights["ecr"] * min(player["ecr_pos"], 32)
+            player["special_score"] = round(score, 2)
+            player["special_mode"] = "weekly fallback" if position == "K" else "early stream"
+        ordered = sorted(group, key=lambda p: (p["special_score"], -p["week1_proj"], -p["proj"]))
         for index, player in enumerate(ordered, 1):
             player["special_rank"] = index
 
@@ -192,7 +246,8 @@ def render_report(players: list[dict], before: list[dict]) -> str:
 - Position coverage: {', '.join(f'{pos} {count}' for pos, count in counts.items())}.
 - ESPN custom projections, ESPN room ADP/rank, current teams, and status were refreshed {dt.date.today().isoformat()}.
 - All 32 NFL bye weeks are populated from the official schedule.
-- K and D/ST use a 75% custom-projection rank / 25% FantasyPros positional-ECR rank blend.
+- D/ST is a streaming board: 55% Week 1, 25% Week 2, 10% Week 3, 7.5% season projection, and 2.5% positional ECR.
+- K balances immediate and season-long value: 40% Week 1, 20% Week 2, 10% Week 3, 22.5% season projection, and 7.5% positional ECR.
 - {len(players) - BASELINE_POOL_SIZE} net players were added. Skill players without a current projection: {len(zero)}; each remains searchable and status-flagged.
 
 ## Status coverage
@@ -211,6 +266,45 @@ def render_report(players: list[dict], before: list[dict]) -> str:
 """
 
 
+def render_special_report(players: list[dict]) -> str:
+    def table(position: str) -> str:
+        group = sorted((p for p in players if p["pos"] == position), key=lambda p: p["special_rank"])
+        return "\n".join(
+            f'| {p["special_rank"]} | {p["name"]} | {p["team"]} | {p["week1_opp"]} | {p["week1_proj"]:.1f} | '
+            f'{p["week2_opp"]} | {p["week2_proj"]:.1f} | {p["week3_opp"]} | {p["week3_proj"]:.1f} | '
+            f'{p["proj"]:.1f} | {p["ecr_pos"]} |'
+            for p in group[:16]
+        )
+
+    return f"""# Early-season special-teams streaming board
+
+Generated {dt.date.today().isoformat()} from ESPN's authenticated weekly projections scored under this league's custom settings.
+
+## Draft policy
+
+- Keep K and D/ST out of VONA and wait until Rounds 13–14.
+- D/ST is treated as a stream, not a season-long hold: Week 1 carries 55% of its rank, Week 2 25%, Week 3 10%, season projection 7.5%, and positional ECR 2.5%.
+- K keeps more season-long signal because elite kickers can be worth holding: Week 1 carries 40%, Week 2 20%, Week 3 10%, season projection 22.5%, and positional ECR 7.5%. If the preferred options are gone, the remaining order naturally becomes an early-week streaming list.
+- Weekly projections are volatile and should be refreshed near the draft and again before setting the Week 1 lineup. Opponent, injuries, depth-chart changes, weather, and betting markets can materially change this order.
+
+## D/ST early-stream board
+
+| Rank | Defense | Team | W1 opp | W1 pts | W2 opp | W2 pts | W3 opp | W3 pts | Season | ECR pos |
+| ---: | --- | --- | --- | ---: | --- | ---: | --- | ---: | ---: | ---: |
+{table("DST")}
+
+## Kicker draft/fallback board
+
+| Rank | Kicker | Team | W1 opp | W1 pts | W2 opp | W2 pts | W3 opp | W3 pts | Season | ECR pos |
+| ---: | --- | --- | --- | ---: | --- | ---: | --- | ---: | ---: | ---: |
+{table("K")}
+
+## Interpretation
+
+This ranking is a draft-day acquisition list, not a promise to hold the player. For D/ST, prioritize the best Week 1 option still available and reassess weekly. For K, hold a top option while usage and offense remain strong; otherwise stream based on the next matchup rather than protecting draft capital.
+"""
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--refresh", action="store_true")
@@ -220,11 +314,14 @@ def main() -> None:
     old_by_id = {p["id"]: p for p in before}
     fp = fantasypros(args.refresh)
     rows = espn_rows(args.refresh)
+    weekly_rows = {period: espn_rows(args.refresh, period) for period in (1, 2, 3)}
+    schedule = espn_schedule(args.refresh)
     candidates = [player for row in rows if (player := candidate(row, fp, old_by_id))]
     pool = choose_pool(candidates)
     cbs, fftoday, metadata = ensemble.source_data(args.refresh)
     metadata["sources"]["ESPN"] = {"date": dt.date.today().isoformat(), "role": "live custom-league projection"}
     players, analysis = ensemble.build_ensemble(pool, cbs, fftoday, metadata)
+    add_weekly_projections(players, weekly_rows, schedule)
     # New/rescued players need an upside input even when the old ESPN row was zero.
     for player in players:
         if player["proj"] > 0 and player["sd"] <= 0:
@@ -233,6 +330,7 @@ def main() -> None:
     players.sort(key=lambda p: (p["room_rank"], p["name"]))
     report = render_report(players, before)
     REPORT.write_text(report)
+    SPECIAL_REPORT.write_text(render_special_report(players))
     RAW.write_text(json.dumps({"metadata": metadata, "players": players}, indent=2))
     ensemble.REPORT.write_text(ensemble.render_report(analysis))
     ensemble.RAW.write_text(json.dumps(analysis, indent=2))
