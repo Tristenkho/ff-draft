@@ -292,7 +292,7 @@ The separate player `proj_unc` field combines a position-specific historical res
 - ESPN is the current authenticated league-scored projection embedded by `refresh_draft_data.py`.
 - CBS and FFToday do not project first downs, so the existing empirical reception/carry rates are applied. Passing first downs use 0.518 per completion from nflverse 2023–2024 player stats.
 - FFToday does not expose projected fumbles in its public table; its source score therefore omits that small component. CBS and ESPN retain their fumble assumptions.
-- K and D/ST use ESPN's league-scored projection because equivalent raw multi-source scoring was not available under this league's distance and defense-tier rules; their late-round order adds a 25% positional-consensus sanity check.
+- K and D/ST use ESPN's league-scored season and Weeks 1–3 projections because equivalent raw multi-source scoring was not available under this league's distance and defense-tier rules. D/ST is ranked primarily for early streaming; kicker retains more season-long and consensus signal.
 """
 
 
