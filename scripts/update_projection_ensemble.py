@@ -200,7 +200,7 @@ def build_ensemble(players: list[dict], cbs: dict, fftoday: dict, metadata: dict
         values = list(sources.values())
         if not values:
             values = [espn]
-        projection = statistics.median(values) if len(values) >= 2 else espn
+        projection = statistics.median(values) if values else espn
         disagreement = statistics.pstdev(values) if len(values) >= 2 else 0
         if player["pos"] in HISTORICAL_UNCERTAINTY and len(values) >= 2:
             floor = HISTORICAL_UNCERTAINTY[player["pos"]] * projection
@@ -289,10 +289,10 @@ The separate player `proj_unc` field combines a position-specific historical res
 
 ## Limitations
 
-- ESPN is retained from the existing embedded custom projection because the original raw ESPN stat snapshot is not stored in the repository.
+- ESPN is the current authenticated league-scored projection embedded by `refresh_draft_data.py`.
 - CBS and FFToday do not project first downs, so the existing empirical reception/carry rates are applied. Passing first downs use 0.518 per completion from nflverse 2023–2024 player stats.
 - FFToday does not expose projected fumbles in its public table; its source score therefore omits that small component. CBS and ESPN retain their fumble assumptions.
-- K and D/ST remain on the existing projection because equivalent raw multi-source scoring was not available under this league's distance and defense-tier rules.
+- K and D/ST use ESPN's league-scored projection because equivalent raw multi-source scoring was not available under this league's distance and defense-tier rules; their late-round order adds a 25% positional-consensus sanity check.
 """
 
 
