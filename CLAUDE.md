@@ -28,7 +28,10 @@ with reasoning before committing.
   would expose secrets or perform a destructive migration.
 
 ## League
-12 teams, snake, redraft, 14 rounds, 90s/pick. Draft slot: [TBD]
+12 teams, snake, redraft, 14 rounds, 90s/pick. Draft slot: 3
+2026 order: berds, kevin, tristen, castelani, kyle, houston hotdogs, deshaun,
+worthy, matthew, capullo, ray rice, sweet
+My picks: 3 22 27 46 51 70 75 94 99 118 123 142 147 166
 Starters: QB1 RB2 WR2 TE1 FLEX1 K1 DST1 · Bench 5 · IR 2
 Caps: QB4 RB8 WR8 TE3 K3 DST3
 Playoffs: 8 of 12 teams, weeks 15-17, one week per round
@@ -51,6 +54,16 @@ DST: see league settings (points-allowed and yards-allowed tiers)
 - K and DST excluded from VONA entirely, hardcoded to rounds 13-14
 - Replacement: 12QB/24RB/24WR/12TE + 12 FLEX allocated to best next man
 - Show 8 candidates max. One screen, no scrolling, keyboard-driven.
+
+## Room intelligence (read before changing draft strategy)
+`out/league_tendencies_2025.md` — study of the 2025 draft by the same twelve
+managers, graded against same-weekend FantasyFootballCalculator ADP. No season
+outcomes used. Raw draft in `out/league_draft_2025.json`.
+The three exploitable findings: K/DST go 30-70 picks early (rounds 7-9 were 53%
+special teams), QB1-12 go early then a 38-pick desert with no QB at all, and WR
+is priced at market. Its "Model changes this argues for" table is NOT applied —
+those constants contradict the generic-room backtest and must be validated
+through scripts/backtest_draft_policy.py before going live.
 
 ## Empirical first-down rates (nflverse 2023-25, already computed)
 See out/first_down_rates.json. WR 0.597/rec, TE 0.511, RB 0.325.
