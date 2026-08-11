@@ -11877,6 +11877,10 @@ function buildState(){
   const L=[];
   L.push(`DRAFT STATE — on the clock ${fmtPick(curPick())} (round ${curRound()} of ${ROUNDS})`);
   L.push(`My slot ${slot}/${TEAMS} · ceiling weight lambda ${currentLambda().toFixed(2)} (${lambdaAuto?'automatic by round':'manual'}) · ECR guardrail ${Math.round(ecrWeight*100)}%`);
+  L.push(`My full pick schedule: ${myPicks().join(' · ')}`);
+  L.push('League: 12-team, 14-round snake redraft; QB1 RB2 WR2 TE1 FLEX1 K1 D/ST1, bench 5, IR 2; caps QB4 RB8 WR8 TE3 K3 D/ST3.');
+  L.push('Scoring: 0.5 PPR; 0.1/yard rushing and receiving; pass 0.04/yard, 4/TD, -2/INT; first downs pass 0.1, rush 0.25, reception 0.5; rush/receiving TD 6; fumble -2; return/recovery TD 6. K uses distance tiers (3/3.5/4/5) with -1 misses; D/ST uses league points- and yards-allowed tiers.');
+  L.push('Format: 8 of 12 make the playoffs; single-week rounds in Weeks 15–17. Waivers reset weekly to inverse standings, no FAAB, one-day period.');
   L.push(`Projection: ${PROJECTION_META.method} of ${PROJECTION_META.sources.join(', ')} where available, each rescored for league settings using regressed 2023-24 player first-down rates (position fallback for rookies/unmatched players); source disagreement is tracked separately from upside; ADP/ECR are not projection inputs.`);
   L.push(`Model: core rank = custom projected points − ${(MODEL_REPLACEMENT_WEIGHT*100).toFixed(0)}% of that position's replacement projection; generic ceiling SD is excluded. Blend score (lower is better) = ${(1-ecrWeight).toFixed(2)} × core rank + ${ecrWeight.toFixed(2)} × half-PPR ECR, then re-ranked into Model. VONA tiers use a ${VONA_TIER_MIN}–${VONA_TIER_MAX}-point uncertainty-aware band; 25+ rank Model/ECR gaps use the more conservative rank as the tiebreak. Timing is ${Math.round((1-MARKET_FP_WEIGHT)*100)}% ESPN room (including recent movement) + ${Math.round(MARKET_FP_WEIGHT*100)}% FantasyPros half-PPR ADP.`);
   L.push('Build guardrails: QB1/TE1 only; three RB/WR by Round 4; WR1 by Round 5; RB2/WR2/FLEX by Round 8; TE by Round 9; QB by Round 10; ten RB/WR with at least four each; K + D/ST in Rounds 13–14.');
@@ -11884,6 +11888,16 @@ function buildState(){
   const open=openStarterSlots(mine);
   L.push(`Starter slots still open: ${Object.entries(open).filter(([,n])=>n).map(([k,n])=>`${k} ${n}`).join(', ')||'none'} · bench ${benchSlotsFilled(mine)}/5 · roster spots left ${ROUNDS-mine.length}`);
   L.push('K/DST policy: excluded from VONA; wait until rounds 13–14. D/ST streams prioritize W1/W2/W3 at 55%/25%/10%; K prioritizes W1/W2/W3 at 40%/20%/10% with more season-long signal.');
+  L.push('');
+  L.push('ROOM INTELLIGENCE — same 12 managers, 2025 draft only');
+  L.push('  · 11 of 12 managers used a Round 7–9 pick on K or D/ST; 19 of 36 picks in those rounds were special teams, with zero RBs selected. Do not join that run: picks 75, 94 and 99 may expose unusual RB/WR value.');
+  L.push('  · QB10/QB11/QB12 went at picks 74/80/83, followed by no QB until picks 121/122/124. At picks 70/75, decide between the last acceptable top-12 QB and a deliberate punt toward picks 118/123; avoid the QB4–9 overpay band at picks 39–60.');
+  L.push('  · Eight managers carried QB2, leaving waivers near QB22. A QB2 from Round 11 can be considered after core starters and RB/WR depth, but the terminal still blocks it pending backtest validation.');
+  L.push('  · WR was priced near market. Kicker remained effectively free; D/ST had a small scarcity cost. Never recommend K or D/ST before pick 147.');
+  L.push('  · These tendencies inform draft-day judgment but are not yet encoded in survival or eligibility. Proposed QB/TE deadline, QB2 and opponent K/DST changes remain unvalidated and unapplied.');
+  L.push('');
+  L.push('JUDGMENT REQUEST');
+  L.push('  Treat this exported HTML state as the only draft ledger. Use the live board, roster needs, recent positional runs, VONA tiers, projection confidence and room intelligence to give a top 3 for this pick. Do not invent, record or persist picks outside the HTML.');
   L.push('');
 
   const order=['QB','RB','RB','WR','WR','TE','FLEX','K','DST'];
