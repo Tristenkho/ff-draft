@@ -154,6 +154,9 @@ def candidate(row: dict, fp_by_name: dict[str, dict], old_by_id: dict[int, dict]
     projection = season_projection(p)
     market = room_rank(espn_adp, espn_rank, ecr)
     old_fp_adp = old.get("fp_adp", old.get("adp", 999))
+    same_day = old.get("adp_updated") == dt.date.today().isoformat()
+    old_adp = float(old.get("adp_prev" if same_day else "espn_adp", old.get("adp", espn_adp)))
+    old_adp_delta = float(old.get("adp_delta", espn_adp - old_adp)) if same_day else espn_adp - old_adp
     sd = float(old.get("sd") or projection * CEILING_RATE[position])
     return {
         "id": p["id"], "name": p["fullName"], "pos": position, "team": team,
@@ -161,6 +164,9 @@ def candidate(row: dict, fp_by_name: dict[str, dict], old_by_id: dict[int, dict]
         "injured": bool(p.get("injured")), "last_news": p.get("lastNewsDate"),
         "proj": round(projection, 1), "proj_espn": round(projection, 1), "sd": round(sd, 1),
         "adp": round(espn_adp, 1), "espn_adp": round(espn_adp, 1),
+        "adp_prev": round(old_adp, 1), "adp_delta": round(old_adp_delta, 1),
+        "adp_prev_date": old.get("adp_prev_date" if same_day else "adp_updated", "prior refresh"),
+        "adp_updated": dt.date.today().isoformat(),
         "espn_rank": round(espn_rank, 1), "room_rank": round(market, 1),
         "adp_sd": round(max(6, min(35, 5.8 + .055 * market)), 1),
         "ecr": int(ecr), "fp_adp": old_fp_adp, "tier": int((fp or {}).get("tier") or old.get("tier") or 99),
@@ -260,7 +266,7 @@ def render_report(players: list[dict], before: list[dict]) -> str:
 
 ## Model boundaries
 
-- ESPN room rank/ADP controls opponent timing and survival; FantasyPros ECR remains the model sanity check.
+- Opponent timing and survival blend 60% ESPN room rank/ADP with 40% FantasyPros half-PPR ADP; FantasyPros ECR remains the model sanity check.
 - Status is visible and zero-projection/long-term unavailable players are not automatically recommended, but every player remains clickable for accurate bookkeeping.
 - Bye week is informational; elite players are not downgraded for sharing a bye.
 """
@@ -320,7 +326,8 @@ def main() -> None:
     pool = choose_pool(candidates)
     cbs, fftoday, metadata = ensemble.source_data(args.refresh)
     metadata["sources"]["ESPN"] = {"date": dt.date.today().isoformat(), "role": "live custom-league projection"}
-    players, analysis = ensemble.build_ensemble(pool, cbs, fftoday, metadata)
+    fd_rates = ensemble.player_first_down_rates(args.refresh)
+    players, analysis = ensemble.build_ensemble(pool, cbs, fftoday, metadata, fd_rates)
     add_weekly_projections(players, weekly_rows, schedule)
     # New/rescued players need an upside input even when the old ESPN row was zero.
     for player in players:
@@ -340,13 +347,18 @@ def main() -> None:
         output = re.sub(
             r'<b>2026 RANKINGS</b><span>.*?</span>',
             f'<b>2026 RANKINGS</b><span>{len(players)}-player pool, refreshed {dt.date.today():%b %-d}. '
-            'Projections: median of ESPN, CBS, and FFToday; room timing: ESPN ADP/rank; ECR: FantasyPros.</span>',
+            'Projections: median of ESPN, CBS, and FFToday; timing: 60% ESPN room + 40% FantasyPros ADP.</span>',
             output, count=1,
         )
         output = re.sub(
             r"const PROJECTION_META=\{sources:\['ESPN','CBS','FFToday'\],method:'median',updated:'[^']+'\};",
             f"const PROJECTION_META={{sources:['ESPN','CBS','FFToday'],method:'median',updated:'{today}'}};",
             output, count=1,
+        )
+        output = re.sub(
+            r"player-specific 2024–25 first-down rates regressed toward position averages;(?: rookies and unmatched players use the position rate\.)?",
+            "player-specific 2023–24 first-down rates regressed toward position averages; rookies and unmatched players use the position rate.",
+            output,
         )
         ensemble.HTML.write_text(output)
     print(report)

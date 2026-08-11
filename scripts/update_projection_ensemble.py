@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import datetime as dt
 import json
 import math
@@ -23,6 +24,7 @@ HTML = ROOT / "out" / "draft_terminal.html"
 CACHE = ROOT / ".cache" / "projection-ensemble-2026"
 RAW = ROOT / "out" / "projection_ensemble_raw.json"
 REPORT = ROOT / "out" / "projection_ensemble_analysis.md"
+NFLVERSE_URL = "https://github.com/nflverse/nflverse-data/releases/download/player_stats/player_stats.csv"
 POSITIONS = ("QB", "RB", "WR", "TE")
 CBS_URL = "https://www.cbssports.com/fantasy/football/stats/{pos}/2026/season/projections/ppr/"
 FFTODAY_URL = "https://www.fftoday.com/rankings/playerproj.php?Season=2026&PosID={pos_id}&LeagueID=1&cur_page={page}"
@@ -33,6 +35,7 @@ RUSH_FD = {"QB": .344, "RB": .224, "WR": .291, "TE": .224}
 # Half the robust 2018-23 preseason residual scale. This represents shared
 # outcome/role uncertainty; source disagreement is added separately below.
 HISTORICAL_UNCERTAINTY = {"QB": .156, "RB": .260, "WR": .212, "TE": .229}
+RATE_PRIOR = {"pass": 300, "rush": 120, "rec": 80}
 
 
 def normalize(value: str) -> str:
@@ -147,17 +150,50 @@ def parse_fftoday(position: str, pages: list[str]) -> dict[str, dict]:
     return output
 
 
-def custom_score(stats: dict) -> float:
+def player_first_down_rates(refresh: bool) -> dict[tuple[str, str], dict]:
+    """Return 2023-24 player rates shrunk toward the empirical position mean."""
+    text = download(NFLVERSE_URL, CACHE / "nflverse_player_stats.csv", refresh)
+    totals: dict[tuple[str, str], dict[str, float]] = {}
+    for row in csv.DictReader(text.splitlines()):
+        if row.get("season") not in ("2023", "2024") or row.get("season_type") != "REG":
+            continue
+        pos = row.get("position", "")
+        if pos not in POSITIONS:
+            continue
+        key = (normalize(row.get("player_display_name") or row.get("player_name") or ""), pos)
+        item = totals.setdefault(key, {"pass_n": 0, "pass_fd": 0, "rush_n": 0, "rush_fd": 0,
+                                       "rec_n": 0, "rec_fd": 0})
+        for field in item:
+            source = {"pass_n": "completions", "pass_fd": "passing_first_downs",
+                      "rush_n": "carries", "rush_fd": "rushing_first_downs",
+                      "rec_n": "receptions", "rec_fd": "receiving_first_downs"}[field]
+            item[field] += number(row.get(source, "0"))
+
+    output = {}
+    for (name, pos), item in totals.items():
+        rates = dict(item)
+        if pos == "QB":
+            rates["pass_rate"] = (item["pass_fd"] + RATE_PRIOR["pass"] * PASS_FD_PER_COMPLETION) / (item["pass_n"] + RATE_PRIOR["pass"])
+        if pos in RUSH_FD:
+            rates["rush_rate"] = (item["rush_fd"] + RATE_PRIOR["rush"] * RUSH_FD[pos]) / (item["rush_n"] + RATE_PRIOR["rush"])
+        if pos in REC_FD:
+            rates["rec_rate"] = (item["rec_fd"] + RATE_PRIOR["rec"] * REC_FD[pos]) / (item["rec_n"] + RATE_PRIOR["rec"])
+        output[(name, pos)] = rates
+    return output
+
+
+def custom_score(stats: dict, rates: dict | None = None) -> float:
     pos = stats["pos"]
+    rates = rates or {}
     score = 0.0
     if pos == "QB":
         score += .04 * stats.get("pass_yds", 0) + 4 * stats.get("pass_td", 0) - 2 * stats.get("interceptions", 0)
-        score += .1 * PASS_FD_PER_COMPLETION * stats.get("completions", 0)
+        score += .1 * rates.get("pass_rate", PASS_FD_PER_COMPLETION) * stats.get("completions", 0)
     score += .1 * stats.get("rush_yds", 0) + 6 * stats.get("rush_td", 0)
-    score += .25 * RUSH_FD[pos] * stats.get("rush_att", 0)
+    score += .25 * rates.get("rush_rate", RUSH_FD[pos]) * stats.get("rush_att", 0)
     if pos != "QB":
         score += .5 * stats.get("receptions", 0) + .1 * stats.get("rec_yds", 0) + 6 * stats.get("rec_td", 0)
-        score += .5 * REC_FD[pos] * stats.get("receptions", 0)
+        score += .5 * rates.get("rec_rate", REC_FD[pos]) * stats.get("receptions", 0)
     score -= 2 * stats.get("fumbles", 0)
     return score
 
@@ -183,7 +219,8 @@ def rank_map(players: list[dict], field: str) -> dict[int, int]:
     return {player["id"]: index + 1 for index, player in enumerate(ordered)}
 
 
-def build_ensemble(players: list[dict], cbs: dict, fftoday: dict, metadata: dict) -> tuple[list[dict], dict]:
+def build_ensemble(players: list[dict], cbs: dict, fftoday: dict, metadata: dict,
+                   fd_rates: dict[tuple[str, str], dict] | None = None) -> tuple[list[dict], dict]:
     espn_players = [{**player, "proj": player.get("proj_espn", player["proj"])} for player in players]
     original_rank = rank_map(espn_players, "proj")
     rows, updated = [], []
@@ -193,10 +230,13 @@ def build_ensemble(players: list[dict], cbs: dict, fftoday: dict, metadata: dict
         sources = {"ESPN": espn} if espn > 0 or player["pos"] not in POSITIONS else {}
         if player["pos"] in POSITIONS:
             key = normalize(player["name"])
+            rates = (fd_rates or {}).get((key, player["pos"]), {})
             if key in cbs[player["pos"]]:
-                sources["CBS"] = custom_score(cbs[player["pos"]][key])
+                sources["CBS"] = custom_score(cbs[player["pos"]][key], rates)
             if key in fftoday[player["pos"]]:
-                sources["FFToday"] = custom_score(fftoday[player["pos"]][key])
+                sources["FFToday"] = custom_score(fftoday[player["pos"]][key], rates)
+        else:
+            rates = {}
         values = list(sources.values())
         if not values:
             values = [espn]
@@ -210,8 +250,14 @@ def build_ensemble(players: list[dict], cbs: dict, fftoday: dict, metadata: dict
         changed = dict(player)
         # `sd` is the app's upside/ceiling input. Projection disagreement is a
         # confidence measure, not player upside, so keep those concepts separate.
+        spread_ratio = (max(values) - min(values)) / projection if projection > 0 else 1
+        reliability = "low" if len(sources) <= 1 or projection <= 0 else "medium" if len(sources) == 2 or spread_ratio > .25 else "high"
         changed.update(proj=round(projection, 1), proj_espn=round(espn, 1), proj_unc=round(uncertainty, 1), proj_n=len(sources),
-                       proj_low=round(min(values), 1), proj_high=round(max(values), 1))
+                       proj_low=round(min(values), 1), proj_high=round(max(values), 1), proj_reliability=reliability,
+                       fd_rec_rate=round(rates.get("rec_rate", REC_FD.get(player["pos"], 0)), 3),
+                       fd_rush_rate=round(rates.get("rush_rate", RUSH_FD.get(player["pos"], 0)), 3),
+                       fd_pass_rate=round(rates.get("pass_rate", PASS_FD_PER_COMPLETION if player["pos"] == "QB" else 0), 3),
+                       fd_rate_n=int(rates.get("rec_n", 0) + rates.get("rush_n", 0) + rates.get("pass_n", 0)))
         updated.append(changed)
         rows.append({"id": player["id"], "name": player["name"], "pos": player["pos"], "team": player["team"],
                      "old_proj": old, "new_proj": changed["proj"], "ceiling_sd": changed["sd"], "proj_unc": changed["proj_unc"],
@@ -228,7 +274,9 @@ def build_ensemble(players: list[dict], cbs: dict, fftoday: dict, metadata: dict
         "three_sources": sum(row["pos"] == pos and len(row["sources"]) == 3 for row in skill_rows),
         "two_plus_sources": sum(row["pos"] == pos and len(row["sources"]) >= 2 for row in skill_rows),
     } for pos in POSITIONS}
-    analysis = {"metadata": metadata, "coverage": coverage, "players": rows}
+    analysis = {"metadata": metadata, "coverage": coverage,
+                "fd_player_matches": sum(p["pos"] in POSITIONS and p.get("fd_rate_n", 0) > 0 for p in updated),
+                "players": rows}
     return updated, analysis
 
 
@@ -259,6 +307,7 @@ def render_report(analysis: dict) -> str:
 - ESPN, CBS, and FFToday are combined with a robust median when available.
 - CBS and FFToday raw stat lines are rescored under the league's passing, rushing, receiving, first-down, and fumble rules.
 - ADP and ECR are not projection inputs.
+- Player-specific 2023-24 first-down rates are regressed toward position averages before CBS/FFToday are rescored; matched players: {analysis['fd_player_matches']}/{len(skill)}.
 - Mean absolute projection change among matched players: {mean_change:.1f} points.
 - Three-source coverage: {len(three)}/{len(skill)} skill players ({100*len(three)/len(skill):.1f}%).
 - Two-or-more-source coverage: {len(covered)}/{len(skill)} skill players ({100*len(covered)/len(skill):.1f}%).
@@ -290,7 +339,7 @@ The separate player `proj_unc` field combines a position-specific historical res
 ## Limitations
 
 - ESPN is the current authenticated league-scored projection embedded by `refresh_draft_data.py`.
-- CBS and FFToday do not project first downs, so the existing empirical reception/carry rates are applied. Passing first downs use 0.518 per completion from nflverse 2023–2024 player stats.
+- CBS and FFToday do not project first downs, so player-specific 2023–24 reception/carry/completion rates are regressed toward the position baseline; rookies and unmatched players use that baseline.
 - FFToday does not expose projected fumbles in its public table; its source score therefore omits that small component. CBS and ESPN retain their fumble assumptions.
 - K and D/ST use ESPN's league-scored season and Weeks 1–3 projections because equivalent raw multi-source scoring was not available under this league's distance and defense-tier rules. D/ST is ranked primarily for early streaming; kicker retains more season-long and consensus signal.
 """
@@ -303,7 +352,8 @@ def main() -> None:
     args = parser.parse_args()
     text, players, start, end = current_players()
     cbs, fftoday, metadata = source_data(args.refresh)
-    updated, analysis = build_ensemble(players, cbs, fftoday, metadata)
+    fd_rates = player_first_down_rates(args.refresh)
+    updated, analysis = build_ensemble(players, cbs, fftoday, metadata, fd_rates)
     RAW.write_text(json.dumps(analysis, indent=2))
     report = render_report(analysis)
     REPORT.write_text(report)

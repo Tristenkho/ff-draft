@@ -1,6 +1,6 @@
 # Early-season special-teams streaming board
 
-Generated 2026-08-08 from ESPN's authenticated weekly projections scored under this league's custom settings.
+Generated 2026-08-09 from ESPN's authenticated weekly projections scored under this league's custom settings.
 
 ## Draft policy
 
