@@ -21,8 +21,9 @@ with reasoning before committing.
 - Preserve unrelated working-tree changes and never include them in the commit.
   Generated scratch files and bulky raw simulation output stay uncommitted unless
   the user explicitly asks to publish them.
-- If the current branch cannot publish directly, push a focused feature branch
-  and open a draft pull request automatically.
+- If the current branch cannot publish directly, push a focused feature branch,
+  open a pull request, mark it ready, and merge it automatically after validation
+  and required checks pass. Do not wait for manual review or merge confirmation.
 - Stop before publishing only when validation fails, authentication or the remote
   is unavailable, the intended file scope is genuinely ambiguous, or the action
   would expose secrets or perform a destructive migration.
