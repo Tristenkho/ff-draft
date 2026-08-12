@@ -256,10 +256,11 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
   .snake-mobile-pick .spos{display:block;margin-top:3px;color:var(--dim);font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .snake-mode #poolcount{display:none}
   #board{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
-  footer{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;padding:0 max(6px,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(6px,env(safe-area-inset-left))}
+  footer{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;padding:0 max(6px,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(6px,env(safe-area-inset-left))}
   footer .caret,.keys{display:none}
   #q{grid-column:1/-1;width:100%;padding:10px 6px;border-bottom:1px solid var(--rule);font-size:16px}
   .fbtn{min-height:44px;padding:0 5px;border-left:0;border-right:1px solid var(--rule);font-size:8.5px;line-height:1.15}
+  #auto{margin-left:0!important}
   #copy{margin-left:0!important}
   #reset{border-right:0}
   .mobile-nav{display:flex;background:var(--panel);border-top:1px solid var(--rule);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
@@ -356,9 +357,10 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
     <span class="caret">›</span>
     <input id="q" placeholder="Type a name, press Enter to record the pick on the clock" autocomplete="off" spellcheck="false">
     <div class="keys">
-      <span><b>Pick Board:</b> 1–8 record board · <b>Enter</b> search</span><span><b>Room:</b> Bksp undo · Esc clear search</span>
+      <span><b>Pick Board:</b> 1–8 record board · <b>Enter</b> search · <b>Ctrl/Cmd Enter</b> auto preview</span><span><b>Room:</b> Bksp undo · Esc clear search</span>
     </div>
     <button id="copy" class="fbtn" style="margin-left:auto">Copy state</button>
+    <button id="auto" class="fbtn">Auto to my pick</button>
     <button id="backpick" class="fbtn" aria-label="Undo the most recent pick" disabled>Back pick</button>
     <button id="helpbtn" class="fbtn" aria-haspopup="dialog" aria-expanded="false">Help</button>
     <button id="reset" class="fbtn">Reset draft</button>
@@ -379,7 +381,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
       <p><b>Availability</b> blends 60% of the current ESPN-only room rank/ADP with 40% of Fantasy Football Calculator's current 12-team half-PPR market. Observed market draft dispersion drives the survival curve when a player is matched; otherwise a conservative heuristic supplies the fallback. Unavailable and low-confidence players remain searchable for accurate bookkeeping but no longer occupy forecasted opponent picks or expected-next-player estimates.</p>
       <p><b>ESPN update</b> plus a date under a name is only the timestamp of that player's most recent ESPN news item, shown when it landed within the last three days. It is a recency marker, not a headline and not a sentiment signal — read the actual news before acting on it.</p>
       <p><b>Winning build</b> is QB1, TE1, ten RB/WR, K1 and D/ST1. It starts with three RB/WR through Round 4, secures WR1 by Round 5, fills RB2/WR2/FLEX by Round 8, TE by Round 9, QB by Round 10, and takes K/D/ST in Rounds 13–14. QB2 and TE2 are waiver positions in this shallow format.</p>
-      <p><b>Draft</b> keeps the top eight candidates in the first screen and lets you scroll through the full ranking below them. On the Pick Board, press <b>1–8</b> to record one of those top eight, type a name and press Enter, or click any player row. Model, Points, ECR and ADP are read-only audit views; switch back to the Pick Board before recording. Copy state exports the Pick Board top eight. In Snake, <b>Auto to my pick (preview)</b> simulates varied need-aware opponent selections only until your next turn; it never records picks. While this guide is open the board is locked — nothing can be recorded or undone.</p>
+      <p><b>Draft</b> keeps the top eight candidates in the first screen and lets you scroll through the full ranking below them. On the Pick Board, press <b>1–8</b> to record one of those top eight, type a name and press Enter, or click any player row. Model, Points, ECR and ADP are read-only audit views; switch back to the Pick Board before recording. <b>Auto to my pick</b> and <b>Ctrl/Cmd Enter</b> rehearse opponent picks through your next turn; simulated picks are marked <b>~</b> in the same ledger and Copy state, so reset the draft before using it live. Snake remains the planning-only board for comparing whole-room scenarios. While this guide is open the board is locked — nothing can be recorded or undone.</p>
       <p>Record every real pick here. Copy state on your turn and paste it to Codex or Claude for a current-news top three. K/DST stay out of wait-cost ranking and are prioritized in rounds 13–14.</p>
       <p>Press <b>Esc</b>, click outside this panel, or use the × above to close.</p>
     </div>
@@ -15257,6 +15259,22 @@ function rostersFromDraft(){
   picks.forEach((id,i)=>{const p=byId.get(id);if(p)rosters[teamAtPick(i+1)-1].push(p);});
   return rosters;
 }
+// Draft-page rehearsal: simulated opponent picks are marked and remain in the
+// single HTML ledger so the Pick Board reflects the exact rehearsal state.
+// Reset draft before going live if this was only a practice run.
+function autoToMyPick(){
+  if(draftLocked()||curPick()>TEAMS*ROUNDS||myPicks().includes(curPick()))return;
+  const meta=modelMeta(),rosters=rostersFromDraft(),total=TEAMS*ROUNDS;
+  while(picks.length<total&&!myPicks().includes(curPick())){
+    const n=curPick(),round=Math.ceil(n/TEAMS),roster=rosters[teamAtPick(n)-1];
+    let candidates=remaining().filter(p=>modelDraftable(p)&&mockEligible(p,roster,true,round));
+    if(!candidates.length)candidates=remaining().filter(p=>modelDraftable(p)&&mockEligible(p,roster,false,round));
+    const pick=chooseNeedAware(candidates,roster,round,meta,true);
+    if(!pick)break;
+    picks.push(pick.id);autoPickNos.push(n);roster.push(pick);
+  }
+  save();render();
+}
 function runMock(mode='adp',randomized=false,untilMine=false){
   mockMode=mode; mockRandom=randomized; mockUntilMine=untilMine;
   const total=TEAMS*ROUNDS, end=untilMine?Math.max(0,(nextMyPick()??total)-1):total, used=new Set(), out=[];
@@ -15605,6 +15623,9 @@ function render(){
   back.disabled=picks.length===0;
   back.textContent=picks.length?`Back ${fmtPick(picks.length)}`:'Back pick';
   back.title=picks.length?`Remove pick ${fmtPick(picks.length)} and return it to the board`:'No picks to undo';
+  const auto=$('#auto'), total=TEAMS*ROUNDS, autoDisabled=curPick()>total||isOTC;
+  auto.disabled=autoDisabled;
+  auto.textContent=curPick()>total?'Draft complete':isOTC?'Your pick':`Auto ${((nextMyPick()??(total+1))-curPick())} to ${nextMyPick()?fmtPick(nextMyPick()):'finish'}`;
   $('#lamv').textContent=currentLambda().toFixed(2);
   $('#ecrwv').textContent=Math.round(ecrWeight*100)+'%';
 
@@ -15934,6 +15955,9 @@ document.addEventListener('keydown',e=>{
     }
     return;
   }
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'&&decisionInputActive()){
+    e.preventDefault();autoToMyPick();return;
+  }
   if(e.key==='Escape'){
     if(!roomKeys)return;
     e.preventDefault();
@@ -15984,6 +16008,7 @@ $('#help').addEventListener('click',e=>{if(e.target===$('#help'))closeHelp();});
 $('#reset').addEventListener('click',resetDraft);
 $('#copy').addEventListener('click',copyState);
 $('#backpick').addEventListener('click',undo);
+$('#auto').addEventListener('click',autoToMyPick);
 
 setInterval(()=>{
   const active=document.activeElement;

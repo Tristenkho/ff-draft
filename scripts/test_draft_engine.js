@@ -123,8 +123,8 @@ vm.createContext(context);
 vm.runInContext(engine+'\n'+harness,context,{timeout:30000});
 const result=context.TEST_RESULT;
 result.engineSha256=crypto.createHash('sha256').update(engine).digest('hex');
-assert(!html.includes('id="auto"'),'live Auto control must not mutate the real ledger');
-assert(!html.includes('function autoToMyPick'),'legacy Auto mutation path returned');
+assert(html.includes('id="auto"')&&html.includes('autoPickNos.push(n)')&&html.includes('function autoToMyPick'),
+  'Draft-page Auto rehearsal is not connected to the marked draft ledger');
 assert(engine.includes('Math.abs(modelRank-ecrRank)')&&!engine.includes('Math.abs(modelRank-p.ecr)'),
   'review gate must compare Model with skill-pool ECR on the same rank scale');
 assert(html.includes('row&&decisionInputActive()'),'non-Pick-Board rows are not guarded as read-only');
@@ -145,7 +145,10 @@ assert(html.includes('const show=rows2;')&&html.includes('visibleRows=show.slice
 assert(html.includes('id="autountil"')&&html.includes('runMock(\'needs\',true,true)')&&
   html.includes('mockUntilMine'),
   'planning-only Auto to my pick preview is missing');
+assert(html.includes('id="auto"')&&html.includes('function autoToMyPick()')&&
+  html.includes("(e.ctrlKey||e.metaKey)&&e.key==='Enter'"),
+  'Draft-page Auto to my pick control or shortcut is missing');
 assert(!html.includes('NEWS today')&&!/NEWS \d+d/.test(html)&&html.includes('ESPN update ${NEWS_MONTHS'),
   'news recency is not shown as a neutral exact-date stamp');
-assert(/grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/.test(html),'mobile footer button grid is stale');
+assert(/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/.test(html),'mobile footer button grid is stale');
 console.log(JSON.stringify(result,null,2));
