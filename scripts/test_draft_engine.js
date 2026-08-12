@@ -127,7 +127,19 @@ assert(!html.includes('id="auto"'),'live Auto control must not mutate the real l
 assert(!html.includes('function autoToMyPick'),'legacy Auto mutation path returned');
 assert(engine.includes('Math.abs(modelRank-ecrRank)')&&!engine.includes('Math.abs(modelRank-p.ecr)'),
   'review gate must compare Model with skill-pool ECR on the same rank scale');
-assert(html.includes('row&&decisionInputActive()'),'non-Decision rows are not guarded as read-only');
+assert(html.includes('row&&decisionInputActive()'),'non-Pick-Board rows are not guarded as read-only');
 assert(html.includes("if($('#help').classList.contains('on'))"),'keyboard actions are not guarded behind Help');
+assert(html.includes('role="dialog" aria-modal="true" aria-labelledby="helptitle"'),
+  'Help is not exposed as a modal dialog');
+assert(html.includes("$('#app').setAttribute('inert','')")&&html.includes('function draftLocked()'),
+  'Help does not hard-lock the draft surface');
+assert(html.includes('id="helpbody" tabindex="0"')&&html.includes("const stops=[$('#helpclose'),$('#helpbody')]"),
+  'Help does not provide a scrollable, trapped keyboard surface');
+assert(html.includes('function waitBandLabel(tier)')&&html.includes('>Wait Cost</div>'),
+  'Pick Board wait-band presentation is missing');
+assert(html.includes('data-board-view')&&html.includes('ECR &minus; Model'),
+  'mobile audit metric or ECR/Model comparison presentation is missing');
+assert(!html.includes('NEWS today')&&!/NEWS \d+d/.test(html)&&html.includes('ESPN update ${NEWS_MONTHS'),
+  'news recency is not shown as a neutral exact-date stamp');
 assert(/grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/.test(html),'mobile footer button grid is stale');
 console.log(JSON.stringify(result,null,2));
