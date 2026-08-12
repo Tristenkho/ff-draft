@@ -139,6 +139,9 @@ assert(html.includes('function waitBandLabel(tier)')&&html.includes('>Wait Cost<
   'Pick Board wait-band presentation is missing');
 assert(html.includes('data-board-view')&&html.includes('ECR &minus; Model'),
   'mobile audit metric or ECR/Model comparison presentation is missing');
+assert(html.includes('const show=rows2;')&&html.includes('visibleRows=show.slice(0,8);')&&
+  html.includes('.board{flex:1;min-height:0;overflow:auto'),
+  'full ranking is not scrollable while hotkeys remain limited to the top eight');
 assert(!html.includes('NEWS today')&&!/NEWS \d+d/.test(html)&&html.includes('ESPN update ${NEWS_MONTHS'),
   'news recency is not shown as a neutral exact-date stamp');
 assert(/grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/.test(html),'mobile footer button grid is stale');

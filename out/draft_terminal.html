@@ -64,7 +64,7 @@ main.snake-mode>.col:first-child,main.snake-mode>.col:last-child{display:none}
 .needs span{color:var(--text)}
 
 /* board */
-.board{overflow:hidden;padding:2px 0}
+.board{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:2px 0}
 .brow{position:relative;display:grid;grid-template-columns:16px minmax(120px,1fr) 46px 60px 44px 46px 44px 50px 50px;
   align-items:center;gap:8px;padding:7px 14px;border-bottom:1px solid #1A2029;cursor:pointer}
 .brow:hover{background:var(--panel)}
@@ -379,7 +379,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
       <p><b>Availability</b> blends 60% of the current ESPN-only room rank/ADP with 40% of Fantasy Football Calculator's current 12-team half-PPR market. Observed market draft dispersion drives the survival curve when a player is matched; otherwise a conservative heuristic supplies the fallback. Unavailable and low-confidence players remain searchable for accurate bookkeeping but no longer occupy forecasted opponent picks or expected-next-player estimates.</p>
       <p><b>ESPN update</b> plus a date under a name is only the timestamp of that player's most recent ESPN news item, shown when it landed within the last three days. It is a recency marker, not a headline and not a sentiment signal — read the actual news before acting on it.</p>
       <p><b>Winning build</b> is QB1, TE1, ten RB/WR, K1 and D/ST1. It starts with three RB/WR through Round 4, secures WR1 by Round 5, fills RB2/WR2/FLEX by Round 8, TE by Round 9, QB by Round 10, and takes K/D/ST in Rounds 13–14. QB2 and TE2 are waiver positions in this shallow format.</p>
-      <p><b>Draft</b> shows eight candidates on one screen. On the Pick Board, press <b>1–8</b> to record a displayed player, type a name and press Enter, or click a row. Model, Points, ECR and ADP are read-only audit views; switch back to the Pick Board before recording. Copy state always exports the Pick Board top eight. Snake simulations never record picks. While this guide is open the board is locked — nothing can be recorded or undone.</p>
+      <p><b>Draft</b> keeps the top eight candidates in the first screen and lets you scroll through the full ranking below them. On the Pick Board, press <b>1–8</b> to record one of those top eight, type a name and press Enter, or click any player row. Model, Points, ECR and ADP are read-only audit views; switch back to the Pick Board before recording. Copy state exports the Pick Board top eight. Snake simulations never record picks. While this guide is open the board is locked — nothing can be recorded or undone.</p>
       <p>Record every real pick here. Copy state on your turn and paste it to Codex or Claude for a current-news top three. K/DST stay out of wait-cost ranking and are prioritized in rounds 13–14.</p>
       <p>Press <b>Esc</b>, click outside this panel, or use the × above to close.</p>
     </div>
@@ -15680,7 +15680,7 @@ function render(){
       adp:strategic((a,b)=>a.p.adp-b.p.adp)};
     rows2.sort(order[sortBy]);
   }
-  $('#poolcount').textContent=view==='prep'?Math.min(8,rows2.length)+' of '+rows2.length+(decisionInputActive()?' · keys 1–8':' · read only'):remaining().length+' left';
+  $('#poolcount').textContent=view==='prep'?rows2.length+' ranked'+(decisionInputActive()?' · keys 1–8':' · read only'):remaining().length+' left';
   const sortLabel={gain:'Pick Board',model:'Model',proj:'Points',ecr:'ECR',adp:'ADP'}[sortBy];
   $('#boardtitle').textContent=q?'Matches':(kdst?'Special teams window':sortBy==='gain'?'Pick Board — wait band, then Model':`Audit view — ${sortLabel} (read only)`);
   $('#q').placeholder=decisionInputActive()?'Type a name, press Enter to record the pick on the clock':'Audit view is read-only — switch to Pick Board to record';
@@ -15694,9 +15694,9 @@ function render(){
   $('#board').classList.remove('snakeboard');
   document.querySelector('main').classList.remove('snake-mode');
 
-  const show=rows2.slice(0,8);
-  visibleRows=show;
-  const gmax=Math.max(...show.map(r=>Math.abs(r.gain)),1);
+  const show=rows2;
+  visibleRows=show.slice(0,8);
+  const gmax=Math.max(...visibleRows.map(r=>Math.abs(r.gain)),1);
   $('#board').innerHTML=show.length?show.map((r,i)=>{
     const c=r.isSpecial?'var(--cyan)':urgency(r);
     const costTxt=r.isSpecial?'—':(r.gain>0?'+':'')+r.gain.toFixed(1);

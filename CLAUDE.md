@@ -54,7 +54,8 @@ DST: see league settings (points-allowed and yards-allowed tiers)
   ADP re-ranked among REMAINING players, not absolute ADP
 - K and DST excluded from VONA entirely, hardcoded to rounds 13-14
 - Replacement: 12QB/24RB/24WR/12TE + 12 FLEX allocated to best next man
-- Show 8 candidates max. One screen, no scrolling, keyboard-driven.
+- Show the top 8 candidates in the first viewport, then allow scrolling through
+  the full ranking. Keys 1–8 select only the top eight.
 
 ## Room intelligence (read before changing draft strategy)
 `out/league_tendencies_2025.md` — study of the 2025 draft by the same twelve
