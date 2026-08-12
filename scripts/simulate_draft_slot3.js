@@ -1,5 +1,6 @@
 /* Offline Monte Carlo harness for out/draft_terminal.html. Does not alter the app.
-   Set DRAFT_MARKET=espn|blend|conservative to stress-test player timing.
+   Set DRAFT_MARKET=espn|blend|conservative to stress-test ESPN versus the
+   current 12-team half-PPR market used by the live board.
    Seed picks before slot 3 with DRAFT_SEED='Puka Nacua|Jahmyr Gibbs'. */
 const fs=require('fs'), vm=require('vm');
 const html=fs.readFileSync(process.env.DRAFT_HTML||'out/draft_terminal.html','utf8');
@@ -13,14 +14,14 @@ const seed=(process.env.DRAFT_SEED||'').split('|').map(name=>name.trim()).filter
 if(seed.length>2)throw new Error('DRAFT_SEED can contain at most the two picks before slot 3');
 const timingSource=`function timingMetric(p){
   const espn=roomMetric(p)+ADP_TREND_WEIGHT*clamp(adpTrend(p),-20,20);
-  const fantasyPros=(p?.fp_adp??999)<500?p.fp_adp:((p?.ecr??999)<500?p.ecr:espn);
-  return (1-MARKET_FP_WEIGHT)*espn+MARKET_FP_WEIGHT*fantasyPros;
+  const market=(p?.market_adp??999)<500?p.market_adp:espn;
+  return (1-MARKET_ADP_WEIGHT)*espn+MARKET_ADP_WEIGHT*market;
 }`;
 const timingScenario=`const timingMetric=p=>{
   const espn=roomMetric(p)+ADP_TREND_WEIGHT*clamp(adpTrend(p),-20,20);
-  const fantasyPros=(p?.fp_adp??999)<500?p.fp_adp:((p?.ecr??999)<500?p.ecr:espn);
-  if(SIM_MARKET==='blend')return .60*espn+.40*fantasyPros;
-  if(SIM_MARKET==='conservative')return Math.min(espn,fantasyPros);
+  const market=(p?.market_adp??999)<500?p.market_adp:espn;
+  if(SIM_MARKET==='blend')return .60*espn+.40*market;
+  if(SIM_MARKET==='conservative')return Math.min(espn,market);
   return espn;
 };`;
 const originalEngine=html.slice(start,end);
@@ -41,8 +42,8 @@ function autoOppUntilMine(){
   const total=TEAMS*ROUNDS, meta=modelMeta(), rosters=rostersFromDraft();
   while(picks.length<total&&!myPicks().includes(curPick())){
     const n=curPick(), round=Math.ceil(n/TEAMS), team=teamAtPick(n), roster=rosters[team-1];
-    let candidates=remaining().filter(p=>mockEligible(p,roster,true,round));
-    if(!candidates.length)candidates=remaining();
+    let candidates=remaining().filter(p=>modelDraftable(p)&&mockEligible(p,roster,true,round));
+    if(!candidates.length)candidates=remaining().filter(p=>modelDraftable(p)&&mockEligible(p,roster,false,round));
     const pick=chooseNeedAware(candidates,roster,round,meta,SIM_RANDOM);
     if(!pick) break;
     picks.push(pick.id); roster.push(pick);
@@ -81,7 +82,14 @@ function simulate(n,randomized){
       autoOppUntilMine();
     }
     signatures.add(mine.map(p=>p.id).join(','));
-    rostersFromDraft().forEach((roster,i)=>{if(i!==slot-1)add(oppBuilds,keyRoster(roster));});
+    const leagueRosters=rostersFromDraft();
+    leagueRosters.forEach((roster,i)=>{
+      const c=rosterCounts(roster);
+      const legal=roster.length===ROUNDS&&c.QB>=1&&c.RB>=2&&c.WR>=2&&c.TE>=1&&c.K===1&&c.DST===1
+        &&Object.keys(CAPS).every(pos=>c[pos]<=CAPS[pos]);
+      if(!legal)throw new Error('Illegal roster in simulation '+d+', team '+(i+1)+': '+keyRoster(roster));
+      if(i!==slot-1)add(oppBuilds,keyRoster(roster));
+    });
     add(combos,mine.slice(0,3).map(p=>p.name).join(' + '));
     const skill=mine.filter(p=>POS.includes(p.pos));
     totals.push({proj:mine.reduce((s,p)=>s+p.proj,0),value:mine.reduce((s,p)=>s+value(p),0),vor:skill.reduce((s,p)=>s+value(p)-(baseRep[p.pos]||0),0), roster:keyRoster(mine)});

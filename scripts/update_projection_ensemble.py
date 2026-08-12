@@ -24,8 +24,11 @@ HTML = ROOT / "out" / "draft_terminal.html"
 CACHE = ROOT / ".cache" / "projection-ensemble-2026"
 RAW = ROOT / "out" / "projection_ensemble_raw.json"
 REPORT = ROOT / "out" / "projection_ensemble_analysis.md"
-NFLVERSE_URL = "https://github.com/nflverse/nflverse-data/releases/download/player_stats/player_stats.csv"
+NFLVERSE_WEEK_URL = ("https://github.com/nflverse/nflverse-data/releases/download/stats_player/"
+                     "stats_player_week_{season}.csv")
+FIRST_DOWN_SEASONS = (2023, 2024, 2025)
 POSITIONS = ("QB", "RB", "WR", "TE")
+CEILING_RATE = {"QB": .14, "RB": .26, "WR": .23, "TE": .25, "K": .10, "DST": .18}
 CBS_URL = "https://www.cbssports.com/fantasy/football/stats/{pos}/2026/season/projections/ppr/"
 FFTODAY_URL = "https://www.fftoday.com/rankings/playerproj.php?Season=2026&PosID={pos_id}&LeagueID=1&cur_page={page}"
 FFTODAY_POS = {"QB": 10, "RB": 20, "WR": 30, "TE": 40}
@@ -63,6 +66,11 @@ def download(url: str, path: Path, refresh: bool) -> str:
         with urllib.request.urlopen(request, timeout=120, context=context) as response:
             path.write_bytes(response.read())
     return path.read_text(errors="replace")
+
+
+def cache_date(path: Path) -> str:
+    """Return the local retrieval date for a cached source artifact."""
+    return dt.datetime.fromtimestamp(path.stat().st_mtime).date().isoformat()
 
 
 def current_players() -> tuple[str, list[dict], int, int]:
@@ -151,23 +159,25 @@ def parse_fftoday(position: str, pages: list[str]) -> dict[str, dict]:
 
 
 def player_first_down_rates(refresh: bool) -> dict[tuple[str, str], dict]:
-    """Return 2023-24 player rates shrunk toward the empirical position mean."""
-    text = download(NFLVERSE_URL, CACHE / "nflverse_player_stats.csv", refresh)
+    """Return 2023-25 player rates shrunk toward the empirical position mean."""
     totals: dict[tuple[str, str], dict[str, float]] = {}
-    for row in csv.DictReader(text.splitlines()):
-        if row.get("season") not in ("2023", "2024") or row.get("season_type") != "REG":
-            continue
-        pos = row.get("position", "")
-        if pos not in POSITIONS:
-            continue
-        key = (normalize(row.get("player_display_name") or row.get("player_name") or ""), pos)
-        item = totals.setdefault(key, {"pass_n": 0, "pass_fd": 0, "rush_n": 0, "rush_fd": 0,
-                                       "rec_n": 0, "rec_fd": 0})
-        for field in item:
-            source = {"pass_n": "completions", "pass_fd": "passing_first_downs",
-                      "rush_n": "carries", "rush_fd": "rushing_first_downs",
-                      "rec_n": "receptions", "rec_fd": "receiving_first_downs"}[field]
-            item[field] += number(row.get(source, "0"))
+    for season in FIRST_DOWN_SEASONS:
+        text = download(NFLVERSE_WEEK_URL.format(season=season),
+                        CACHE / f"nflverse_player_stats_{season}.csv", refresh)
+        for row in csv.DictReader(text.splitlines()):
+            if row.get("season_type") != "REG":
+                continue
+            pos = row.get("position", "")
+            if pos not in POSITIONS:
+                continue
+            key = (normalize(row.get("player_display_name") or row.get("player_name") or ""), pos)
+            item = totals.setdefault(key, {"pass_n": 0, "pass_fd": 0, "rush_n": 0, "rush_fd": 0,
+                                           "rec_n": 0, "rec_fd": 0})
+            for field in item:
+                source = {"pass_n": "completions", "pass_fd": "passing_first_downs",
+                          "rush_n": "carries", "rush_fd": "rushing_first_downs",
+                          "rec_n": "receptions", "rec_fd": "receiving_first_downs"}[field]
+                item[field] += number(row.get(source, "0"))
 
     output = {}
     for (name, pos), item in totals.items():
@@ -200,15 +210,22 @@ def custom_score(stats: dict, rates: dict | None = None) -> float:
 
 def source_data(refresh: bool) -> tuple[dict, dict, dict]:
     cbs, fftoday, metadata = {}, {}, {"season": 2026, "fetched": dt.date.today().isoformat(), "sources": {}}
+    cbs_paths, fftoday_paths = [], []
     for pos in POSITIONS:
-        cbs_html = download(CBS_URL.format(pos=pos), CACHE / f"cbs_{pos.lower()}.html", refresh)
+        cbs_path = CACHE / f"cbs_{pos.lower()}.html"
+        cbs_paths.append(cbs_path)
+        cbs_html = download(CBS_URL.format(pos=pos), cbs_path, refresh)
         cbs[pos] = parse_cbs(pos, cbs_html)
-        pages = [download(FFTODAY_URL.format(pos_id=FFTODAY_POS[pos], page=page), CACHE / f"fftoday_{pos.lower()}_{page}.html", refresh) for page in (0, 1)]
+        pages = []
+        for page in (0, 1):
+            fftoday_path = CACHE / f"fftoday_{pos.lower()}_{page}.html"
+            fftoday_paths.append(fftoday_path)
+            pages.append(download(FFTODAY_URL.format(pos_id=FFTODAY_POS[pos], page=page), fftoday_path, refresh))
         fftoday[pos] = parse_fftoday(pos, pages)
     metadata["sources"] = {
-        "ESPN": {"date": "2026-08-07", "role": "existing custom projection"},
-        "CBS": {"date": dt.date.today().isoformat(), "role": "raw stat projection rescored locally"},
-        "FFToday": {"date": "2026-08-06", "role": "raw stat projection rescored locally"},
+        "ESPN": {"date": "supplied by draft refresh", "role": "existing custom projection"},
+        "CBS": {"date": max(map(cache_date, cbs_paths)), "role": "raw stat projection rescored locally"},
+        "FFToday": {"date": max(map(cache_date, fftoday_paths)), "role": "raw stat projection rescored locally"},
     }
     return cbs, fftoday, metadata
 
@@ -252,7 +269,11 @@ def build_ensemble(players: list[dict], cbs: dict, fftoday: dict, metadata: dict
         # confidence measure, not player upside, so keep those concepts separate.
         spread_ratio = (max(values) - min(values)) / projection if projection > 0 else 1
         reliability = "low" if len(sources) <= 1 or projection <= 0 else "medium" if len(sources) == 2 or spread_ratio > .25 else "high"
-        changed.update(proj=round(projection, 1), proj_espn=round(espn, 1), proj_unc=round(uncertainty, 1), proj_n=len(sources),
+        changed.update(proj=round(projection, 1), proj_espn=round(espn, 1),
+                       sd=round(projection * CEILING_RATE[player["pos"]], 1),
+                       sd_source="position-rate proxy",
+                       proj_sources={name: round(value, 1) for name, value in sources.items()},
+                       proj_unc=round(uncertainty, 1), proj_n=len(sources),
                        proj_low=round(min(values), 1), proj_high=round(max(values), 1), proj_reliability=reliability,
                        fd_rec_rate=round(rates.get("rec_rate", REC_FD.get(player["pos"], 0)), 3),
                        fd_rush_rate=round(rates.get("rush_rate", RUSH_FD.get(player["pos"], 0)), 3),
@@ -307,7 +328,7 @@ def render_report(analysis: dict) -> str:
 - ESPN, CBS, and FFToday are combined with a robust median when available.
 - CBS and FFToday raw stat lines are rescored under the league's passing, rushing, receiving, first-down, and fumble rules.
 - ADP and ECR are not projection inputs.
-- Player-specific 2023-24 first-down rates are regressed toward position averages before CBS/FFToday are rescored; matched players: {analysis['fd_player_matches']}/{len(skill)}.
+- Player-specific 2023-25 first-down rates are regressed toward position averages before CBS/FFToday are rescored; matched players: {analysis['fd_player_matches']}/{len(skill)}.
 - Mean absolute projection change among matched players: {mean_change:.1f} points.
 - Three-source coverage: {len(three)}/{len(skill)} skill players ({100*len(three)/len(skill):.1f}%).
 - Two-or-more-source coverage: {len(covered)}/{len(skill)} skill players ({100*len(covered)/len(skill):.1f}%).
@@ -336,10 +357,12 @@ Positive means the ensemble moves the player up.
 
 The separate player `proj_unc` field combines a position-specific historical residual floor with current source disagreement in quadrature. The residual floors are half of the robust 2018–2023 preseason error scale: QB 15.6%, RB 26.0%, WR 21.2%, and TE 22.9%. This prevents three similar projections from implying false certainty while increasing uncertainty when sources materially disagree. It deliberately does not replace `sd`, which remains the app's ceiling/upside input; treating forecast error as upside created a position bias in validation.
 
+The ceiling `sd` input is regenerated from the current ensemble projection on every refresh using the configured generic position-rate proxy: QB 14%, RB 26%, WR 23%, TE 25%, K 10%, and D/ST 18%. It is not a player-specific volatility estimate.
+
 ## Limitations
 
 - ESPN is the current authenticated league-scored projection embedded by `refresh_draft_data.py`.
-- CBS and FFToday do not project first downs, so player-specific 2023–24 reception/carry/completion rates are regressed toward the position baseline; rookies and unmatched players use that baseline.
+- CBS and FFToday do not project first downs, so player-specific 2023–25 reception/carry/completion rates are regressed toward the position baseline; rookies and unmatched players use that baseline.
 - FFToday does not expose projected fumbles in its public table; its source score therefore omits that small component. CBS and ESPN retain their fumble assumptions.
 - K and D/ST use ESPN's league-scored season and Weeks 1–3 projections because equivalent raw multi-source scoring was not available under this league's distance and defense-tier rules. D/ST is ranked primarily for early streaming; kicker retains more season-long and consensus signal.
 """
@@ -350,6 +373,8 @@ def main() -> None:
     parser.add_argument("--refresh", action="store_true", help="redownload source pages")
     parser.add_argument("--write", action="store_true", help="replace the embedded player array")
     args = parser.parse_args()
+    if args.write and not args.refresh:
+        parser.error("--write requires --refresh so the live app cannot publish cached data with a fresh timestamp")
     text, players, start, end = current_players()
     cbs, fftoday, metadata = source_data(args.refresh)
     fd_rates = player_first_down_rates(args.refresh)
@@ -359,7 +384,25 @@ def main() -> None:
     REPORT.write_text(report)
     if args.write:
         replacement = json.dumps(updated, indent=2, ensure_ascii=False)
-        HTML.write_text(text[:start] + replacement + text[end:])
+        today = dt.date.today().isoformat()
+        output = text[:start] + replacement + text[end:]
+        output = re.sub(
+            r'<b>2026 RANKINGS</b><span>.*?</span>',
+            f'<b>2026 RANKINGS</b><span>{len(updated)}-player pool, projections refreshed {dt.date.today():%b %-d}. '
+            'Timing and player status retain their last full draft-data refresh.</span>',
+            output, count=1,
+        )
+        output = re.sub(
+            r"const PROJECTION_META=\{sources:\['ESPN','CBS','FFToday'\],method:'median',updated:'[^']+'\};",
+            f"const PROJECTION_META={{sources:['ESPN','CBS','FFToday'],method:'median',updated:'{today}'}};",
+            output, count=1,
+        )
+        output = re.sub(
+            r"// Projections: robust median of ESPN, CBS, and FFToday, refreshed \d{4}-\d{2}-\d{2}\.",
+            f"// Projections: robust median of ESPN, CBS, and FFToday, refreshed {today}.",
+            output, count=1,
+        )
+        HTML.write_text(output)
     print(report)
 
 
