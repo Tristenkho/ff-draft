@@ -29,11 +29,11 @@ RAW = ROOT / "out" / "draft_data_refresh_raw.json"
 REPORT = ROOT / "out" / "draft_data_refresh_analysis.md"
 SPECIAL_REPORT = ROOT / "out" / "special_teams_streaming_analysis.md"
 FP_URL = "https://www.fantasypros.com/nfl/rankings/half-point-ppr-cheatsheets.php"
+FFC_URL = "https://fantasyfootballcalculator.com/api/v1/adp/half-ppr?teams=12&year=2026"
 
 POSITION_ID = {1: "QB", 2: "RB", 3: "WR", 4: "TE", 5: "K", 16: "DST"}
 QUOTAS = {"QB": 30, "RB": 70, "WR": 90, "TE": 26}
 BASELINE_POOL_SIZE = 205
-CEILING_RATE = {"QB": .14, "RB": .26, "WR": .23, "TE": .25, "K": .10, "DST": .18}
 TEAM_BY_ID = {
     1: "ATL", 2: "BUF", 3: "CHI", 4: "CIN", 5: "CLE", 6: "DAL", 7: "DEN", 8: "DET",
     9: "GB", 10: "TEN", 11: "IND", 12: "KC", 13: "LV", 14: "LAR", 15: "MIA", 16: "MIN",
@@ -78,14 +78,71 @@ def espn_rows(refresh: bool, scoring_period: int = 0) -> list[dict]:
     return json.loads(fetch(url, CACHE / cache_name, refresh, headers))["players"]
 
 
-def fantasypros(refresh: bool) -> dict[str, dict]:
+def fantasypros(refresh: bool) -> tuple[dict[str, dict], dict]:
     text = fetch(FP_URL, CACHE / "fantasypros_half_ppr.html", refresh)
-    marker = '"players":[{"player_id":22968'
+    marker = "var ecrData = "
     start = text.find(marker)
     if start < 0:
-        raise RuntimeError("FantasyPros player payload not found")
-    players, _ = json.JSONDecoder().raw_decode(text[start + len('"players":'):])
-    return {ensemble.normalize(player["player_name"]): player for player in players}
+        raise RuntimeError("FantasyPros ECR payload not found")
+    payload, _ = json.JSONDecoder().raw_decode(text[start + len(marker):])
+    players = payload.get("players") or []
+    if (payload.get("type") != "Draft Half PPR" or payload.get("year") != "2026"
+            or payload.get("scoring") != "HALF" or len(players) < 200):
+        raise RuntimeError("FantasyPros returned an unexpected half-PPR ECR payload")
+    try:
+        month, day = map(int, payload["last_updated"].split("/"))
+        updated = dt.date(dt.date.today().year, month, day)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise RuntimeError("FantasyPros did not provide a valid ECR update date") from exc
+    if not 0 <= (dt.date.today() - updated).days <= 3:
+        raise RuntimeError(f"FantasyPros ECR is stale ({updated.isoformat()})")
+
+    groups_marker = "var expertGroupsData = "
+    groups_start = text.find(groups_marker)
+    if groups_start < 0:
+        raise RuntimeError("FantasyPros expert-recency payload not found")
+    groups, _ = json.JSONDecoder().raw_decode(text[groups_start + len(groups_marker):])
+    default_ids = set(groups["expert_groups"]["default"]["options"][0]["experts"])
+    recency_options = groups["recency_groups"]["recency"]["options"]
+    if recency_options and isinstance(recency_options[0], list):
+        recency_options = recency_options[0]
+    recency = {str(option["id"]): set(option["experts"]) for option in recency_options}
+    if len(default_ids) < 20 or default_ids != recency.get("7", set()):
+        raise RuntimeError("FantasyPros Latest ECR is not the expected seven-day expert panel")
+    metadata = {
+        "source": "FantasyPros Latest ECR, half-PPR",
+        "updated": updated.isoformat(),
+        "experts": len(default_ids),
+        "updated_1d": len(default_ids & recency.get("1", set())),
+        "updated_3d": len(default_ids & recency.get("3", set())),
+        "updated_7d": len(default_ids & recency.get("7", set())),
+    }
+    return {ensemble.normalize(player["player_name"]): player for player in players}, metadata
+
+
+def fantasyfootballcalculator(refresh: bool) -> tuple[dict[tuple[str, str], dict], dict]:
+    """Return current 12-team half-PPR market ADP with observed draft dispersion."""
+    payload = json.loads(fetch(FFC_URL, CACHE / "ffc_half_ppr_adp.json", refresh))
+    meta = payload.get("meta") or {}
+    rows = payload.get("players") or []
+    if payload.get("status") != "Success" or meta.get("type") != "Half-PPR" or meta.get("teams") != 12:
+        raise RuntimeError("Fantasy Football Calculator returned an unexpected ADP payload")
+    if len(rows) < 150:
+        raise RuntimeError(f"Fantasy Football Calculator ADP pool is incomplete ({len(rows)} rows)")
+    try:
+        market_date = dt.date.fromisoformat(meta["end_date"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise RuntimeError("Fantasy Football Calculator did not provide a valid market end date") from exc
+    if not 0 <= (dt.date.today() - market_date).days <= 3 or int(meta.get("total_drafts") or 0) < 10:
+        raise RuntimeError(f"Fantasy Football Calculator market is stale or undersampled ({meta})")
+    positions = {"DEF": "DST", "D/ST": "DST"}
+    by_player = {}
+    for row in rows:
+        pos = positions.get(row.get("position"), row.get("position"))
+        if pos not in (*ensemble.POSITIONS, "K", "DST"):
+            continue
+        by_player[(ensemble.normalize(row.get("name", "")), pos)] = row
+    return by_player, meta
 
 
 def espn_schedule(refresh: bool) -> dict[int, dict[str, str]]:
@@ -128,14 +185,16 @@ def position_rank(fp: dict | None, position: str) -> int:
     return int(match.group(1)) if match else 99
 
 
-def room_rank(adp: float, rank: float, ecr: float) -> float:
+def room_rank(adp: float, rank: float) -> float:
     adp = min(adp if 0 < adp < 500 else 400, 400)
     rank = min(rank if 0 < rank < 1000 else 400, 400)
-    ecr = min(ecr if 0 < ecr < 1000 else 400, 400)
-    return .65 * adp + .25 * rank + .10 * ecr
+    # Keep player quality (ECR) out of the ESPN room forecast. ECR belongs in
+    # Model; including it here also lets consensus alter VONA through survival.
+    return .70 * adp + .30 * rank
 
 
-def candidate(row: dict, fp_by_name: dict[str, dict], old_by_id: dict[int, dict]) -> dict | None:
+def candidate(row: dict, fp_by_name: dict[str, dict], ffc_by_player: dict[tuple[str, str], dict],
+              ffc_meta: dict, old_by_id: dict[int, dict]) -> dict | None:
     p = row["player"]
     position = POSITION_ID.get(p.get("defaultPositionId"))
     team = TEAM_BY_ID.get(p.get("proTeamId"))
@@ -152,24 +211,40 @@ def candidate(row: dict, fp_by_name: dict[str, dict], old_by_id: dict[int, dict]
     espn_adp = float(ownership.get("averageDraftPosition") or 999)
     ecr = float((fp or {}).get("rank_ecr") or old.get("ecr") or espn_rank)
     projection = season_projection(p)
-    market = room_rank(espn_adp, espn_rank, ecr)
-    old_fp_adp = old.get("fp_adp", old.get("adp", 999))
+    room = room_rank(espn_adp, espn_rank)
+    market_row = ffc_by_player.get((ensemble.normalize(p["fullName"]), position))
+    if position == "DST" and not market_row:
+        market_row = next((item for (name, pos), item in ffc_by_player.items()
+                           if pos == "DST" and item.get("team") == team), None)
+    market_adp = float((market_row or {}).get("adp") or room)
+    market_sd = float((market_row or {}).get("stdev") or 0)
+    if market_sd <= 0:
+        market_sd = float(old.get("adp_sd") or max(6, min(35, 5.8 + .055 * room)))
     same_day = old.get("adp_updated") == dt.date.today().isoformat()
     old_adp = float(old.get("adp_prev" if same_day else "espn_adp", old.get("adp", espn_adp)))
-    old_adp_delta = float(old.get("adp_delta", espn_adp - old_adp)) if same_day else espn_adp - old_adp
-    sd = float(old.get("sd") or projection * CEILING_RATE[position])
+    old_adp_delta = espn_adp - old_adp
+    sd = projection * ensemble.CEILING_RATE[position]
     return {
         "id": p["id"], "name": p["fullName"], "pos": position, "team": team,
         "bye": BYE_BY_TEAM[team], "status": p.get("injuryStatus") or "ACTIVE",
         "injured": bool(p.get("injured")), "last_news": p.get("lastNewsDate"),
         "proj": round(projection, 1), "proj_espn": round(projection, 1), "sd": round(sd, 1),
+        "sd_source": "position-rate proxy",
         "adp": round(espn_adp, 1), "espn_adp": round(espn_adp, 1),
         "adp_prev": round(old_adp, 1), "adp_delta": round(old_adp_delta, 1),
         "adp_prev_date": old.get("adp_prev_date" if same_day else "adp_updated", "prior refresh"),
         "adp_updated": dt.date.today().isoformat(),
-        "espn_rank": round(espn_rank, 1), "room_rank": round(market, 1),
-        "adp_sd": round(max(6, min(35, 5.8 + .055 * market)), 1),
-        "ecr": int(ecr), "fp_adp": old_fp_adp, "tier": int((fp or {}).get("tier") or old.get("tier") or 99),
+        "espn_rank": round(espn_rank, 1), "room_rank": round(room, 1),
+        "market_adp": round(market_adp, 1), "market_adp_sd": round(market_sd, 1),
+        "market_adp_n": int((market_row or {}).get("times_drafted") or 0),
+        "market_adp_updated": ffc_meta.get("end_date") if market_row else old.get("market_adp_updated"),
+        "adp_sd": round(market_sd, 1), "adp_sd_source": "FFC observed" if market_row else "fallback",
+        "ecr": int(ecr),
+        "ecr_mean": round(float((fp or {}).get("rank_ave") or old.get("ecr_mean") or ecr), 2),
+        "ecr_sd": round(float((fp or {}).get("rank_std") or old.get("ecr_sd") or 0), 2),
+        "ecr_min": int(float((fp or {}).get("rank_min") or old.get("ecr_min") or ecr)),
+        "ecr_max": int(float((fp or {}).get("rank_max") or old.get("ecr_max") or ecr)),
+        "tier": int((fp or {}).get("tier") or old.get("tier") or 99),
         "ecr_pos": position_rank(fp, position), "fp_ranked": bool(fp),
         "percent_owned": round(float(ownership.get("percentOwned") or 0), 1),
     }
@@ -237,7 +312,7 @@ def add_special_ranks(players: list[dict]) -> None:
             player["special_rank"] = index
 
 
-def render_report(players: list[dict], before: list[dict]) -> str:
+def render_report(players: list[dict], before: list[dict], source_date: str, ecr_meta: dict) -> str:
     counts = {pos: sum(p["pos"] == pos for p in players) for pos in (*ensemble.POSITIONS, "K", "DST")}
     statuses = defaultdict(int)
     for player in players:
@@ -250,7 +325,8 @@ def render_report(players: list[dict], before: list[dict]) -> str:
 
 - Player pool expanded from {BASELINE_POOL_SIZE} to {len(players)} players.
 - Position coverage: {', '.join(f'{pos} {count}' for pos, count in counts.items())}.
-- ESPN custom projections, ESPN room ADP/rank, current teams, and status were refreshed {dt.date.today().isoformat()}.
+- ESPN custom projections, ESPN room ADP/rank, current teams, and status were retrieved {source_date}.
+- FantasyPros half-PPR ECR was updated {ecr_meta['updated']} from {ecr_meta['experts']} experts: {ecr_meta['updated_1d']} updated within one day, {ecr_meta['updated_3d']} within three days, and all {ecr_meta['updated_7d']} within seven days.
 - All 32 NFL bye weeks are populated from the official schedule.
 - D/ST is a streaming board: 55% Week 1, 25% Week 2, 10% Week 3, 7.5% season projection, and 2.5% positional ECR.
 - K balances immediate and season-long value: 40% Week 1, 20% Week 2, 10% Week 3, 22.5% season projection, and 7.5% positional ECR.
@@ -266,13 +342,14 @@ def render_report(players: list[dict], before: list[dict]) -> str:
 
 ## Model boundaries
 
-- Opponent timing and survival blend 60% ESPN room rank/ADP with 40% FantasyPros half-PPR ADP; FantasyPros ECR remains the model sanity check.
+- Opponent timing and survival blend 60% ESPN-only room rank/ADP with 40% current Fantasy Football Calculator 12-team half-PPR ADP. Its observed draft standard deviation drives availability uncertainty when matched; FantasyPros ECR remains separate as the Model sanity check.
+- FantasyPros supplies not only ECR but each player's expert mean, standard deviation, and range. Those disagreement fields are exported for judgment and are not silently converted into another ranking weight.
 - Status is visible and zero-projection/long-term unavailable players are not automatically recommended, but every player remains clickable for accurate bookkeeping.
 - Bye week is informational; elite players are not downgraded for sharing a bye.
 """
 
 
-def render_special_report(players: list[dict]) -> str:
+def render_special_report(players: list[dict], source_date: str) -> str:
     def table(position: str) -> str:
         group = sorted((p for p in players if p["pos"] == position), key=lambda p: p["special_rank"])
         return "\n".join(
@@ -284,7 +361,7 @@ def render_special_report(players: list[dict]) -> str:
 
     return f"""# Early-season special-teams streaming board
 
-Generated {dt.date.today().isoformat()} from ESPN's authenticated weekly projections scored under this league's custom settings.
+Generated from ESPN's authenticated weekly projections retrieved {source_date} and scored under this league's custom settings.
 
 ## Draft policy
 
@@ -316,28 +393,31 @@ def main() -> None:
     parser.add_argument("--refresh", action="store_true")
     parser.add_argument("--write", action="store_true")
     args = parser.parse_args()
+    if args.write and not args.refresh:
+        parser.error("--write requires --refresh so the live app cannot publish cached data with a fresh timestamp")
     text, before, start, end = ensemble.current_players()
     old_by_id = {p["id"]: p for p in before}
-    fp = fantasypros(args.refresh)
+    fp, ecr_meta = fantasypros(args.refresh)
+    ffc, ffc_meta = fantasyfootballcalculator(args.refresh)
     rows = espn_rows(args.refresh)
     weekly_rows = {period: espn_rows(args.refresh, period) for period in (1, 2, 3)}
     schedule = espn_schedule(args.refresh)
-    candidates = [player for row in rows if (player := candidate(row, fp, old_by_id))]
+    candidates = [player for row in rows if (player := candidate(row, fp, ffc, ffc_meta, old_by_id))]
     pool = choose_pool(candidates)
     cbs, fftoday, metadata = ensemble.source_data(args.refresh)
-    metadata["sources"]["ESPN"] = {"date": dt.date.today().isoformat(), "role": "live custom-league projection"}
+    metadata["sources"]["ESPN"] = {
+        "date": ensemble.cache_date(CACHE / "espn_players.json"),
+        "role": "live custom-league projection",
+    }
     fd_rates = ensemble.player_first_down_rates(args.refresh)
     players, analysis = ensemble.build_ensemble(pool, cbs, fftoday, metadata, fd_rates)
     add_weekly_projections(players, weekly_rows, schedule)
-    # New/rescued players need an upside input even when the old ESPN row was zero.
-    for player in players:
-        if player["proj"] > 0 and player["sd"] <= 0:
-            player["sd"] = round(player["proj"] * CEILING_RATE[player["pos"]], 1)
     add_special_ranks(players)
     players.sort(key=lambda p: (p["room_rank"], p["name"]))
-    report = render_report(players, before)
+    espn_source_date = ensemble.cache_date(CACHE / "espn_players.json")
+    report = render_report(players, before, espn_source_date, ecr_meta)
     REPORT.write_text(report)
-    SPECIAL_REPORT.write_text(render_special_report(players))
+    SPECIAL_REPORT.write_text(render_special_report(players, espn_source_date))
     RAW.write_text(json.dumps({"metadata": metadata, "players": players}, indent=2))
     ensemble.REPORT.write_text(ensemble.render_report(analysis))
     ensemble.RAW.write_text(json.dumps(analysis, indent=2))
@@ -347,7 +427,7 @@ def main() -> None:
         output = re.sub(
             r'<b>2026 RANKINGS</b><span>.*?</span>',
             f'<b>2026 RANKINGS</b><span>{len(players)}-player pool, refreshed {dt.date.today():%b %-d}. '
-            'Projections: median of ESPN, CBS, and FFToday; timing: 60% ESPN room + 40% FantasyPros ADP.</span>',
+            'Projections: median of ESPN, CBS, and FFToday; timing: 60% ESPN room + 40% current 12-team half-PPR market.</span>',
             output, count=1,
         )
         output = re.sub(
@@ -356,8 +436,26 @@ def main() -> None:
             output, count=1,
         )
         output = re.sub(
-            r"player-specific 2024–25 first-down rates regressed toward position averages;(?: rookies and unmatched players use the position rate\.)?",
-            "player-specific 2023–24 first-down rates regressed toward position averages; rookies and unmatched players use the position rate.",
+            r"// Projections: robust median of ESPN, CBS, and FFToday, refreshed \d{4}-\d{2}-\d{2}\.",
+            f"// Projections: robust median of ESPN, CBS, and FFToday, refreshed {today}.",
+            output, count=1,
+        )
+        output = re.sub(
+            r"const MARKET_META=\{source:'[^']+',updated:'[^']+',drafts:\d+\};",
+            f"const MARKET_META={{source:'Fantasy Football Calculator 12-team half-PPR',"
+            f"updated:'{ffc_meta.get('end_date', today)}',drafts:{int(ffc_meta.get('total_drafts') or 0)}}};",
+            output, count=1,
+        )
+        output = re.sub(
+            r"const ECR_META=\{source:'[^']+',updated:'[^']+',experts:\d+,updated1d:\d+,updated3d:\d+,updated7d:\d+\};",
+            f"const ECR_META={{source:'FantasyPros Latest ECR, half-PPR',updated:'{ecr_meta['updated']}',"
+            f"experts:{ecr_meta['experts']},updated1d:{ecr_meta['updated_1d']},"
+            f"updated3d:{ecr_meta['updated_3d']},updated7d:{ecr_meta['updated_7d']}}};",
+            output, count=1,
+        )
+        output = re.sub(
+            r"player-specific 2023–(?:24|25) first-down rates regressed toward position averages;(?: rookies and unmatched players use the position rate\.)?",
+            "player-specific 2023–25 first-down rates regressed toward position averages; rookies and unmatched players use the position rate.",
             output,
         )
         ensemble.HTML.write_text(output)
