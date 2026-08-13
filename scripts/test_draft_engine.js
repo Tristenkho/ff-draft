@@ -139,6 +139,8 @@ assert(html.includes('function waitBandLabel(tier)')&&html.includes('>Wait Cost<
   'Pick Board wait-band presentation is missing');
 assert(html.includes('data-board-view')&&html.includes('ECR &minus; Model'),
   'mobile audit metric or ECR/Model comparison presentation is missing');
+assert(html.includes('ADP avg')&&html.includes('r.p.adp.toFixed(1)'),
+  'ADP audit view is hiding decimal average-pick values');
 assert(html.includes('const show=rows2;')&&html.includes('visibleRows=show.slice(0,8);')&&
   html.includes('.board{flex:1;min-height:0;overflow:auto'),
   'full ranking is not scrollable while hotkeys remain limited to the top eight');
