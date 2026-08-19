@@ -2,7 +2,7 @@
 
 ## Goal
 Single-file HTML draft assistant for one ESPN league.
-Draft is [DATE]. No backend, no CDN, no build step.
+Draft is Sun Sep 6 2026, 8:00pm EDT (7:00pm CDT). No backend, no CDN, no build step.
 
 ## Workflow (draft day)
 Network is assumed available. The HTML tool is the source of truth for draft
