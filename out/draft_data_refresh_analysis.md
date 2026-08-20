@@ -4,22 +4,23 @@
 
 - Player pool expanded from 205 to 280 players.
 - Position coverage: QB 30, RB 70, WR 90, TE 26, K 32, DST 32.
-- ESPN custom projections, ESPN room ADP/rank, current teams, and status were retrieved 2026-08-12.
-- FantasyPros half-PPR ECR was updated 2026-08-12 from 87 experts: 27 updated within one day, 53 within three days, and all 87 within seven days.
+- ESPN custom projections, ESPN room ADP/rank, current teams, and status were retrieved 2026-08-20.
+- FantasyPros half-PPR ECR was updated 2026-08-20 from 101 experts: 38 updated within one day, 84 within three days, and all 101 within seven days.
 - All 32 NFL bye weeks are populated from the official schedule.
 - D/ST is a streaming board: 55% Week 1, 25% Week 2, 10% Week 3, 7.5% season projection, and 2.5% positional ECR.
 - K balances immediate and season-long value: 40% Week 1, 20% Week 2, 10% Week 3, 22.5% season projection, and 7.5% positional ECR.
-- 75 net players were added. Skill players without a current projection: 0; each remains searchable and status-flagged.
+- 75 net players were added. Skill players without a current projection: 1; each remains searchable and status-flagged.
 
 ## Status coverage
 
-- ACTIVE: 264
-- OUT: 4
-- QUESTIONABLE: 12
+- ACTIVE: 240
+- DOUBTFUL: 2
+- OUT: 3
+- QUESTIONABLE: 35
 
 ## Zero-projection skill players
 
-- None
+- Jayden Higgins (HOU, DOUBTFUL, ESPN ADP 161.1)
 
 ## Model boundaries
 
