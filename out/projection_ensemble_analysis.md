@@ -5,10 +5,10 @@
 - ESPN, CBS, and FFToday are combined with a robust median when available.
 - CBS and FFToday raw stat lines are rescored under the league's passing, rushing, receiving, first-down, and fumble rules.
 - ADP and ECR are not projection inputs.
-- Player-specific 2023-25 first-down rates are regressed toward position averages before CBS/FFToday are rescored; matched players: 190/216.
-- Mean absolute projection change among matched players: 10.1 points.
-- Three-source coverage: 197/216 skill players (91.2%).
-- Two-or-more-source coverage: 213/216 skill players (98.6%).
+- Player-specific 2023-25 first-down rates are regressed toward position averages before CBS/FFToday are rescored; matched players: 193/216.
+- Mean absolute projection change among matched players: 9.8 points.
+- Three-source coverage: 201/216 skill players (93.1%).
+- Two-or-more-source coverage: 212/216 skill players (98.1%).
 
 ## Coverage
 
@@ -16,7 +16,7 @@
 | --- | ---: | ---: |
 | QB | 30/30 | 30/30 |
 | RB | 65/70 | 70/70 |
-| WR | 77/90 | 88/90 |
+| WR | 81/90 | 87/90 |
 | TE | 25/26 | 25/26 |
 
 ## Largest overall projection-rank changes
@@ -25,51 +25,51 @@ Positive means the ensemble moves the player up.
 
 | Player | Pos | ESPN/custom | Ensemble | Old rank | New rank | Change |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| Chris Godwin Jr. | WR | 135.9 | 163.3 | 138 | 106 | +32 |
-| Tyrone Tracy Jr. | RB | 83.2 | 124.1 | 182 | 151 | +31 |
-| Tank Dell | WR | 92.3 | 129.9 | 174 | 146 | +28 |
-| Matthew Golden | WR | 162.5 | 143.0 | 106 | 133 | -27 |
-| Blake Corum | RB | 157.3 | 138.4 | 111 | 137 | -26 |
-| Mike Evans | WR | 164.0 | 195.3 | 104 | 78 | +26 |
-| James Conner | RB | 0.0 | 75.9 | 216 | 193 | +23 |
-| Jacoby Brissett | QB | 201.0 | 246.6 | 71 | 50 | +21 |
-| Aaron Jones Sr. | RB | 174.2 | 157.4 | 95 | 116 | -21 |
-| Makai Lemon | WR | 153.3 | 138.3 | 117 | 138 | -21 |
-| Wan'Dale Robinson | WR | 145.0 | 160.1 | 131 | 110 | +21 |
-| Malik Willis | QB | 240.7 | 295.0 | 46 | 26 | +20 |
-| Jayden Reed | WR | 148.3 | 163.0 | 127 | 107 | +20 |
-| Dalton Schultz | TE | 110.8 | 133.3 | 161 | 141 | +20 |
-| Kyler Murray | QB | 253.4 | 299.1 | 41 | 24 | +17 |
-| Josh Jacobs | RB | 266.8 | 247.6 | 31 | 48 | -17 |
-| Bucky Irving | RB | 198.6 | 229.9 | 72 | 55 | +17 |
-| Kyle Monangai | RB | 171.0 | 157.8 | 97 | 114 | -17 |
-| Chris Rodriguez Jr. | RB | 71.9 | 102.3 | 190 | 173 | +17 |
-| Dylan Sampson | RB | 76.2 | 103.3 | 188 | 171 | +17 |
+| Tyrone Tracy Jr. | RB | 61.8 | 101.2 | 201 | 171 | +30 |
+| Chris Godwin Jr. | WR | 135.7 | 163.3 | 134 | 106 | +28 |
+| Matthew Golden | WR | 162.0 | 143.0 | 105 | 132 | -27 |
+| Blake Corum | RB | 157.3 | 138.4 | 111 | 136 | -25 |
+| Mike Evans | WR | 163.8 | 195.3 | 102 | 77 | +25 |
+| Chris Rodriguez Jr. | RB | 72.1 | 102.3 | 193 | 169 | +24 |
+| Dylan Sampson | RB | 76.5 | 103.3 | 190 | 167 | +23 |
+| Jacoby Brissett | QB | 200.2 | 246.6 | 71 | 49 | +22 |
+| Malik Willis | QB | 242.0 | 295.0 | 46 | 26 | +20 |
+| James Conner | RB | 0.0 | 75.9 | 215 | 195 | +20 |
+| Jayden Reed | WR | 147.8 | 163.2 | 126 | 107 | +19 |
+| De'Zhaun Stribling | WR | 116.0 | 136.4 | 158 | 139 | +19 |
+| Dalton Schultz | TE | 110.7 | 133.3 | 160 | 143 | +17 |
+| Sam Darnold | QB | 243.5 | 283.4 | 45 | 29 | +16 |
+| Breece Hall | RB | 260.5 | 243.0 | 34 | 50 | -16 |
+| Jordyn Tyson | WR | 87.5 | 106.1 | 181 | 165 | +16 |
+| Kyler Murray | QB | 253.0 | 299.1 | 39 | 24 | +15 |
+| Bucky Irving | RB | 198.1 | 229.9 | 72 | 57 | +15 |
+| Jaylen Warren | RB | 177.6 | 199.0 | 91 | 76 | +15 |
+| Caleb Williams | QB | 283.8 | 325.1 | 22 | 8 | +14 |
 
 ## Largest source disagreements
 
 | Player | Pos | ESPN | CBS | FFToday | Median | Uncertainty |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| Kaelon Black | RB | 28.1 | 121.2 | 21.9 | 28.1 | 46.0 |
-| Troy Franklin | WR | 44.8 | 137.6 | 63.4 | 63.4 | 42.3 |
-| Emanuel Wilson | RB | 9.6 | 95.6 | 11.6 | 11.6 | 40.2 |
-| Jordan James | RB | 59.6 | 121.5 | 44.5 | 59.6 | 36.7 |
-| Drake London | WR | 233.5 | 310.1 | 254.8 | 254.8 | 62.9 |
-| Jacoby Brissett | QB | 201.0 | 276.5 | 246.7 | 246.6 | 49.4 |
-| Malik Willis | QB | 240.7 | 308.8 | 295.0 | 295.0 | 54.6 |
-| George Pickens | WR | 211.9 | 277.6 | 214.2 | 214.3 | 54.7 |
-| Bijan Robinson | RB | 331.6 | 394.7 | 357.4 | 357.4 | 96.5 |
-| Kayshon Boutte | WR | 68.1 | 126.9 | 65.7 | 68.1 | 31.8 |
-| Tyrone Tracy Jr. | RB | 83.2 | 142.6 | 124.1 | 124.1 | 40.7 |
-| Chris Rodriguez Jr. | RB | 71.9 | 130.2 | 102.3 | 102.3 | 35.7 |
-| George Kittle | TE | 151.6 | 184.4 | 128.2 | 151.6 | 41.7 |
-| Caleb Williams | QB | 284.2 | 337.9 | 325.1 | 325.1 | 55.6 |
-| Kyler Murray | QB | 253.4 | 299.1 | 307.1 | 299.1 | 52.3 |
-| Antonio Williams | WR | 69.0 | 122.5 | 78.4 | 78.4 | 28.7 |
-| Jonathan Taylor | RB | 304.9 | 344.6 | 292.6 | 304.9 | 82.3 |
-| Rashee Rice | WR | 236.4 | 280.6 | 229.1 | 236.4 | 55.0 |
-| Kenyon Sadiq | TE | 137.6 | 122.3 | 87.0 | 122.3 | 35.1 |
-| Tyler Shough | QB | 267.4 | 301.3 | 317.9 | 301.3 | 51.5 |
+| Kaelon Black | RB | 59.0 | 121.1 | 21.9 | 59.0 | 43.7 |
+| Jordan James | RB | 28.4 | 121.6 | 44.5 | 44.5 | 42.3 |
+| Emanuel Wilson | RB | 9.6 | 95.8 | 11.6 | 11.6 | 40.3 |
+| Troy Franklin | WR | 44.9 | 131.0 | 63.4 | 63.4 | 39.4 |
+| Jacoby Brissett | QB | 200.2 | 276.8 | 246.7 | 246.6 | 49.7 |
+| Tyrone Tracy Jr. | RB | 61.8 | 136.3 | 101.2 | 101.2 | 40.2 |
+| Drake London | WR | 233.6 | 303.9 | 254.8 | 254.8 | 61.5 |
+| Tank Dell | WR | 133.6 | 138.8 | 69.7 | 133.6 | 42.3 |
+| Malik Willis | QB | 242.0 | 309.3 | 295.0 | 295.0 | 54.4 |
+| George Pickens | WR | 211.5 | 277.7 | 214.2 | 214.3 | 54.8 |
+| Ja'Kobi Lane | WR | 89.9 | 142.4 | 79.4 | 89.9 | 33.5 |
+| Kayshon Boutte | WR | 76.9 | 124.4 | 65.7 | 76.9 | 30.2 |
+| Chris Rodriguez Jr. | RB | 72.1 | 130.6 | 102.3 | 102.3 | 35.7 |
+| Oronde Gadsden | TE | 66.0 | 122.5 | 85.5 | 85.5 | 30.5 |
+| Bijan Robinson | RB | 331.4 | 387.4 | 357.4 | 357.4 | 95.7 |
+| Kyler Murray | QB | 253.0 | 299.1 | 307.1 | 299.1 | 52.4 |
+| Denzel Boston | WR | 121.1 | 149.1 | 96.5 | 121.1 | 33.5 |
+| Rashee Rice | WR | 237.2 | 281.6 | 229.1 | 237.2 | 55.3 |
+| Omar Cooper Jr. | WR | 58.4 | 110.6 | 75.9 | 75.9 | 27.0 |
+| RJ Harvey | RB | 132.4 | 182.2 | 140.5 | 140.5 | 42.5 |
 
 ## Uncertainty
 
