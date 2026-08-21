@@ -28,6 +28,8 @@ jobs:
         run: |
           mkdir _site
           cp out/draft_terminal.html _site/index.html
+          cp out/draft-terminal-icon-180.png _site/draft-terminal-icon-180.png
+          cp out/draft-terminal-icon-32.png _site/draft-terminal-icon-32.png
           touch _site/.nojekyll
 
       - name: Configure Pages
