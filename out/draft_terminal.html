@@ -271,6 +271,9 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
   .snakeboard .snakecell{min-height:58px;padding:7px 8px}
   .snakeboard .snakehead{position:sticky;top:0;min-height:34px;padding:8px 4px;white-space:nowrap}
   .snakeboard .snake-round{position:sticky;left:0;min-height:58px}
+  /* Snake is planning-only on mobile; reclaim the command footer's height so
+     the full-room grid remains useful in short landscape viewports. */
+  main.snake-mode~footer{display:none}
   #board{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
   footer{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;padding:0 max(6px,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(6px,env(safe-area-inset-left))}
   footer .caret,.keys{display:none}
