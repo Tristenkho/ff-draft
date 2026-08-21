@@ -342,7 +342,7 @@ def render_report(players: list[dict], before: list[dict], source_date: str, ecr
 
 ## Model boundaries
 
-- Opponent timing and survival blend 60% ESPN-only room rank/ADP with 40% current Fantasy Football Calculator 12-team half-PPR ADP. Its observed draft standard deviation drives availability uncertainty when matched; FantasyPros ECR remains separate as the Model sanity check.
+- Opponent timing and survival are market-first: RB/WR/TE blend 80% current Fantasy Football Calculator 12-team half-PPR ADP with 20% ESPN-only room rank/ADP, QB blends 50/50, K/DST are unchanged. Its observed draft standard deviation drives availability uncertainty when matched, widened when ESPN and market disagree; FantasyPros ECR remains separate as the Model sanity check.
 - FantasyPros supplies not only ECR but each player's expert mean, standard deviation, and range. Those disagreement fields are exported for judgment and are not silently converted into another ranking weight.
 - Status is visible and zero-projection/long-term unavailable players are not automatically recommended, but every player remains clickable for accurate bookkeeping.
 - Bye week is informational; elite players are not downgraded for sharing a bye.
@@ -427,7 +427,7 @@ def main() -> None:
         output = re.sub(
             r'<b>2026 RANKINGS</b><span>.*?</span>',
             f'<b>2026 RANKINGS</b><span>{len(players)}-player pool, refreshed {dt.date.today():%b %-d}. '
-            'Projections: median of ESPN, CBS, and FFToday; timing: 60% ESPN room + 40% current 12-team half-PPR market.</span>',
+            'Projections: median of ESPN, CBS, and FFToday; timing: market-first blend, 80% current 12-team half-PPR market for RB/WR/TE and 50% for QB, ESPN room fills the rest (K/DST unchanged, rounds 13-14 only).</span>',
             output, count=1,
         )
         output = re.sub(
