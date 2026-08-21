@@ -309,7 +309,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
 <body>
 <div id="app">
   <div class="warn" id="warn">
-    <b>2026 RANKINGS</b><span>280-player pool, refreshed Aug 20. Projections: median of ESPN, CBS, and FFToday; timing: 60% ESPN room + 40% current 12-team half-PPR market.</span>
+    <b>2026 RANKINGS</b><span>280-player pool, refreshed Aug 20. Projections: median of ESPN, CBS, and FFToday; timing: market-first blend, 80% current 12-team half-PPR market for RB/WR/TE and 50% for QB, ESPN room fills the rest (K/DST unchanged, rounds 13-14 only).</span>
   </div>
 
   <header>
@@ -398,7 +398,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
       <p><b>Points</b> is the median of ESPN, CBS, and FFToday when available. CBS and FFToday raw stat lines are rescored locally using player-specific 2023–25 first-down rates regressed toward position averages. ADP and ECR never enter the projection. <b>Model</b> subtracts 80% of position replacement from projected points, blends that core rank with half-PPR ECR re-ranked among skill players, and breaks wait-band ties. Model is an audit view, not the pick list.</p>
       <p><b>ECR</b> is one current FantasyPros expert panel, not an invitation to average the same opinions again. Its expert disagreement is shown under the ECR rank and included in Copy state for close-call judgment; it does not alter wait cost or availability. Raw ECR, ADP and <b>ECR − Model</b> stay off the Pick Board so the on-clock screen is short — they are one tab away in the audit views and always in Copy state. ECR − Model is the skill-player ECR rank minus the Model rank: positive means the model likes the player more than the panel does. Additional expert lists remain shadow evidence until historical testing shows incremental value.</p>
       <p><b>Ceiling weight</b> defaults to the validated 0.40 and remains live-adjustable. The current upside SD is a configured generic position-rate proxy carried separately from forecast disagreement; it is useful across positions but is not a measured player-specific ceiling. Resolve close same-position calls with current role, health, discipline and quarterback news in the copied-state judgment step.</p>
-      <p><b>Availability</b> blends 60% of the current ESPN-only room rank/ADP with 40% of Fantasy Football Calculator's current 12-team half-PPR market. Observed market draft dispersion drives the survival curve when a player is matched; otherwise a conservative heuristic supplies the fallback. Unavailable and low-confidence players remain searchable for accurate bookkeeping but no longer occupy forecasted opponent picks or expected-next-player estimates.</p>
+      <p><b>Availability</b> is market-first: RB/WR/TE blend 80% of Fantasy Football Calculator's current 12-team half-PPR market with 20% ESPN-only room rank/ADP, QB blends 50/50, and K/DST are unchanged since they never enter VONA. ESPN's room price for RB/WR/TE runs consistently later than the market, so it is deliberately shrunk toward market rather than trusted outright. Observed market draft dispersion drives the survival curve when a player is matched, widened whenever ESPN and market disagree so a large source gap reads as genuine uncertainty instead of false precision; otherwise a conservative heuristic supplies the fallback. Unavailable and low-confidence players remain searchable for accurate bookkeeping but no longer occupy forecasted opponent picks or expected-next-player estimates.</p>
       <p><b>ESPN update</b> plus a date under a name is only the timestamp of that player's most recent ESPN news item, shown when it landed within the last three days. It is a recency marker, not a headline and not a sentiment signal — read the actual news before acting on it.</p>
       <p><b>Winning build</b> is QB1, TE1, ten RB/WR, K1 and D/ST1. It starts with three RB/WR through Round 4, secures WR1 by Round 5, fills RB2/WR2/FLEX by Round 8, TE by Round 9, QB by Round 10, and takes K/D/ST in Rounds 13–14. QB2 and TE2 are waiver positions in this shallow format.</p>
       <p><b>Draft</b> keeps the top eight candidates in the first screen and lets you scroll through the full ranking below them. On the Pick Board, press <b>1–8</b> to record one of those top eight, type a name and press Enter, or click any player row. Model, Points, ECR and ADP are read-only audit views; switch back to the Pick Board before recording. <b>Auto to my pick</b> and <b>Ctrl/Cmd Enter</b> rehearse opponent picks through your next turn; simulated picks are marked <b>~</b> in the same ledger and Copy state, so reset the draft before using it live. Snake remains the planning-only board for comparing whole-room scenarios. While this guide is open the board is locked — nothing can be recorded or undone.</p>
@@ -15129,7 +15129,16 @@ const KDST_ROUND=13;                  // K and DST go in rounds 13-14
 const VONA_TIER_MIN=4,VONA_TIER_MAX=12,VONA_UNCERTAINTY_SCALE=.12;
 const MODEL_REPLACEMENT_WEIGHT=.80;   // intentionally lighter than full VOR for Model rank
 const ADP_TREND_WEIGHT=.50;           // carry half of recent ESPN movement into timing
-const MARKET_ADP_WEIGHT=.40;          // guard ESPN timing with current cross-platform half-PPR cost
+// Market-first, position-aware timing. ESPN's room ADP for RB/WR/TE runs
+// consistently late against the observed cross-platform market (see
+// out/league_tendencies_2025.md), so opponent timing/survival must not let
+// that stale room signal dominate: shrink it hard toward market for RB/WR/TE.
+// QB keeps a 50/50 blend — the room's one-QB-early-then-desert pattern is
+// itself validated signal, not noise to shrink away. K/DST timing is
+// unchanged by this fix: they never enter VONA and are hardcoded to rounds
+// 13-14 regardless of this weight.
+const MARKET_ADP_WEIGHT_BY_POS={QB:.50,RB:.80,WR:.80,TE:.80,K:.40,DST:.40};
+const marketWeight=p=>MARKET_ADP_WEIGHT_BY_POS[p?.pos]??.40;
 const OPPONENT={modelWeight:0,needWeight:.20,noiseScale:.65};
 const PROJECTION_META={sources:['ESPN','CBS','FFToday'],method:'median',updated:'2026-08-20'};
 const MARKET_META={source:'Fantasy Football Calculator 12-team half-PPR',updated:'2026-08-20',drafts:2595};
@@ -15192,21 +15201,35 @@ const pickForTeam=(round,team)=>overallOf(round,round%2?team:TEAMS-team+1);
 // Planning-only board. Default modes follow the selected source exactly;
 // Randomize is deliberately opt-in and only perturbs that source ranking.
 // Recorded real picks are seeded but are never changed by this display.
+const roomMetric=p=>p?.room_rank??p?.adp??999;
+const adpTrend=p=>Number.isFinite(p?.adp_delta)?p.adp_delta:0;
+// espn/market are the two timing sources; timingMetric blends them per
+// position, timingSd widens for pick uncertainty when they disagree.
+function timingComponents(p){
+  const espn=roomMetric(p)+ADP_TREND_WEIGHT*clamp(adpTrend(p),-20,20);
+  const market=(p?.market_adp??999)<500?p.market_adp:espn;
+  return {espn,market};
+}
+function timingMetric(p){
+  const {espn,market}=timingComponents(p), w=marketWeight(p);
+  return (1-w)*espn+w*market;
+}
+// Base spread is FFC's own observed pick dispersion. When ESPN room price and
+// market ADP disagree, add the standard two-source mixture variance
+// (w·(1-w)·gap², the between-component term of a weighted mixture) so a large
+// source disagreement widens the survival curve instead of just moving its
+// center — this keeps availability from reading falsely precise.
 function timingSd(p){
   const sd=Number(p?.adp_sd);
-  return Number.isFinite(sd)&&sd>0?sd:1.5;
+  const base=Number.isFinite(sd)&&sd>0?sd:1.5;
+  const {espn,market}=timingComponents(p), w=marketWeight(p);
+  const disagreementVar=w*(1-w)*(espn-market)**2;
+  return Math.sqrt(base*base+disagreementVar);
 }
 function mockNoise(p){
   const u=Math.max(Math.random(),1e-9),v=Math.max(Math.random(),1e-9);
   const sd=p?timingSd(p)*OPPONENT.noiseScale:4;
   return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)*sd;
-}
-const roomMetric=p=>p?.room_rank??p?.adp??999;
-const adpTrend=p=>Number.isFinite(p?.adp_delta)?p.adp_delta:0;
-function timingMetric(p){
-  const espn=roomMetric(p)+ADP_TREND_WEIGHT*clamp(adpTrend(p),-20,20);
-  const market=(p?.market_adp??999)<500?p.market_adp:espn;
-  return (1-MARKET_ADP_WEIGHT)*espn+MARKET_ADP_WEIGHT*market;
 }
 function mockMetric(p,mode,meta){
   if(mode==='model'||mode==='needs')return meta.modelRank.get(p.id)||999;
@@ -15860,7 +15883,7 @@ function buildState(){
   L.push('Format: 8 of 12 make the playoffs; single-week rounds in Weeks 15–17. Waivers reset weekly to inverse standings, no FAAB, one-day period.');
   L.push(`Projection: ${PROJECTION_META.method} of ${PROJECTION_META.sources.join(', ')} where available, each rescored for league settings using regressed 2023-25 player first-down rates (position fallback for rookies/unmatched players); source disagreement is tracked separately from upside; ADP/ECR are not projection inputs.`);
   L.push(`Expert consensus: ${ECR_META.source}, updated ${ECR_META.updated}; ${ECR_META.experts} experts in the seven-day panel (${ECR_META.updated1d} updated within one day, ${ECR_META.updated3d} within three days). Player-level expert average, SD, and range are judgment context, not added ranking weight.`);
-  L.push(`Pick Board order: eligibility → uncertainty-aware wait band (A, B, C …) → Model decision rank → exact wait cost. Wait cost is VONA: the ceiling-adjusted value lost by waiting until my next pick. Model core rank = custom projected points − ${(MODEL_REPLACEMENT_WEIGHT*100).toFixed(0)}% of that position's replacement projection; blend score = ${(1-ecrWeight).toFixed(2)} × core rank + ${ecrWeight.toFixed(2)} × half-PPR ECR re-ranked among QB/RB/WR/TE, then re-ranked. A 25+ rank Model/ECR gap uses the more conservative rank. Timing is ${Math.round((1-MARKET_ADP_WEIGHT)*100)}% ESPN-only room rank/ADP (including recent movement) + ${Math.round(MARKET_ADP_WEIGHT*100)}% ${MARKET_META.source}; market updated ${MARKET_META.updated} from ${MARKET_META.drafts} drafts. ECR does not enter timing, survival, or wait cost.`);
+  L.push(`Pick Board order: eligibility → uncertainty-aware wait band (A, B, C …) → Model decision rank → exact wait cost. Wait cost is VONA: the ceiling-adjusted value lost by waiting until my next pick. Model core rank = custom projected points − ${(MODEL_REPLACEMENT_WEIGHT*100).toFixed(0)}% of that position's replacement projection; blend score = ${(1-ecrWeight).toFixed(2)} × core rank + ${ecrWeight.toFixed(2)} × half-PPR ECR re-ranked among QB/RB/WR/TE, then re-ranked. A 25+ rank Model/ECR gap uses the more conservative rank. Timing blends ESPN-only room rank/ADP (including recent movement) with ${MARKET_META.source}, market-weighted ${Math.round(MARKET_ADP_WEIGHT_BY_POS.RB*100)}% for RB/WR/TE and ${Math.round(MARKET_ADP_WEIGHT_BY_POS.QB*100)}% for QB so ESPN's stale room price can't dominate survival; market updated ${MARKET_META.updated} from ${MARKET_META.drafts} drafts. Survival uncertainty widens when ESPN and market disagree. ECR does not enter timing, survival, or wait cost.`);
   L.push('Model boundary: supplied ceiling SD is a generic position-rate proxy, not player-specific measured upside. For near-ties, check current injury, discipline, role and quarterback news before choosing.');
   L.push('Build guardrails: QB1/TE1 only; three RB/WR by Round 4; WR1 by Round 5; RB2/WR2/FLEX by Round 8; TE by Round 9; QB by Round 10; ten RB/WR with at least four each; K + D/ST in Rounds 13–14.');
   L.push(`My next pick ${nm?fmtPick(nm):'—'}${nxt?`, then ${fmtPick(nxt)}`:' (last pick)'}`);
@@ -15899,7 +15922,7 @@ function buildState(){
 
   const rows=computeBoard().slice(0,8);
   L.push(`TOP CANDIDATES — PICK BOARD ORDER (eligibility → wait band → Model → exact wait cost); wait cost = raw value lost if I wait until ${nxt?fmtPick(nxt):'my next pick'}; wait bands expand with projection uncertainty (${VONA_TIER_MIN}–${VONA_TIER_MAX} points), so players sharing a band are ties`);
-  L.push(`(survives = P(still on board at ${nxt?fmtPick(nxt):'next pick'}), using ${Math.round((1-MARKET_ADP_WEIGHT)*100)}% ESPN room timing + ${Math.round(MARKET_ADP_WEIGHT*100)}% ${MARKET_META.source}, re-ranked among draftable remaining players)`);
+  L.push(`(survives = P(still on board at ${nxt?fmtPick(nxt):'next pick'}), using ESPN room timing blended with ${MARKET_META.source} (RB/WR/TE ${Math.round(MARKET_ADP_WEIGHT_BY_POS.RB*100)}% market, QB ${Math.round(MARKET_ADP_WEIGHT_BY_POS.QB*100)}% market, K/DST ${Math.round(MARKET_ADP_WEIGHT_BY_POS.K*100)}% market), re-ranked among draftable remaining players; spread widens when sources disagree)`);
   rows.forEach((r,i)=>L.push(
     `  ${String(i+1).padStart(2)}. ${r.p.name.padEnd(22)} ${r.p.pos.padEnd(3)} ${(r.p.team||'—').padEnd(4)}`+
     ` pts ${r.p.proj.toFixed(0).padStart(3)} (${projectionSourcesText(r.p)}; ${r.p.proj_n||0}src ${(r.p.proj_reliability||'medium').toUpperCase()} ${r.p.proj_low?.toFixed(0)??'—'}–${r.p.proj_high?.toFixed(0)??'—'}) · wait band ${r.isSpecial?'—':waitBandLabel(r.vonaTier)} · wait cost ${(r.gain>0?'+':'')+r.gain.toFixed(1)} · model ${rankText(r.modelRank)} [core ${r.coreRank}, skill-ECR ${r.ecrRank}, ECR−Model ${r.ecrRank>500?'—':(r.ecrRank-r.modelRank>0?'+':'')+(r.ecrRank-r.modelRank)}, blend ${r.blendScore.toFixed(1)}${r.needsReview?', REVIEW '+r.decisionRank:''}] · ${ecrEvidenceText(r.p)} · ESPN ADP ${r.p.adp.toFixed(0)} (${adpTrend(r.p)>0?'+':''}${adpTrend(r.p).toFixed(1)}) / market ${r.p.market_adp?.toFixed(1)??'—'} ±${r.p.adp_sd?.toFixed(1)??'—'} (${r.p.adp_sd_source||'unknown'}, n=${r.p.market_adp_n||0}) / timing ${timingMetric(r.p).toFixed(0)} · status ${r.p.status||'ACTIVE'} · latest ESPN update ${newsDate(r.p)} (timestamp only, no headline) · survives ${(r.surv*100).toFixed(0)}%`));

@@ -1,6 +1,10 @@
 /* Offline Monte Carlo harness for out/draft_terminal.html. Does not alter the app.
-   Set DRAFT_MARKET=espn|blend|conservative to stress-test ESPN versus the
-   current 12-team half-PPR market used by the live board.
+   Default run (DRAFT_MARKET unset or 'live') uses the exact embedded production
+   timing engine, byte-for-byte, so this harness can never silently drift from
+   the live board. Set DRAFT_MARKET=espn|conservative to stress-test scenarios
+   against that same market-first, position-aware baseline:
+     espn         - pure ESPN-only room rank/ADP, market ignored entirely
+     conservative - the earlier (more pessimistic) of ESPN room and market
    Seed picks before slot 3 with DRAFT_SEED='Puka Nacua|Jahmyr Gibbs'. */
 const fs=require('fs'), vm=require('vm');
 const html=fs.readFileSync(process.env.DRAFT_HTML||'out/draft_terminal.html','utf8');
@@ -8,25 +12,23 @@ const start=html.indexOf('const TEAMS=12, ROUNDS=14;');
 const end=html.indexOf('// ── render ───────────────────────────────────────');
 if(start<0||end<0) throw new Error('Could not locate the draft engine');
 
-const market=process.env.DRAFT_MARKET||'blend';
-if(!['espn','blend','conservative'].includes(market))throw new Error('DRAFT_MARKET must be espn, blend, or conservative');
+const market=process.env.DRAFT_MARKET||'live';
+if(!['live','espn','conservative'].includes(market))throw new Error('DRAFT_MARKET must be live, espn, or conservative');
 const seed=(process.env.DRAFT_SEED||'').split('|').map(name=>name.trim()).filter(Boolean);
 if(seed.length>2)throw new Error('DRAFT_SEED can contain at most the two picks before slot 3');
 const timingSource=`function timingMetric(p){
-  const espn=roomMetric(p)+ADP_TREND_WEIGHT*clamp(adpTrend(p),-20,20);
-  const market=(p?.market_adp??999)<500?p.market_adp:espn;
-  return (1-MARKET_ADP_WEIGHT)*espn+MARKET_ADP_WEIGHT*market;
+  const {espn,market}=timingComponents(p), w=marketWeight(p);
+  return (1-w)*espn+w*market;
 }`;
 const timingScenario=`const timingMetric=p=>{
-  const espn=roomMetric(p)+ADP_TREND_WEIGHT*clamp(adpTrend(p),-20,20);
-  const market=(p?.market_adp??999)<500?p.market_adp:espn;
-  if(SIM_MARKET==='blend')return .60*espn+.40*market;
+  const {espn,market}=timingComponents(p), w=marketWeight(p);
+  if(SIM_MARKET==='espn')return espn;
   if(SIM_MARKET==='conservative')return Math.min(espn,market);
-  return espn;
+  return (1-w)*espn+w*market;
 };`;
 const originalEngine=html.slice(start,end);
-if(!originalEngine.includes(timingSource))throw new Error('Could not locate timing metric');
-const engine=originalEngine.replace(timingSource,timingScenario);
+if(market!=='live'&&!originalEngine.includes(timingSource))throw new Error('Could not locate timing metric');
+const engine=market==='live'?originalEngine:originalEngine.replace(timingSource,timingScenario);
 const harness=`
 function initialPicks(){
   const ids=[];
