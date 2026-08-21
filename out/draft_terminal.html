@@ -7,6 +7,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Draft Terminal">
+<link rel="icon" type="image/png" sizes="32x32" href="draft-terminal-icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="draft-terminal-icon-180.png">
 <title>Lava Hound Draft Terminal</title>
 <style>
 :root{
@@ -142,6 +144,9 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
   font-family:var(--sans);font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dimmer);white-space:nowrap}
 .planbar{display:none;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid var(--rule);background:#11161e;color:var(--dim);font:10px var(--sans);line-height:1.35}
 .planbar.on{display:flex}.planbar span{flex:1}.planbtn{padding:4px 8px;border:1px solid var(--rule);border-radius:3px;color:var(--text);font:600 9px var(--sans);letter-spacing:.08em;text-transform:uppercase}.planbtn:hover,.planbtn.on{border-color:var(--amber);color:var(--amber);background:#2b2113}
+.snake-layout-label{display:none;flex:none;color:var(--dimmer);font:600 9px var(--sans);letter-spacing:.1em;text-transform:uppercase}
+.snake-detail{display:none;padding:7px 12px;border-bottom:1px solid var(--rule);background:#11161e;color:var(--dim);font:11px var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.snake-detail.on{display:block}.snake-detail b{color:var(--amber)}
 .snakeboard{padding:0;overflow:auto;background:#10151d}
 .snakegrid{display:grid;grid-template-columns:30px repeat(12,minmax(0,1fr));min-width:0}
 .snake-mobile{display:none}
@@ -188,6 +193,9 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
 @media (min-width:981px) and (max-width:1100px){
   .brow,.thead{grid-template-columns:14px minmax(100px,1fr) 40px 56px 38px 38px 38px 52px 50px;gap:5px;padding-left:8px;padding-right:8px}
   .thead div{font-size:8.5px;letter-spacing:.1em}
+}
+@media (min-width:981px){
+  .snake-layout-label,.snake-layout-btn{display:none!important}
 }
 
 @media (max-width:980px){
@@ -241,8 +249,13 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
   .band{font-size:12px;min-width:21px;padding:1px 5px}.waitcost{font-size:10px}
   .slots{padding:8px}.slotrow{min-height:38px;font-size:14px}.needs{font-size:12px}
   .rr{padding:10px;overscroll-behavior:contain}
-  .snakegrid{display:none}
-  .snake-mobile{display:block;padding:0 8px 12px}
+  .snake-layout-label{display:block}
+  .snakegrid{display:none;grid-template-columns:30px repeat(12,90px);min-width:1110px}
+  #board.snakeboard[data-snake-view="grid"] .snakegrid{display:grid}
+  #board.snakeboard[data-snake-view="grid"] .snake-mobile{display:none}
+  #board.snakeboard[data-snake-view="cards"] .snakegrid{display:none}
+  #board.snakeboard[data-snake-view="cards"] .snake-mobile{display:block}
+  .snake-mobile{padding:0 8px 12px}
   .snake-mobile-round{padding-top:8px}
   .snake-mobile-rhead{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;min-height:32px;padding:5px 8px;background:#10151d;border-bottom:1px solid var(--rule);color:var(--dim);font:600 10px var(--sans);letter-spacing:.1em;text-transform:uppercase}
   .snake-mobile-rhead span:last-child{color:var(--dimmer);font-weight:500}
@@ -255,6 +268,9 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
   .snake-mobile-pick .sname{display:block;margin-top:5px;color:var(--text);font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .snake-mobile-pick .spos{display:block;margin-top:3px;color:var(--dim);font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .snake-mode #poolcount{display:none}
+  .snakeboard .snakecell{min-height:58px;padding:7px 8px}
+  .snakeboard .snakehead{position:sticky;top:0;min-height:34px;padding:8px 4px;white-space:nowrap}
+  .snakeboard .snake-round{position:sticky;left:0;min-height:58px}
   #board{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
   footer{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;padding:0 max(6px,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(6px,env(safe-area-inset-left))}
   footer .caret,.keys{display:none}
@@ -331,7 +347,8 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
         <button data-pos="DST">D/ST</button>
       </div>
       <div class="sort" id="sort" role="group" aria-label="Board view"><button class="on" data-sort="gain">Pick Board</button><span class="sortsep">Audit views</span><button data-sort="model" aria-label="Model audit view (read only)">Model</button><button data-sort="proj" aria-label="Points audit view (read only)">Points</button><button data-sort="ecr" aria-label="ECR audit view (read only)">ECR</button><button data-sort="adp" aria-label="ADP audit view (read only)">ADP</button></div>
-      <div class="planbar" id="planbar"><span id="mocknote">Choose an exact source board, or use Need-aware to simulate roster-based opponent selections. Neither changes real draft state.</span><button class="planbtn" data-mock="model">Model</button><button class="planbtn" data-mock="ecr">ECR</button><button class="planbtn" data-mock="adp">ADP</button><button class="planbtn" data-mock="needs">Need-aware</button><button class="planbtn" id="randommock">Randomize</button><button class="planbtn planbtn-primary" id="autountil">Auto to my pick (preview)</button><button class="planbtn" id="clearmock">Clear mock</button></div>
+      <div class="planbar" id="planbar"><span id="mocknote">Choose an exact source board, or use Need-aware to simulate roster-based opponent selections. Neither changes real draft state.</span><button class="planbtn" data-mock="model">Model</button><button class="planbtn" data-mock="ecr">ECR</button><button class="planbtn" data-mock="adp">ADP</button><button class="planbtn" data-mock="needs">Need-aware</button><button class="planbtn" id="randommock">Randomize</button><button class="planbtn planbtn-primary" id="autountil">Auto to my pick (preview)</button><span class="snake-layout-label">Layout</span><button class="planbtn snake-layout-btn on" data-snake-view="grid">Grid</button><button class="planbtn snake-layout-btn" data-snake-view="cards">Cards</button><button class="planbtn" id="clearmock">Clear mock</button></div>
+      <div class="snake-detail" id="snake-detail" aria-live="polite"></div>
       <div class="thead"><div></div><div>Player</div><div title="Projected fantasy points for this league's scoring">Pts</div><div title="Wait cost: ceiling-adjusted points lost by waiting until your next pick. The letter is the wait band (A, B, C …) — players in the same band are statistical ties. The number below it is the exact wait cost, used only as the final tiebreak.">Wait Cost</div><div title="Model decision rank among skill players">Model</div><div title="Raw FantasyPros half-PPR expert consensus rank (audit view)">ECR</div><div title="ESPN room average draft position, shown as a decimal average rather than an ordinal rank (audit view)">ADP avg</div><div title="Skill-player ECR rank minus Model rank. Positive means the model ranks the player ahead of the expert panel; negative means the panel is higher.">ECR &minus; Model</div><div title="Chance the player is still on the board at your next pick">Survives</div></div>
       <div class="board" id="board"></div>
     </div>
@@ -15128,7 +15145,7 @@ const STRATEGY={
 // Forecast confidence remains separate from the existing upside/ceiling SD.
 
 // ── state ────────────────────────────────────────────────────────
-let slot=3, lambda=0.40, ecrWeight=.35, picks=[], autoPickNos=[], posFilter='', view='prep', sortBy='gain', visibleRows=[], mockPicks=[], mockMode='adp', mockRandom=false, mockUntilMine=false, roomKeys=false;
+let slot=3, lambda=0.40, ecrWeight=.35, picks=[], autoPickNos=[], posFilter='', view='prep', sortBy='gain', visibleRows=[], mockPicks=[], mockMode='adp', mockRandom=false, mockUntilMine=false, snakeView='grid', roomKeys=false, snakeCenterPending=false;
 const byId=new Map(PLAYERS.map(p=>[p.id,p]));
 const decisionInputActive=()=>view==='prep'&&sortBy==='gain';
 
@@ -15140,8 +15157,9 @@ const decisionInputActive=()=>view==='prep'&&sortBy==='gain';
   if(s.slot!=null)slot=Math.max(1,Math.min(12,+s.slot));
   if(s.modelVersion>=4&&s.lambda!=null)lambda=Math.max(0,Math.min(1,+s.lambda));
   if(s.modelVersion>=2&&s.ecrWeight!=null)ecrWeight=Math.max(0,Math.min(.5,+s.ecrWeight));
+  if(s.snakeView==='cards'||s.snakeView==='grid')snakeView=s.snakeView;
 }catch(e){}}());
-function save(){localStorage.setItem('ff26-v3',JSON.stringify({picks,autoPickNos,slot,lambda,ecrWeight,modelVersion:4}));}
+function save(){localStorage.setItem('ff26-v3',JSON.stringify({picks,autoPickNos,slot,lambda,ecrWeight,snakeView,modelVersion:4}));}
 
 const $=s=>document.querySelector(s);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -15301,6 +15319,19 @@ function runMock(mode='adp',randomized=false,untilMine=false){
   }
   mockPicks=out; render();
 }
+function centerSnakeSlot(){
+  const board=$('#board'), mine=board.querySelector('.snakehead.mine');
+  if(!mine)return;
+  const target=mine.offsetLeft-(board.clientWidth-mine.offsetWidth)/2;
+  board.scrollLeft=Math.max(0,target);
+}
+function showSnakeDetail(id,pickNo){
+  const p=byId.get(+id)||byId.get(id);
+  if(!p)return;
+  const metric=mockMetric(p,mockMode,modelMeta());
+  $('#snake-detail').innerHTML=`<b>${p.name}</b> · ${p.pos} · pick ${fmtPick(pickNo||curPick())} · ${mockMetricLabel()} ${metric<900?metric:'—'}`;
+  $('#snake-detail').classList.add('on');
+}
 function renderSnake(){
   const meta=modelMeta(), metricLabel=mockMetricLabel();
   const cells=['<div class="snakegrid"><div class="snakecorner">RD</div>'];
@@ -15312,7 +15343,7 @@ function renderSnake(){
       const n=pickForTeam(r,team), actual=picks[n-1], id=actual||mockPicks[n-1], p=byId.get(id);
       const classes=`snakecell ${team===slot?'mine':''} ${actual?'real':p?'mock':''}`;
       const metric=mockMetric(p||{},mockMode,meta);
-      cells.push(`<div class="${classes}"><span class="pick">${fmtPick(n)}${team===slot?' · YOU':''}</span>${p?`<span class="sname">${p.name}</span><span class="spos">${p.pos} · ${metricLabel} ${metric<900?metric:'—'}</span>`:`<span class="sname snakeempty">—</span>`}</div>`);
+      cells.push(`<div class="${classes}"${p?` data-player-id="${p.id}" data-pick="${n}" tabindex="0" role="button"`:''}><span class="pick">${fmtPick(n)}${team===slot?' · YOU':''}</span>${p?`<span class="sname">${p.name}</span><span class="spos">${p.pos} · ${metricLabel} ${metric<900?metric:'—'}</span>`:`<span class="sname snakeempty">—</span>`}</div>`);
     }
     mobile.push(`<section class="snake-mobile-round"><div class="snake-mobile-rhead"><span>Round ${r}</span><span>${r%2?'Slots 1 → 12':'Slots 12 → 1'}</span></div><div class="snake-mobile-picks">`);
     for(let inRound=1;inRound<=TEAMS;inRound++){
@@ -15320,12 +15351,19 @@ function renderSnake(){
       const actual=picks[n-1], id=actual||mockPicks[n-1], p=byId.get(id);
       const metric=mockMetric(p||{},mockMode,meta);
       const classes=`snake-mobile-pick ${team===slot?'mine':''} ${actual?'real':p?'mock':''}`;
-      mobile.push(`<div class="${classes}"><span class="pick"><span>${fmtPick(n)}</span><span>S${team}${team===slot?' · YOU':''}</span></span>${p?`<span class="sname">${p.name}</span><span class="spos">${p.pos} · ${metricLabel} ${metric<900?metric:'—'}</span>`:`<span class="sname snakeempty">Available</span><span class="spos">Awaiting source or real pick</span>`}</div>`);
+      mobile.push(`<div class="${classes}"${p?` data-player-id="${p.id}" data-pick="${n}" tabindex="0" role="button"`:''}><span class="pick"><span>${fmtPick(n)}</span><span>S${team}${team===slot?' · YOU':''}</span></span>${p?`<span class="sname">${p.name}</span><span class="spos">${p.pos} · ${metricLabel} ${metric<900?metric:'—'}</span>`:`<span class="sname snakeempty">Available</span><span class="spos">Awaiting source or real pick</span>`}</div>`);
     }
     mobile.push('</div></section>');
   }
   cells.push('</div>'); mobile.push('</div>');
   $('#board').innerHTML=cells.join('')+mobile.join('');
+  $('#board').dataset.snakeView=snakeView;
+  $('#planbar').querySelectorAll('.snake-layout-btn').forEach(b=>b.classList.toggle('on',b.dataset.snakeView===snakeView));
+  $('#snake-detail').classList.remove('on');
+  if(snakeCenterPending){
+    snakeCenterPending=false;
+    requestAnimationFrame(centerSnakeSlot);
+  }
 }
 
 // Keep the whole undrafted pool visible. K/DST are simply prioritized in the
@@ -15981,7 +16019,18 @@ document.addEventListener('keydown',e=>{
   // focused search field, so the first character is preserved.
   if(e.key.length===1&&!e.ctrlKey&&!e.metaKey&&!e.altKey)$('#q').focus();
 });
-$('#board').addEventListener('click',e=>{const row=e.target.closest('.brow'); if(row&&decisionInputActive())draft(+row.dataset.id);});
+$('#board').addEventListener('click',e=>{
+  const cell=e.target.closest('[data-player-id]');
+  if(cell&&view==='plan'){showSnakeDetail(cell.dataset.playerId,+cell.dataset.pick);return;}
+  const row=e.target.closest('.brow');
+  if(row&&decisionInputActive())draft(+row.dataset.id);
+});
+$('#board').addEventListener('keydown',e=>{
+  if((e.key==='Enter'||e.key===' ')&&view==='plan'){
+    const cell=e.target.closest('[data-player-id]');
+    if(cell){e.preventDefault();showSnakeDetail(cell.dataset.playerId,+cell.dataset.pick);}
+  }
+});
 document.addEventListener('pointerdown',e=>setRoomKeys(!!e.target.closest('#roomcol')),true);
 $('#roomcol').addEventListener('focusin',()=>setRoomKeys(true));
 $('#slot').addEventListener('input',e=>{slot=clamp(parseInt(e.target.value)||1,1,TEAMS);save();render();});
@@ -15993,13 +16042,22 @@ $('#filt').addEventListener('click',e=>{
 });
 $('#mode').addEventListener('click',e=>{
   const b=e.target.closest('button[data-view]'); if(!b)return;
-  view=b.dataset.view; render();
+  view=b.dataset.view;
+  if(view==='plan'){
+    snakeCenterPending=true;
+    if(!mockPicks.length){runMock('needs');return;}
+  }
+  render();
 });
 $('#sort').addEventListener('click',e=>{
   const b=e.target.closest('button[data-sort]'); if(!b)return;
   sortBy=b.dataset.sort; render();
 });
-$('#planbar').addEventListener('click',e=>{const b=e.target.closest('button[data-mock]');if(b)runMock(b.dataset.mock,false);});
+$('#planbar').addEventListener('click',e=>{
+  const layout=e.target.closest('.snake-layout-btn');
+  if(layout){snakeView=layout.dataset.snakeView;snakeCenterPending=snakeView==='grid';save();render();return;}
+  const b=e.target.closest('button[data-mock]');if(b)runMock(b.dataset.mock,false);
+});
 $('#randommock').addEventListener('click',()=>runMock(mockMode,true));
 $('#autountil').addEventListener('click',()=>runMock('needs',true,true));
 $('#clearmock').addEventListener('click',()=>{mockPicks=[];mockRandom=false;mockUntilMine=false;render();});
