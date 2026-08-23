@@ -15884,13 +15884,15 @@ function recentNewsText(p){
   return days>=0&&days<=3?` · <span class="newsflag">${newsStamp(p)}</span>`:'';
 }
 function statusText(p){return p.status&&p.status!=='ACTIVE'?`${p.status.replaceAll('_',' ').toLowerCase()} · `:'';}
+const optionalEarlyOnesie=p=>curRound()<=4&&(p.pos==='QB'||p.pos==='TE');
 function why(r){
   const audit=r.isSpecial?'':` · core ${r.coreRank} × ${(1-ecrWeight).toFixed(2)} + skill-ECR ${r.ecrRank} × ${ecrWeight.toFixed(2)} = ${r.blendScore.toFixed(1)}`;
   if(!r.eligible)return `not recommended · ${r.blockedReason}`;
   const open=openStarterSlots(myRoster());
-  const need=open[r.p.pos]||(['RB','WR','TE'].includes(r.p.pos)&&open.FLEX?1:0);
+  const need=optionalEarlyOnesie(r.p)?0:(open[r.p.pos]||(['RB','WR','TE'].includes(r.p.pos)&&open.FLEX?1:0));
   const gate=r.needsReview?` · REVIEW gate uses conservative rank ${r.decisionRank}`:'';
-  if(r.vonaTier===1)return `${statusText(r.p)}${need?'starter need · ':''}wait band A · Model ${rankText(r.modelRank)} tiebreak${gate}${audit} · ${projectionText(r.p)}`;
+  const tieLabel=SAME_BAND_TIEBREAK==='consensus'?`ECR ${rankText(r.ecrRank)} tiebreak`:`Model ${rankText(r.modelRank)} tiebreak`;
+  if(r.vonaTier===1)return `${statusText(r.p)}${need?'starter need · ':''}wait band A · ${tieLabel}${gate}${audit} · ${projectionText(r.p)}`;
   const diff=r.ecrRank>500?0:r.ecrRank-r.modelRank;
   const timing=r.surv<.45?'likely gone next turn':r.surv<.7?'at risk by next turn':'reasonable wait';
   const valueFlag=Math.abs(diff)>=10?(diff>0?`model ${diff} ahead of ECR`:`ECR ${-diff} ahead of model`):timing;
@@ -15946,19 +15948,20 @@ function turnPairPlanner(boardRows){
     ...r,s22:survives(r.p,22,ranked),s27:survives(r.p,27,ranked)
   }));
   const liveOrder=boardDecisionCompare;
-  const pick22=rows.filter(r=>r.s22>=.30).sort(liveOrder).slice(0,6);
-  const pick27=rows.filter(r=>r.s27>=.30).sort(liveOrder).slice(0,6);
+  const pick22All=rows.filter(r=>r.s22>=.30).sort(liveOrder);
+  const pick27All=rows.filter(r=>r.s27>=.30).sort(liveOrder);
+  const pick22=pick22All.slice(0,6);
+  const pick27=pick27All.slice(0,6);
   const miracles=rows.filter(r=>r.modelRank<90&&r.s22<.15).sort((a,b)=>a.modelRank-b.modelRank).slice(0,5);
   const label=r=>`${r.p.name} <b>${r.p.pos}</b> ${Math.round(r.s22*100)}%/${Math.round(r.s27*100)}%`;
-  const core22=pick22.filter(r=>r.p.pos==='RB'||r.p.pos==='WR');
-  const core27=pick27.filter(r=>r.p.pos==='RB'||r.p.pos==='WR');
-  const firstCore=core22.find(r=>r.p.pos==='RB')||core22[0];
+  const core22=pick22All.filter(r=>r.p.pos==='RB'||r.p.pos==='WR');
+  const core27=pick27All.filter(r=>r.p.pos==='RB'||r.p.pos==='WR');
+  const firstCore=core22[0];
   const secondCore=(firstCore&&core27.find(r=>r.p.id!==firstCore.p.id&&r.p.pos!==firstCore.p.pos))
     ||core27.find(r=>!firstCore||r.p.id!==firstCore.p.id);
   const pairs=[];
   if(firstCore&&secondCore)pairs.push(`Balanced core: ${firstCore.p.name} + ${secondCore.p.name}`);
-  const teRows=rows.filter(r=>r.p.pos==='TE');
-  const te22=pick22.filter(r=>r.p.pos==='TE');
+  const te22=pick22All.filter(r=>r.p.pos==='TE');
   const eliteTe=te22.filter(r=>/Brock Bowers|Trey McBride/.test(r.p.name));
   const overlap=(a,b)=>Number.isFinite(a?.p?.proj_low)&&Number.isFinite(a?.p?.proj_high)&&Number.isFinite(b?.p?.proj_low)&&Number.isFinite(b?.p?.proj_high)&&Math.max(a.p.proj_low,b.p.proj_low)<=Math.min(a.p.proj_high,b.p.proj_high);
   const te=eliteTe.length>1&&overlap(eliteTe[0],eliteTe[1])
@@ -16199,7 +16202,7 @@ function render(){
     const deltaTxt=delta==='—'?'—':(delta>0?'+':'')+delta;
     const deltaCol=delta==='—'?'var(--dimmer)':delta>=10?'var(--green)':delta<=-10?'var(--amber)':'var(--dim)';
     const queued=queueContains(r.p.id);
-    const starterNeed=open[r.p.pos]||(['RB','WR','TE'].includes(r.p.pos)&&open.FLEX);
+    const starterNeed=!optionalEarlyOnesie(r.p)&&(open[r.p.pos]||(['RB','WR','TE'].includes(r.p.pos)&&open.FLEX));
     const byeRisk=byeRiskForPlayer(r.p,mine);
     const flags=[
       tierStart?`<span class="tierflag">Band ${waitBandLabel(r.vonaTier)} · ${bandLabel(r.vonaTier)}</span>`:'',
