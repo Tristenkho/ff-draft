@@ -72,6 +72,74 @@ const ecrMeta=modelMeta(),skillEcrRanks=skillPool().map(p=>ecrMeta.ecrRank(p));
 if(Math.max(...skillEcrRanks)>skillPool().length)
   throw new Error('ECR was not normalized to the skill-player rank scale');
 
+// Projection audit fields are labels for judgment, not a second hidden pick
+// score. Keep the point estimate, source range, source identities, and the
+// generic ceiling proxy visibly and semantically distinct.
+const bowers=playerNamed('Brock Bowers'),mcbride=playerNamed('Trey McBride');
+for(const p of [puka,chase,bowers,mcbride]){
+  const sources=Object.keys(p.proj_sources||{});
+  if(!Number.isInteger(p.proj_n)||p.proj_n<2||sources.length!==p.proj_n||
+    !Number.isFinite(p.proj_low)||!Number.isFinite(p.proj_high)||
+    p.proj_low>p.proj||p.proj>p.proj_high)
+    throw new Error('projection audit range is incomplete for '+p.name);
+  const audit=projectionText(p);
+  if(!audit.includes(p.proj_n+'-source '+PROJECTION_META.method)||
+    audit.includes('HIGH confidence')||audit.includes('LOW confidence')||
+    !audit.includes(p.proj_low.toFixed(0)+'–'+p.proj_high.toFixed(0)))
+    throw new Error('projection audit naming/range is not honest for '+p.name);
+  const sourceText=projectionSourcesText(p);
+  if(!['ESPN','CBS','FFToday'].every(name=>sourceText.includes(name)))
+    throw new Error('projection source names are missing for '+p.name);
+  if(!Number.isFinite(p.proj_unc)||p.proj_unc<=0||p.sd_source!=='position-rate proxy')
+    throw new Error('projection confidence and ceiling provenance are conflated for '+p.name);
+}
+// A large model/ECR disagreement must be visible and conservative. This is
+// deliberately a rank-scale contract; it does not assert any particular
+// player or change the underlying ECR weight.
+picks=[chase.id];
+const conflictRows=computeBoard().filter(r=>r.needsReview);
+const conflict=conflictRows.find(r=>r.ecrRank<=500&&Math.abs(r.modelRank-r.ecrRank)>=25);
+if(!conflict||conflict.decisionRank!==Math.max(conflict.modelRank,conflict.ecrRank)||
+  !why(conflict).includes('REVIEW gate uses conservative rank')||
+  !['projection-led','consensus-led'].some(label=>conflictSignal(conflict).includes(label))||
+  !conflictSignal(conflict).includes('rank gap'))
+  throw new Error('Model/ECR conflict flag or conservative decision gate is missing');
+
+// The turn-pair planner should distinguish players who are conditional fallers
+// from realistic 22/27 targets using the timing/survival signal. It must not
+// turn an early conditional faller into a recommendation merely because the
+// player has a large projection.
+const pairRows=computeBoard();
+const conditionalFaller=pairRows.filter(r=>r.eligible&&!r.isSpecial&&r.p.market_adp<15)
+  .sort((a,b)=>a.p.market_adp-b.p.market_adp)[0];
+const realisticFaller=pairRows.filter(r=>r.eligible&&!r.isSpecial&&r.p.market_adp>=20&&r.p.market_adp<=35&&r.surv>.20)
+  .sort((a,b)=>a.p.market_adp-b.p.market_adp)[0];
+if(!conditionalFaller||!realisticFaller||
+  !(timingMetric(conditionalFaller.p)<timingMetric(realisticFaller.p))||
+  !(conditionalFaller.surv<.05&&realisticFaller.surv>conditionalFaller.surv))
+  throw new Error('realistic and conditional fallers are not separated by timing/survival');
+
+if(SAME_BAND_TIEBREAK!=='consensus')
+  throw new Error('same-band planner tiebreak is not explicitly consensus-first');
+const turnPairBefore=JSON.stringify(picks),turnPairText=turnPairPlanner(pairRows);
+if(JSON.stringify(picks)!==turnPairBefore||!turnPairText.includes('1.03 turn planner')||
+  !turnPairText.includes('picks 22/27')||!turnPairText.includes('read only')||
+  !turnPairText.includes('Realistic at the turn')||
+  !turnPairText.includes('conditional fallers require an actual slide'))
+  throw new Error('read-only realistic/conditional turn-pair planner is missing or mutating state');
+
+// Auto-to-my-pick in the planning bar is a read-only turn-pair preview. Use a
+// valid opening ledger, stub only rendering, and prove that neither real picks
+// nor the simulated-pick ledger are mixed into one another.
+const plannerOpening=[gibbs.id,bijan.id,chase.id];
+picks=plannerOpening.slice();autoPickNos=[];mockPicks=[];render=()=>{};
+const realBefore=JSON.stringify(picks),autoBefore=JSON.stringify(autoPickNos);
+runMock('needs',true,true);
+if(JSON.stringify(picks)!==realBefore||JSON.stringify(autoPickNos)!==autoBefore||
+  !mockUntilMine||!mockRandom||mockMode!=='needs'||mockPicks.length!==nextMyPick()-1||
+  mockPicks[2]!==chase.id||new Set(mockPicks.filter(Boolean)).size!==mockPicks.filter(Boolean).length)
+  throw new Error('turn-pair planner changed or mixed the real draft ledger');
+
 const oldStatus=puka.status;
 puka.status='OUT';picks=[gibbs.id,bijan.id];
 const outRow=computeBoard().find(r=>r.p.id===puka.id);
@@ -121,6 +189,11 @@ vm.createContext(context);
 vm.runInContext(engine+'\n'+harness,context,{timeout:30000});
 const result=context.TEST_RESULT;
 result.engineSha256=crypto.createHash('sha256').update(engine).digest('hex');
+assert(html.includes('Projection audit view (read only)')&&
+  html.includes('title="Projected fantasy points for this league\'s scoring"')&&
+  html.includes('<b>Projection</b> is the median of ESPN, CBS, and FFToday')&&
+  html.includes('not a calibrated confidence grade'),
+  'projection audit naming is missing or misleading');
 assert(html.includes('id="auto"')&&html.includes('autoPickNos.push(n)')&&html.includes('function autoToMyPick'),
   'Draft-page Auto rehearsal is not connected to the marked draft ledger');
 assert(engine.includes('Math.abs(modelRank-ecrRank)')&&!engine.includes('Math.abs(modelRank-p.ecr)'),
