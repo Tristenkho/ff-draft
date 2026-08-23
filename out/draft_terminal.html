@@ -97,6 +97,8 @@ main.snake-mode>.col:first-child,main.snake-mode>.col:last-child{display:none}
 }
 .sub{font-size:10.5px;color:var(--dim);letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sub .flag{color:var(--amber);font-weight:700}
+.sub .conflict-projection{color:var(--cyan)}
+.sub .conflict-consensus{color:var(--amber)}
 .sub .tierflag{color:var(--text);font-weight:700}
 .status{color:var(--amber);font-weight:700}
 .newsflag{color:var(--dim);font-weight:600}
@@ -404,7 +406,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
         <button data-pos="K">K</button>
         <button data-pos="DST">D/ST</button>
       </div>
-      <div class="sort" id="sort" role="group" aria-label="Board view"><button class="on" data-sort="gain">Pick Board</button><span class="sortsep">Audit views</span><button data-sort="model" aria-label="Model audit view (read only)">Model</button><button data-sort="proj" aria-label="Points audit view (read only)">Points</button><button data-sort="ecr" aria-label="ECR audit view (read only)">ECR</button><button data-sort="adp" aria-label="ADP audit view (read only)">ADP</button></div>
+      <div class="sort" id="sort" role="group" aria-label="Board view"><button class="on" data-sort="gain">Pick Board</button><span class="sortsep">Audit views</span><button data-sort="model" aria-label="Model audit view (read only)">Model</button><button data-sort="proj" aria-label="Projection audit view (read only)">Projection</button><button data-sort="ecr" aria-label="ECR audit view (read only)">ECR</button><button data-sort="adp" aria-label="ADP audit view (read only)">ADP</button></div>
       <div class="planbar" id="planbar"><span id="mocknote">Choose an exact source board, or use Need-aware to simulate roster-based opponent selections. Neither changes real draft state.</span><button class="planbtn" data-mock="model">Model</button><button class="planbtn" data-mock="ecr">ECR</button><button class="planbtn" data-mock="adp">ADP</button><button class="planbtn" data-mock="needs">Need-aware</button><button class="planbtn" id="randommock">Randomize</button><button class="planbtn planbtn-primary" id="autountil">Auto to my pick (preview)</button><span class="snake-layout-label">Layout</span><button class="planbtn snake-layout-btn on" data-snake-view="grid">Grid</button><button class="planbtn snake-layout-btn" data-snake-view="cards">Cards</button><button class="planbtn" id="clearmock">Clear mock</button></div>
       <div class="snake-detail" id="snake-detail" aria-live="polite"></div>
       <div class="thead"><div></div><div>Player</div><div title="Projected fantasy points for this league's scoring">Pts</div><div title="Wait cost: ceiling-adjusted points lost by waiting until your next pick. The letter is the wait band (A, B, C …) — players in the same band are statistical ties. The number below it is the exact wait cost, used only as the final tiebreak.">Wait Cost</div><div title="Model decision rank among skill players">Model</div><div title="Raw FantasyPros half-PPR expert consensus rank (audit view)">ECR</div><div title="ESPN room average draft position, shown as a decimal average rather than an ordinal rank (audit view)">ADP avg</div><div title="Skill-player ECR rank minus Model rank. Positive means the model ranks the player ahead of the expert panel; negative means the panel is higher.">ECR &minus; Model</div><div title="Chance the player is still on the board at your next pick">Survives</div></div>
@@ -451,15 +453,15 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
       <button id="helpclose" type="button" aria-label="Close help">×</button>
     </div>
     <div class="helpbody" id="helpbody" tabindex="0" aria-label="Guide contents">
-      <p><b>Pick Board</b> is the draft-day order: legal roster options first, then the uncertainty-aware wait band, then Model decision rank, then exact wait cost. A 25+ rank Model/ECR conflict activates a conservative review gate. <b>Survives</b> is the chance the player is still available at your next pick.</p>
+      <p><b>Pick Board</b> is the draft-day order: legal roster options first, then the uncertainty-aware wait band, then the configured same-band tiebreak, then exact wait cost. The current same-band tiebreak is consensus-first (ECR rank, then Model, then gain); it is isolated for backtesting and does not change VONA, projection weights or survival. A 25+ rank Model/ECR conflict activates a conservative review gate. <b>Survives</b> is the chance the player is still available at your next pick.</p>
       <p><b>Wait Cost</b> is the ceiling-adjusted value lost if you wait until your next pick — VONA, in the older label. Read the <b>wait band</b> first: A, B, C and so on group players whose wait costs are inside a 4–12 point uncertainty band, so small forecast differences are treated as ties instead of false precision. Everything in band A is a live option; the exact number under the letter is only the final tiebreak. The <b>ECR T1</b> line under a name is the published expert tier for that player, which is a different thing from the wait band.</p>
-      <p><b>Points</b> is the median of ESPN, CBS, and FFToday when available. CBS and FFToday raw stat lines are rescored locally using player-specific 2023–25 first-down rates regressed toward position averages. ADP and ECR never enter the projection. <b>Model</b> subtracts 80% of position replacement from projected points, blends that core rank with half-PPR ECR re-ranked among skill players, and breaks wait-band ties. Model is an audit view, not the pick list.</p>
+      <p><b>Projection</b> is the median of ESPN, CBS, and FFToday when available. Each row shows the number of contributing sources, their range, and the forecast spread; that is uncertainty evidence, not a calibrated confidence grade. CBS and FFToday raw stat lines are rescored locally using player-specific 2023–25 first-down rates regressed toward position averages. ADP and ECR never enter the projection. <b>Model</b> subtracts 80% of position replacement from projected points, blends that core rank with half-PPR ECR re-ranked among skill players, and breaks wait-band ties. Model is an audit view, not the pick list.</p>
       <p><b>ECR</b> is one current FantasyPros expert panel, not an invitation to average the same opinions again. Its expert disagreement is shown under the ECR rank and included in Copy state for close-call judgment; it does not alter wait cost or availability. Raw ECR, ADP and <b>ECR − Model</b> stay off the Pick Board so the on-clock screen is short — they are one tab away in the audit views and always in Copy state. ECR − Model is the skill-player ECR rank minus the Model rank: positive means the model likes the player more than the panel does. Additional expert lists remain shadow evidence until historical testing shows incremental value.</p>
       <p><b>Ceiling weight</b> defaults to the validated 0.40 and remains live-adjustable. The current upside SD is a configured generic position-rate proxy carried separately from forecast disagreement; it is useful across positions but is not a measured player-specific ceiling. Resolve close same-position calls with current role, health, discipline and quarterback news in the copied-state judgment step.</p>
-      <p><b>Availability</b> is market-first: RB/WR/TE blend 80% of Fantasy Football Calculator's current 12-team half-PPR market with 20% ESPN-only room rank/ADP, QB blends 50/50, and K/DST are unchanged since they never enter VONA. ESPN's room price for RB/WR runs later than the market; ESPN's room price for TE runs earlier than the market instead (about 15 picks among ranked TEs in the current sample). TE keeps the same 80% market weight as RB/WR for now — that is a provisional choice pending targeted validation, not a fit to this one snapshot. Observed market draft dispersion drives the survival curve when a player is matched, widened whenever ESPN and market disagree so a large source gap reads as genuine uncertainty instead of false precision; otherwise a conservative heuristic supplies the fallback. Unavailable and low-confidence players remain searchable for accurate bookkeeping but no longer occupy forecasted opponent picks or expected-next-player estimates.</p>
+      <p><b>Availability</b> is market-first: RB/WR/TE blend 80% of Fantasy Football Calculator's current 12-team half-PPR market with 20% ESPN-only room rank/ADP, QB blends 50/50, and K/DST are unchanged since they never enter VONA. ESPN's room price for RB/WR runs later than the market; ESPN's room price for TE runs earlier than the market instead (about 15 picks among ranked TEs in the current sample). TE keeps the same 80% market weight as RB/WR for now — that is a provisional choice pending targeted validation, not a fit to this one snapshot. Observed market draft dispersion drives the survival curve when a player is matched, widened whenever ESPN and market disagree so a large source gap reads as genuine uncertainty instead of false precision; otherwise a conservative heuristic supplies the fallback. Unavailable and low-source-coverage players remain searchable for accurate bookkeeping but no longer occupy forecasted opponent picks or expected-next-player estimates.</p>
       <p><b>ESPN update</b> plus a date under a name is only the timestamp of that player's most recent ESPN news item, shown when it landed within the last three days. It is a recency marker, not a headline and not a sentiment signal — read the actual news before acting on it.</p>
       <p><b>Winning build</b> is QB1, TE1, ten RB/WR, K1 and D/ST1. It starts with three RB/WR through Round 4, secures WR1 by Round 5, fills RB2/WR2/FLEX by Round 8, TE by Round 9, QB by Round 10, and takes K/D/ST in Rounds 13–14. QB2 and TE2 are waiver positions in this shallow format.</p>
-      <p><b>Draft</b> keeps the top eight candidates in the first screen and lets you scroll through the full ranking below them. On the Pick Board, press <b>1–8</b> to record one of those top eight, type an unambiguous name and press Enter, or click any player row. A partial name matching multiple players will never record automatically. Model, Points, ECR and ADP are read-only audit views; switch back to the Pick Board before recording. <b>Auto to my pick</b> and <b>Ctrl/Cmd Enter</b> rehearse opponent picks through your next turn; simulated picks are marked <b>~</b> in the same ledger and Copy state, so reset the draft before using it live. Snake remains the planning-only board for comparing whole-room scenarios. While this guide is open the board is locked — nothing can be recorded or undone.</p>
+      <p><b>Draft</b> keeps the top eight candidates in the first screen and lets you scroll through the full ranking below them. On the Pick Board, press <b>1–8</b> to record one of those top eight, type an unambiguous name and press Enter, or click any player row. A partial name matching multiple players will never record automatically. Model, Projection, ECR and ADP are read-only audit views; switch back to the Pick Board before recording. A large Model/ECR gap is labeled projection-led or consensus-led for review; it does not change rank weights. <b>Auto to my pick</b> and <b>Ctrl/Cmd Enter</b> rehearse opponent picks through your next turn; simulated picks are marked <b>~</b> in the same ledger and Copy state, so reset the draft before using it live. Snake remains the planning-only board for comparing whole-room scenarios. While this guide is open the board is locked — nothing can be recorded or undone.</p>
       <p><b>Queue</b> is manual and persisted. Use + on a Pick Board row, reorder targets under Room / Queue, and use Pick there only while you are on the clock. Opponent picks move queued targets to Recently sniped; Undo reactivates them. Backup JSON copies a machine-restorable snapshot, and Import validates it before replacing local state. Reset draft preserves the queue.</p>
       <p>Record every real pick here. Copy state on your turn and paste it to Codex or Claude for a current-news top three. K/DST stay out of wait-cost ranking and are prioritized in rounds 13–14.</p>
       <p>Press <b>Esc</b>, click outside this panel, or use the × above to close.</p>
@@ -15202,6 +15204,10 @@ const KDST_ROUND=13;                  // K and DST go in rounds 13-14
 const VONA_TIER_MIN=4,VONA_TIER_MAX=12,VONA_UNCERTAINTY_SCALE=.12;
 const MODEL_REPLACEMENT_WEIGHT=.80;   // intentionally lighter than full VOR for Model rank
 const ADP_TREND_WEIGHT=.50;           // carry half of recent ESPN movement into timing
+// Isolated, same-wait-band tiebreak only. This does not change VONA, points,
+// projection weights, or survival. Keep the switch explicit so the policy can
+// be backtested against historical rooms before changing it again.
+const SAME_BAND_TIEBREAK='consensus'; // 'consensus' or 'model'
 // Market-first, position-aware timing. ESPN's room ADP for RB/WR runs
 // consistently late against the observed cross-platform market (see
 // out/league_tendencies_2025.md), so opponent timing/survival must not let
@@ -15232,7 +15238,8 @@ const STRATEGY={
 // CBS and FFToday raw stat lines are rescored locally for the league.
 // ESPN-only rank/ADP remains the primary room signal; current 12-team half-PPR market ADP
 // guards availability and supplies observed draft dispersion when matched.
-// Forecast confidence remains separate from the existing upside/ceiling SD.
+// Forecast source coverage/spread remains separate from the existing
+// upside/ceiling SD; it is not a calibrated confidence grade.
 
 // ── state ────────────────────────────────────────────────────────
 let slot=3, lambda=0.40, ecrWeight=.35, picks=[], autoPickNos=[], queue=[], queueArchive=[], posFilter='', view='prep', sortBy='gain', visibleRows=[], mockPicks=[], mockMode='adp', mockRandom=false, mockUntilMine=false, snakeView='grid', roomKeys=false, snakeCenterPending=false, notice=null, noticeTimer=null;
@@ -15765,7 +15772,7 @@ function recommendationEligibility(p,mine=myRoster(),round=recommendationRound()
   const have=rosterCounts(mine);
   if(have[p.pos]>=(CAPS[p.pos]||0))return {ok:false,reason:`${p.pos} cap reached`};
   if(POS.includes(p.pos)&&p.proj<=0)return {ok:false,reason:`no current projection${p.status&&p.status!=='ACTIVE'?' · '+p.status.replaceAll('_',' '):''}`};
-  if(POS.includes(p.pos)&&p.proj_reliability==='low')return {ok:false,reason:'low projection confidence'};
+  if(POS.includes(p.pos)&&p.proj_reliability==='low')return {ok:false,reason:'single-source projection'};
   if(UNAVAILABLE_STATUSES.has(p.status))
     return {ok:false,reason:p.status.replaceAll('_',' ').toLowerCase()};
 
@@ -15833,8 +15840,9 @@ function rankText(n){return n&&n<900?String(n):'—';}
 function waitBandLabel(tier){return tier>=1&&tier<=26?String.fromCharCode(64+tier):'—';}
 function projectionText(p){
   if(!p.proj_n)return 'no current projection';
-  if(p.proj_n===1)return 'LOW confidence · single-source projection';
-  return `${(p.proj_reliability||'medium').toUpperCase()} confidence · ${p.proj_n}-source range ${p.proj_low.toFixed(0)}–${p.proj_high.toFixed(0)}`;
+  const n=p.proj_n, low=Number.isFinite(p.proj_low)?p.proj_low.toFixed(0):'—', high=Number.isFinite(p.proj_high)?p.proj_high.toFixed(0):'—';
+  const unc=Number.isFinite(p.proj_unc)?` · forecast spread ±${p.proj_unc.toFixed(0)}`:'';
+  return `${n}-source ${PROJECTION_META.method} · source range ${low}–${high}${unc}`;
 }
 function projectionSourcesText(p){
   const sources=p.proj_sources||{};
@@ -15844,6 +15852,21 @@ function ecrEvidenceText(p){
   if(!p||p.ecr>500)return 'ECR unavailable';
   if(!p.ecr_sd)return `ECR ${p.ecr}`;
   return `ECR ${p.ecr} · expert avg ${p.ecr_mean.toFixed(2)} ±${p.ecr_sd.toFixed(2)} · range ${p.ecr_min}–${p.ecr_max}`;
+}
+function conflictSignal(r){
+  if(!r||r.isSpecial||r.ecrRank>=500||Math.abs(r.modelRank-r.ecrRank)<25)return '';
+  const gap=Math.abs(r.modelRank-r.ecrRank);
+  return r.modelRank<r.ecrRank
+    ? `<span class="flag conflict-projection">projection-led · ${gap}-rank gap</span>`
+    : `<span class="flag conflict-consensus">consensus-led · ${gap}-rank gap</span>`;
+}
+function boardDecisionCompare(a,b){
+  if(a.vonaTier!==b.vonaTier)return a.vonaTier-b.vonaTier;
+  if(SAME_BAND_TIEBREAK==='consensus'){
+    const ae=a.ecrRank<500?a.ecrRank:999, be=b.ecrRank<500?b.ecrRank:999;
+    return ae-be||a.modelRank-b.modelRank||b.gain-a.gain;
+  }
+  return a.decisionRank-b.decisionRank||b.gain-a.gain;
 }
 function newsDate(p){return p.last_news?new Date(p.last_news).toISOString().slice(0,10):'—';}
 const NEWS_MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -15909,6 +15932,32 @@ function nextTurnTargets(boardRows){
   if(!targets.length)return '';
   return `<div class="runbox"><div class="eyebrow" style="margin-bottom:5px">At risk before ${fmtPick(nxt)}</div><div class="t">${targets.map(r=>`${r.p.name} <b>${r.p.pos}</b> ${Math.round(r.surv*100)}%`).join(' · ')}</div></div>`;
 }
+function turnPairPlanner(boardRows){
+  // Read-only planning aid: it projects availability at the fixed 1.03 turn
+  // from the same timing/survival rows already used by the live board. It does
+  // not add picks, change sort order, or alter the draft ledger.
+  if(slot!==3||curPick()>27)return '';
+  const forecast=remaining().filter(modelDraftable);
+  if(!forecast.length)return '';
+  const ranked=new Map([...forecast].sort((a,b)=>timingMetric(a)-timingMetric(b)||a.id-b.id)
+    .map((p,i)=>[p.id,curPick()+i]));
+  const rows=boardRows.filter(r=>r.eligible&&!r.isSpecial).map(r=>({
+    ...r,s22:survives(r.p,22,ranked),s27:survives(r.p,27,ranked)
+  }));
+  const liveOrder=boardDecisionCompare;
+  const realistic=rows.filter(r=>r.s27>=.30).sort(liveOrder).slice(0,6);
+  const miracles=rows.filter(r=>r.modelRank<90&&r.s27<.15).sort((a,b)=>a.modelRank-b.modelRank).slice(0,5);
+  const label=r=>`${r.p.name} <b>${r.p.pos}</b> ${Math.round(r.s22*100)}%/${Math.round(r.s27*100)}%`;
+  const best=(pos,min=.30)=>rows.filter(r=>r.p.pos===pos&&r.s27>=min).sort(liveOrder)[0]||rows.filter(r=>r.p.pos===pos).sort(liveOrder)[0];
+  const rb=best('RB'),wr=best('WR'),te=best('TE');
+  const secondWr=rows.filter(r=>r.p.pos==='WR'&&r!==wr&&r.s27>=.30).sort(liveOrder)[0];
+  const pairs=[
+    rb&&wr?`Balanced: ${rb.p.name} + ${wr.p.name}`:'',
+    rb&&te?`TE pivot: ${te.p.name} + ${rb.p.name}`:'',
+    wr&&secondWr?`WR/WR fallback: ${wr.p.name} + ${secondWr.p.name}`:''
+  ].filter(Boolean);
+  return `<div class="runbox turn-planner"><div class="eyebrow" style="margin-bottom:5px">1.03 turn planner · picks 22/27 · read only</div><div class="t"><b>Realistic at the turn</b> <small>(survival at 22% / 27%)</small><br>${realistic.length?realistic.map(label).join(' · '):'No current candidates clear the 30% survival screen.'}${pairs.length?`<br><b>Pair ideas:</b> ${pairs.join(' · ')}`:''}${miracles.length?`<br><b>Conditional fallers:</b> ${miracles.map(label).join(' · ')}`:''}<br><small>Use the realistic list for planning; conditional fallers require an actual slide. Survival is timing evidence, not a rank override.</small></div></div>`;
+}
 
 // ── the board ────────────────────────────────────────────────────
 function computeBoard(){
@@ -15957,7 +16006,7 @@ function computeBoard(){
   rows.sort((a,b)=>Number(b.eligible)-Number(a.eligible)||(recKDST
     ? (Number(!!b.isSpecial)-Number(!!a.isSpecial) || (b.isSpecial&&a.isSpecial
       ? (a.p.special_rank??99)-(b.p.special_rank??99) : b.gain-a.gain))
-    : (a.vonaTier-b.vonaTier||a.decisionRank-b.decisionRank||b.gain-a.gain)));
+    : boardDecisionCompare(a,b)));
   return rows;
 }
 
@@ -16076,7 +16125,7 @@ function render(){
   if(q) rows2=rows2.filter(r=>r.p.name.toLowerCase().includes(q)||r.p.team?.toLowerCase()===q);
   if(view==='prep'){
     const strategic=cmp=>(a,b)=>Number(b.eligible)-Number(a.eligible)||cmp(a,b);
-    const order={gain:strategic((a,b)=>a.vonaTier-b.vonaTier||a.decisionRank-b.decisionRank||b.gain-a.gain),
+    const order={gain:strategic(boardDecisionCompare),
       model:strategic((a,b)=>a.modelRank-b.modelRank),
       proj:strategic((a,b)=>b.p.proj-a.p.proj),
       ecr:strategic((a,b)=>(a.p.ecr||999)-(b.p.ecr||999)),
@@ -16084,8 +16133,8 @@ function render(){
     rows2.sort(order[sortBy]);
   }
   $('#poolcount').textContent=view==='prep'?rows2.length+' ranked'+(decisionInputActive()?' · keys 1–8':' · read only'):remaining().length+' left';
-  const sortLabel={gain:'Pick Board',model:'Model',proj:'Points',ecr:'ECR',adp:'ADP'}[sortBy];
-  $('#boardtitle').textContent=q?'Matches':(kdst?'Special teams window':sortBy==='gain'?'Pick Board — wait band, then Model':`Audit view — ${sortLabel} (read only)`);
+  const sortLabel={gain:'Pick Board',model:'Model',proj:'Projection',ecr:'ECR',adp:'ADP'}[sortBy];
+  $('#boardtitle').textContent=q?'Matches':(kdst?'Special teams window':sortBy==='gain'?`Pick Board — wait band, then ${SAME_BAND_TIEBREAK==='consensus'?'ECR':'Model'}`:`Audit view — ${sortLabel} (read only)`);
   $('#q').placeholder=decisionInputActive()?'Type a name, press Enter to record the pick on the clock':'Audit view is read-only — switch to Pick Board to record';
   setPressed($('#mode'),'view',view);
   $('#filt').style.display='flex';
@@ -16143,6 +16192,7 @@ function render(){
       tierStart?`<span class="tierflag">Band ${waitBandLabel(r.vonaTier)} · ${bandLabel(r.vonaTier)}</span>`:'',
       starterNeed?'<span class="flag">starter need</span>':'',
       byeRisk?'<span class="flag">bye stack risk</span>':'',
+      conflictSignal(r),
       queued?'<span class="flag">queued</span>':''
     ].filter(Boolean).join(' · ');
     rendered.push(`<div class="brow${sortBy==='gain'?'':' audit'}${tierStart?' tier-start':''}${focusIds.has(r.p.id)?' focus-top':''}${queued?' queued':''}" data-id="${r.p.id}">
@@ -16175,7 +16225,7 @@ function render(){
   const focusBox=isOTC&&topChoices.length
     ? `<div class="runbox hot"><div class="eyebrow" style="margin-bottom:5px">On your pick</div><div class="t"><b>Top 3:</b> ${topChoices.map(r=>`${r.p.name} ${waitBandLabel(r.vonaTier)}`).join(' · ')}${queueOverlap.length?`<br><b>Queue overlap:</b> ${queueOverlap.map(r=>r.p.name).join(' · ')}`:''}${topBandCount?`<br><b>Current band:</b> ${topBandCount} left`:''}<br><b>Starter needs:</b> ${openLine}</div></div>`
     : '';
-  $('#plan').innerHTML=focusBox+`<div class="runbox"><div class="t">${planText(mine)}${opponentDemandText()}</div></div>`+nextTurnTargets(boardRows);
+  $('#plan').innerHTML=focusBox+`<div class="runbox"><div class="t">${planText(mine)}${opponentDemandText()}</div></div>`+turnPairPlanner(boardRows)+nextTurnTargets(boardRows);
   renderNotice();
   const dataAgeDays=Math.max(0,Math.floor((Date.now()-new Date(PROJECTION_META.updated+'T00:00:00Z').getTime())/86400000));
   const checks=[
@@ -16302,7 +16352,7 @@ function buildState(){
   L.push('  · These tendencies inform draft-day judgment but are not yet encoded in survival. Proposed QB2 and opponent K/DST changes remain unvalidated and unapplied.');
   L.push('');
   L.push('JUDGMENT REQUEST');
-  L.push('  Treat this exported HTML state as the only draft ledger. Use the live board, roster needs, recent positional runs, wait bands, projection confidence, expert-consensus dispersion, room intelligence, and current player news to give a top 3 for this pick. Explicitly override the board when fresh health/discipline/role/QB information is not priced into projections. Do not invent, record or persist picks outside the HTML.');
+  L.push('  Treat this exported HTML state as the only draft ledger. Use the live board, roster needs, recent positional runs, wait bands, projection source coverage/spread, expert-consensus dispersion, room intelligence, and current player news to give a top 3 for this pick. Explicitly override the board when fresh health/discipline/role/QB information is not priced into projections. Do not invent, record or persist picks outside the HTML.');
   L.push('');
 
   const {slots:rosterView,used}=rosterSlots(mine);
@@ -16318,7 +16368,7 @@ function buildState(){
   L.push('');
 
   const rows=computeBoard().slice(0,8);
-  L.push(`TOP CANDIDATES — PICK BOARD ORDER (eligibility → wait band → Model → exact wait cost); wait cost = raw value lost if I wait until ${nxt?fmtPick(nxt):'my next pick'}; wait bands expand with projection uncertainty (${VONA_TIER_MIN}–${VONA_TIER_MAX} points), so players sharing a band are ties`);
+  L.push(`TOP CANDIDATES — PICK BOARD ORDER (eligibility → wait band → ${SAME_BAND_TIEBREAK==='consensus'?'ECR → Model → gain':'Model → exact wait cost'}); same-band tiebreak is isolated and does not change VONA, projection weights or survival; wait cost = raw value lost if I wait until ${nxt?fmtPick(nxt):'my next pick'}; wait bands expand with projection uncertainty (${VONA_TIER_MIN}–${VONA_TIER_MAX} points), so players sharing a band are ties`);
   L.push(`(survives = P(still on board at ${nxt?fmtPick(nxt):'next pick'}), using ESPN room timing blended with ${MARKET_META.source} (RB/WR/TE ${Math.round(MARKET_ADP_WEIGHT_BY_POS.RB*100)}% market, QB ${Math.round(MARKET_ADP_WEIGHT_BY_POS.QB*100)}% market, K/DST ${Math.round(MARKET_ADP_WEIGHT_BY_POS.K*100)}% market), re-ranked among draftable remaining players; spread widens when sources disagree)`);
   rows.forEach((r,i)=>L.push(
     `  ${String(i+1).padStart(2)}. ${r.p.name.padEnd(22)} ${r.p.pos.padEnd(3)} ${(r.p.team||'—').padEnd(4)}`+
