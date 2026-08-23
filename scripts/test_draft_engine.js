@@ -217,6 +217,201 @@ if(!finalLeague.every(roster=>{
     &&Object.keys(CAPS).every(pos=>c[pos]<=CAPS[pos]);
 }))throw new Error('need-aware opponents did not produce legal final rosters');
 
+// ── Smart Queue: genuine conditional 22/27 evaluation ───────────────────
+// Build a fresh, real pick-3 -> pick-22 ledger (opponent picks via the same
+// calibrated model, my pick-3 chosen from the live board) so curPick()===22
+// and slot 3's myPicks() line up on 22/27 exactly as the feature requires.
+confirm=()=>true;
+render=()=>{};
+picks=[];autoPickNos=[];
+autoOppUntilMineForTest();
+const pick3Row=computeBoard().find(r=>r.eligible&&!r.isSpecial&&(r.p.pos==='RB'||r.p.pos==='WR'));
+if(!pick3Row)throw new Error('no eligible RB/WR available for the Smart Queue fixture pick 3');
+picks.push(pick3Row.p.id);
+autoOppUntilMineForTest();
+if(curPick()!==22||!myPicks().includes(22)||!myPicks().includes(27))
+  throw new Error('Smart Queue fixture did not reach pick 22 on slot 3 22/27 turn');
+
+// Guard rails: only meaningful for slot 3 at the exact moment pick 22 is on
+// the clock (before it, "candidates at 22" are not yet grounded in the live
+// board; after it, the decision is already made).
+const sqBoard=computeBoard();
+if(smartQueue(sqBoard)===null)throw new Error('Smart Queue should be active at slot 3, pick 22');
+const savedSlot=slot; slot=5;
+if(smartQueue(sqBoard)!==null)throw new Error('Smart Queue must return null off slot 3');
+slot=savedSlot;
+picks.push(remaining()[0].id);
+if(smartQueue(computeBoard())!==null)throw new Error('Smart Queue must return null once pick 22 has been made');
+picks.pop();
+
+// Purity: neither smartQueue() nor jointPickEvaluation() may mutate real
+// picks/queue/queueArchive/autoPickNos, or touch localStorage.
+let storageWrites=0;
+const originalSetItem=localStorage.setItem;
+localStorage.setItem=()=>{storageWrites++;};
+const picksBefore=JSON.stringify(picks), queueBefore=JSON.stringify(queue),
+  archiveBefore=JSON.stringify(queueArchive), autoBefore2=JSON.stringify(autoPickNos);
+const meta=modelMeta();
+const probeCandRow=sqBoard.filter(r=>r.eligible&&!r.isSpecial)[0];
+jointPickEvaluation(probeCandRow.p.id,meta,50,1);
+const evalsA=smartQueue(sqBoard);
+if(JSON.stringify(picks)!==picksBefore||JSON.stringify(queue)!==queueBefore||
+  JSON.stringify(queueArchive)!==archiveBefore||JSON.stringify(autoPickNos)!==autoBefore2||storageWrites!==0)
+  throw new Error('Smart Queue mutated real draft state or touched storage');
+localStorage.setItem=originalSetItem;
+
+// Determinism: identical inputs and a fixed seed must give byte-identical
+// jointValue/meanBestGain27/best-27-partner output across repeated calls.
+const evalsB=smartQueue(sqBoard);
+if(evalsA.length!==evalsB.length||!evalsA.every((e,i)=>
+  e.c22.id===evalsB[i].c22.id&&Math.abs(e.jointValue-evalsB[i].jointValue)<1e-9&&
+  Math.abs(e.meanBestGain27-evalsB[i].meanBestGain27)<1e-9&&
+  (e.best27?.id??null)===(evalsB[i].best27?.id??null)))
+  throw new Error('Smart Queue is not deterministic for a fixed seed and board state');
+
+// K/DST exclusion: never a pick-22 candidate or a pick-27 fallback.
+if(evalsA.some(e=>['K','DST'].includes(e.c22.pos))||evalsA.some(e=>e.best27&&['K','DST'].includes(e.best27.pos)))
+  throw new Error('Smart Queue proposed a K/DST pick-22 candidate or pick-27 fallback');
+
+// Manual-queue independence: queue/queueArchive state must never change the
+// computed jointValue, and smartQueue()/jointPickEvaluation() must never
+// call toggleQueue (verified by the picksBefore/queueBefore purity check
+// above finding zero drift even though nothing here special-cased queue).
+const anyOtherCand=sqBoard.filter(r=>r.eligible&&!r.isSpecial&&r.p.id!==probeCandRow.p.id)[0];
+queue.push(anyOtherCand.p.id);
+const evalsWithQueue=smartQueue(sqBoard);
+queue.pop();
+if(!evalsWithQueue.every((e,i)=>Math.abs(e.jointValue-evalsA[i].jointValue)<1e-9))
+  throw new Error('populating the manual queue changed a Smart Queue jointValue');
+
+// Non-naive-sum / eligibility re-check: taking a core (RB/WR) player at pick
+// 22 relaxes the "preserve three-RB/WR start" deadline (STRATEGY.coreDeadline)
+// enough to make an onesie (QB) pick eligible again at pick 27; taking a
+// onesie (TE) at 22 does not. This is the exact mechanism that makes
+// jointValue a genuine conditional evaluation rather than value(c22) plus a
+// fixed, c22-independent pick-27 number.
+const round27=Math.ceil(27/TEAMS);
+const coreCand=sqBoard.find(r=>r.eligible&&!r.isSpecial&&(r.p.pos==='RB'||r.p.pos==='WR')&&r.p.id!==pick3Row.p.id);
+const teCand=sqBoard.find(r=>r.eligible&&!r.isSpecial&&r.p.pos==='TE');
+if(!coreCand||!teCand)throw new Error('Smart Queue fixture needs both an RB/WR and a TE candidate at pick 22');
+const probeQb=remaining().find(p=>p.pos==='QB'&&p.id!==coreCand.p.id&&p.id!==teCand.p.id&&modelDraftable(p));
+if(!probeQb)throw new Error('no probe QB available for the eligibility re-check test');
+const eligBeforeC22=recommendationEligibility(probeQb,[pick3Row.p],round27);
+const eligAfterCoreC22=recommendationEligibility(probeQb,[pick3Row.p,coreCand.p],round27);
+const eligAfterTeC22=recommendationEligibility(probeQb,[pick3Row.p,teCand.p],round27);
+if(eligBeforeC22.ok||eligAfterTeC22.ok||!eligAfterCoreC22.ok)
+  throw new Error('pick-22 candidate eligibility narrowing/widening at pick 27 is not being recomputed per-candidate');
+// The onesie (TE) candidate's simulated pick-27 pool must NEVER include a
+// QB, in every one of its trials -- this is a structural guarantee (the
+// blocked eligibility does not depend on the randomized opponent draws),
+// not a statistical tendency, so it holds with a small trial count too.
+const teJoint=jointPickEvaluation(teCand.p.id,meta,60,7);
+if([...teJoint.topOptions.keys()].some(id=>byId.get(id).pos==='QB'))
+  throw new Error('a blocked-eligibility QB leaked into the Smart Queue pick-27 fallback pool');
+// A naive "value(c22) + fixed independent pick-27 gain" combination cannot
+// see this at all: by construction the SAME fixed pick-27 figure is added to
+// both candidates, so its contribution to the core-vs-TE gap is always
+// exactly value(core)-value(TE) -- it structurally cannot express that only
+// the core candidate unlocks QB eligibility at 27. The real per-candidate
+// mechanism (asserted above) is not bound by that limitation.
+const naiveGain27=(()=>{
+  const forecastPool=PLAYERS.filter(p=>!picks.includes(p.id)&&modelDraftable(p));
+  const skill=forecastPool.filter(p=>POS.includes(p.pos));
+  const {rep}=replacement(skill);
+  const rows=skill.filter(p=>recommendationEligibility(p,[pick3Row.p],round27).ok);
+  return rows.reduce((best,p)=>Math.max(best,value(p)-(rep[p.pos]||0)),-Infinity);
+})();
+const naiveJointCore=value(coreCand.p)+naiveGain27, naiveJointTe=value(teCand.p)+naiveGain27;
+if(Math.abs((naiveJointCore-naiveJointTe)-(value(coreCand.p)-value(teCand.p)))>1e-9)
+  throw new Error('naive fixed-baseline gap must reduce to a pure value(c22) difference, blind to eligibility');
+
+// ── Manual Queue tags: Target / Conditional / Fade ──────────────────────
+// Pure presentation metadata: never read by computeBoard()/value()/
+// replacement()/survives()/recommendationEligibility().
+const tagA=remaining()[0].id, tagB=remaining()[1].id;
+queue=[]; queueArchive=[]; queueTags={};
+toggleQueue(tagA); toggleQueue(tagB);
+setQueueTag(tagA,'target');
+if(queueTags[tagA]!=='target')throw new Error('setQueueTag did not apply a valid tag to a queued player');
+setQueueTag(tagA,'fade');
+if(queueTags[tagA]!=='fade'||Object.keys(queueTags).length!==1)
+  throw new Error('re-tagging a queued player must replace, not add to, its tag (mutual exclusivity)');
+setQueueTag(tagA,'fade');
+if(queueTags[tagA]!==undefined)throw new Error('clicking the active tag again should clear it');
+setQueueTag(tagA,'target'); setQueueTag(tagB,'conditional');
+setQueueTag(tagB,'not-a-real-tag');
+if(queueTags[tagB]!=='conditional')throw new Error('an invalid tag value must be rejected, not applied');
+
+// Board byte-equivalence: tagging/queueing must never change computeBoard()'s
+// ranking output. This is the direct test of "advisory never touches
+// ranking" for the tag feature.
+const boardNoTags=JSON.stringify(computeBoard().map(r=>({id:r.p.id,gain:r.gain,vonaTier:r.vonaTier,eligible:r.eligible,decisionRank:r.decisionRank})));
+queueTags[tagA]='fade'; queue.push(remaining()[2].id);
+const boardWithTags=JSON.stringify(computeBoard().map(r=>({id:r.p.id,gain:r.gain,vonaTier:r.vonaTier,eligible:r.eligible,decisionRank:r.decisionRank})));
+if(boardNoTags!==boardWithTags)throw new Error('populating queueTags/queue changed computeBoard() ranking output');
+queue.pop(); queueTags[tagA]='target';
+
+// Sanitize contract: mirrors sanitizeQueueArchive's defensive filtering.
+// (a) valid id/value, (b) id not currently in queue, (c) id not in PLAYERS,
+// (d) invalid enum value -- only (a) should survive.
+const rawTags={[String(tagA)]:'target',[String(remaining()[5].id)]:'fade','999999':'target',[String(tagB)]:'not-real'};
+const sanitized=sanitizeQueueTags(rawTags,queue);
+if(!(Object.keys(sanitized).length===1&&sanitized[tagA]==='target'))
+  throw new Error('sanitizeQueueTags did not drop orphaned/unknown-id/invalid-enum tags');
+
+// Mutator cleanup contract: removeQueueEntry / toggleQueue-off / clearQueue
+// must delete the corresponding tag; stash+restore (snipe, then undo) must
+// carry the tag through unchanged. tagB is already tagged 'conditional' from
+// the mutual-exclusivity test above; re-applying it here would toggle it OFF
+// (same-tag click clears), so set a genuinely different value to guarantee
+// an active tag going into removeQueueEntry.
+setQueueTag(tagB,'target');
+if(queueTags[tagB]!=='target')throw new Error('test setup failed: tagB should carry an active tag before removeQueueEntry');
+removeQueueEntry(tagB);
+if(queueTags[tagB]!==undefined)throw new Error('removeQueueEntry did not delete its queueTags entry');
+toggleQueue(tagB); setQueueTag(tagB,'fade'); toggleQueue(tagB);
+if(queueTags[tagB]!==undefined)throw new Error('toggling a queued player off did not delete its queueTags entry');
+toggleQueue(tagB); setQueueTag(tagB,'target');
+const snipeStashPick=picks.length+1;
+stashQueuedPlayer(tagB,snipeStashPick,'sniped');
+if(queueTags[tagB]!==undefined)throw new Error('a sniped player must leave the active queueTags map');
+const stashedEntry=queueArchive.find(e=>e.id===tagB);
+if(!stashedEntry||stashedEntry.tag!=='target')throw new Error('the sniped archive entry must carry the tag through');
+restoreQueuedPlayer(tagB,snipeStashPick);
+if(queueTags[tagB]!=='target')throw new Error('undo (restoreQueuedPlayer) did not restore the tag');
+clearQueue();
+if(Object.keys(queueTags).length!==0)throw new Error('clearQueue did not clear all queueTags');
+
+// Reset preserves tags: restoreAllQueueEntries (used by resetDraft) must
+// carry archived tags back onto the restored queue entries.
+queue=[]; queueArchive=[]; queueTags={};
+toggleQueue(tagA); setQueueTag(tagA,'fade');
+stashQueuedPlayer(tagA,1,'drafted');
+restoreAllQueueEntries();
+if(!queue.includes(tagA)||queueTags[tagA]!=='fade')
+  throw new Error('restoreAllQueueEntries (reset draft) did not preserve the queue tag');
+queue=[]; queueArchive=[]; queueTags={};
+
+// Backup/import round-trip: queueTags must export and validate.
+toggleQueue(tagA); setQueueTag(tagA,'conditional');
+const backup=buildBackupState();
+if(!backup.queueTags||backup.queueTags[tagA]!=='conditional')
+  throw new Error('buildBackupState did not include the current queueTags');
+const badBackup={...backup,queueTags:{...backup.queueTags,[String(remaining()[9].id)]:'target'}};
+let rejectedOrphanTag=false;
+try{validateBackupState(badBackup);}catch(e){rejectedOrphanTag=true;}
+if(!rejectedOrphanTag)throw new Error('validateBackupState accepted a queueTags entry for a non-queued id');
+const restored=validateBackupState(backup);
+if(restored.queueTags[tagA]!=='conditional')throw new Error('validateBackupState did not round-trip a valid queueTags entry');
+queue=[]; queueArchive=[]; queueTags={};
+
+// ── Performance: computational bound for a live 90s pick clock ─────────
+const perfStart=Date.now();
+smartQueue(sqBoard);
+const perfMs=Date.now()-perfStart;
+if(perfMs>5000)throw new Error('Smart Queue took '+perfMs+'ms for '+SMART_QUEUE.candidates+' candidates x '+SMART_QUEUE.trials+' trials -- too slow for a 90s pick clock');
+globalThis.SMART_QUEUE_PERF_MS=perfMs;
+
 globalThis.TEST_RESULT={
   lambda:currentLambda(),
   replacement:replacement(skillPool()).rep,
@@ -233,11 +428,13 @@ const context={
   console,Math,Map,Set,Array,Object,JSON,Date,
   localStorage:{getItem:()=>null,setItem:()=>{}},
   document:{querySelector:()=>({classList:{toggle:()=>{}},textContent:'',innerHTML:'',value:'',style:{}})},
+  setTimeout:()=>0,clearTimeout:()=>{},
 };
 vm.createContext(context);
 vm.runInContext(engine+'\n'+harness,context,{timeout:30000});
 const result=context.TEST_RESULT;
 result.engineSha256=crypto.createHash('sha256').update(engine).digest('hex');
+result.smartQueuePerfMs=context.SMART_QUEUE_PERF_MS;
 assert(html.includes('Projection audit view (read only)')&&
   html.includes('title="Projected fantasy points for this league\'s scoring"')&&
   html.includes('<b>Projection</b> is the median of ESPN, CBS, and FFToday')&&

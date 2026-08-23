@@ -100,6 +100,12 @@ main.snake-mode>.col:first-child,main.snake-mode>.col:last-child{display:none}
 .sub .conflict-projection{color:var(--cyan)}
 .sub .conflict-consensus{color:var(--amber)}
 .sub .tierflag{color:var(--text);font-weight:700}
+.flag{color:var(--amber);font-weight:700;font-size:10px;letter-spacing:.03em;text-transform:uppercase}
+.conflict-projection{color:var(--cyan)}
+.conflict-consensus{color:var(--amber)}
+.qtag-target{color:var(--green)}
+.qtag-conditional{color:var(--amber)}
+.qtag-fade{color:var(--red)}
 .status{color:var(--amber);font-weight:700}
 .newsflag{color:var(--dim);font-weight:600}
 .num{text-align:right;font-size:13px;z-index:1}
@@ -142,9 +148,13 @@ main.snake-mode>.col:first-child,main.snake-mode>.col:last-child{display:none}
 .qmain{min-width:0}
 .qname{display:flex;align-items:center;gap:6px;color:var(--text);font-size:12px;font-weight:600}
 .qmeta{margin-top:3px;color:var(--dim);font:10px var(--sans);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.qcontrols{display:flex;align-items:center;gap:4px}
+.qwarn{margin-top:3px;font-size:10px;letter-spacing:.03em;line-height:1.5;white-space:normal}
+.qcontrols{display:flex;flex-wrap:wrap;align-items:center;gap:4px;justify-content:flex-end}
+.qtags{display:flex;flex-wrap:wrap;gap:4px;width:100%;justify-content:flex-end}
 .queue-btn[disabled],.queue-reorder[disabled],.mini-btn[disabled]{opacity:.45;cursor:default}
 .queue-empty{color:var(--dimmer);font-size:11px;line-height:1.6}
+.smart-queue .sqrow{margin-top:8px;padding-top:8px;border-top:1px solid var(--rule)}
+.smart-queue .sqrow:first-of-type{margin-top:6px;padding-top:0;border-top:none}
 .log{margin-top:4px}
 .logrow{display:flex;gap:8px;padding:3px 0;font-size:11px;color:var(--dim);border-bottom:1px solid #171D25}
 .logrow .p{color:var(--dimmer);width:38px;flex:none}
@@ -462,8 +472,9 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
       <p><b>ESPN update</b> plus a date under a name is only the timestamp of that player's most recent ESPN news item, shown when it landed within the last three days. It is a recency marker, not a headline and not a sentiment signal — read the actual news before acting on it.</p>
       <p><b>Winning build</b> is QB1, TE1, ten RB/WR, K1 and D/ST1. It starts with three RB/WR through Round 4, secures WR1 by Round 5, fills RB2/WR2/FLEX by Round 8, TE by Round 9, QB by Round 10, and takes K/D/ST in Rounds 13–14. QB2 and TE2 are waiver positions in this shallow format.</p>
       <p><b>1.03 turn planner</b> is a read-only advisory: it separates current pick-22 targets from players likely to survive to pick 27, then offers independent pair ideas. Those pair ideas are not a joint simulation and never change the ledger or board ranking. Conditional fallers are labeled from low survival to pick 22.</p>
+      <p><b>Smart Queue</b> is a model-generated, read-only advisory that appears once pick 22 is on the clock. Unlike the turn planner's pair ideas, it is a genuine conditional simulation: for each top pick-22 candidate it rolls forward opponent picks 23–26 with the same calibrated opponent model, then re-derives eligibility, roster state and the best pick-27 outcome against that specific resulting pool — not two independently ranked numbers added together. It never changes the ledger, board ranking or your manual Queue; press Compute to run it (it does not run automatically on every render).</p>
       <p><b>Draft</b> keeps the top eight candidates in the first screen and lets you scroll through the full ranking below them. On the Pick Board, press <b>1–8</b> to record one of those top eight, type an unambiguous name and press Enter, or click any player row. A partial name matching multiple players will never record automatically. Model, Projection, ECR and ADP are read-only audit views; switch back to the Pick Board before recording. A large Model/ECR gap is labeled projection-led or consensus-led for review; it does not change rank weights. <b>Auto to my pick</b> and <b>Ctrl/Cmd Enter</b> rehearse opponent picks through your next turn; simulated picks are marked <b>~</b> in the same ledger and Copy state, so reset the draft before using it live. Snake remains the planning-only board for comparing whole-room scenarios. While this guide is open the board is locked — nothing can be recorded or undone.</p>
-      <p><b>Queue</b> is manual and persisted. Use + on a Pick Board row, reorder targets under Room / Queue, and use Pick there only while you are on the clock. Opponent picks move queued targets to Recently sniped; Undo reactivates them. Backup JSON copies a machine-restorable snapshot, and Import validates it before replacing local state. Reset draft preserves the queue.</p>
+      <p><b>Queue</b> is manual and persisted — your explicit override layer, separate from any model advisory. Use + on a Pick Board row, reorder targets under Room / Queue, and use Pick there only while you are on the clock. Tag a queued entry <b>Target</b>, <b>Conditional</b>, or <b>Fade</b> for your own bookkeeping; tags persist, export, and survive Reset with the entry, but never influence Model rank, wait cost, or survival. A queued player who fails the recommendation guardrails, or a Fade tagged on a current Smart Queue candidate, is flagged in the queue row so the conflict is visible before you draft it. Opponent picks move queued targets to Recently sniped, tag included; Undo reactivates them. Backup JSON copies a machine-restorable snapshot, and Import validates it before replacing local state. Reset draft preserves the queue and its tags.</p>
       <p>Record every real pick here. Copy state on your turn and paste it to Codex or Claude for a current-news top three. K/DST stay out of wait-cost ranking and are prioritized in rounds 13–14.</p>
       <p>Press <b>Esc</b>, click outside this panel, or use the × above to close.</p>
     </div>
@@ -15225,6 +15236,16 @@ const SAME_BAND_TIEBREAK='consensus'; // 'consensus' or 'model'
 const MARKET_ADP_WEIGHT_BY_POS={QB:.50,RB:.80,WR:.80,TE:.80,K:.40,DST:.40};
 const marketWeight=p=>MARKET_ADP_WEIGHT_BY_POS[p?.pos]??.40;
 const OPPONENT={modelWeight:0,needWeight:.20,noiseScale:.65};
+// Smart Queue: a genuine conditional (Monte Carlo) evaluation of the 1.03
+// pick-22/27 turn, layered on top of — not replacing — the existing
+// turnPairPlanner() heuristic below. Fixed seed by default for a
+// reproducible, testable board; candidates/trials are a computational-bound
+// tradeoff, not a modeling constant (see jointPickEvaluation/smartQueue).
+const SMART_QUEUE={candidates:6,trials:200,seed:1};
+// Manual-queue tags: pure presentation metadata the user attaches to an
+// existing queue entry. Never read by computeBoard(), value(), replacement(),
+// survives(), or recommendationEligibility() — see setQueueTag().
+const QUEUE_TAGS=['target','conditional','fade'];
 const PROJECTION_META={sources:['ESPN','CBS','FFToday'],method:'median',updated:'2026-08-20'};
 const MARKET_META={source:'Fantasy Football Calculator 12-team half-PPR',updated:'2026-08-20',drafts:2595};
 const ECR_META={source:'FantasyPros Latest ECR, half-PPR',updated:'2026-08-20',experts:101,updated1d:38,updated3d:84,updated7d:101};
@@ -15243,11 +15264,16 @@ const STRATEGY={
 // upside/ceiling SD; it is not a calibrated confidence grade.
 
 // ── state ────────────────────────────────────────────────────────
-let slot=3, lambda=0.40, ecrWeight=.35, picks=[], autoPickNos=[], queue=[], queueArchive=[], posFilter='', view='prep', sortBy='gain', visibleRows=[], mockPicks=[], mockMode='adp', mockRandom=false, mockUntilMine=false, snakeView='grid', roomKeys=false, snakeCenterPending=false, notice=null, noticeTimer=null;
+let slot=3, lambda=0.40, ecrWeight=.35, picks=[], autoPickNos=[], queue=[], queueArchive=[], queueTags={}, posFilter='', view='prep', sortBy='gain', visibleRows=[], mockPicks=[], mockMode='adp', mockRandom=false, mockUntilMine=false, snakeView='grid', roomKeys=false, snakeCenterPending=false, notice=null, noticeTimer=null;
+// Smart Queue result cache: an in-memory-only render aid, never persisted
+// (see save()) and never read by any ranking function. Keyed so a stale
+// cache (from before the most recent pick, a lambda/ECR change, etc.) is
+// never shown as current; see smartQueueCacheKey()/computeSmartQueueNow().
+let smartQueueCache=null;
 const byId=new Map(PLAYERS.map(p=>[p.id,p]));
 const decisionInputActive=()=>view==='prep'&&sortBy==='gain';
 const STORAGE_KEY='ff26-v3';
-const STORAGE_VERSION=5;
+const STORAGE_VERSION=6;
 
 function sanitizeIdList(list){
   if(!Array.isArray(list))return [];
@@ -15265,8 +15291,21 @@ function sanitizeQueueArchive(list,pickedIds){
     const kind=item?.kind==='sniped'||item?.kind==='drafted'?item.kind:'';
     if(!kind||!byId.has(id)||pickNo<1||pickNo>TEAMS*ROUNDS)return null;
     if(!pickedIds.has(id)||pickNo>pickedIds.get(id))return null;
-    return {id,index,pickNo,kind,cleared:Boolean(item?.cleared)};
+    const tag=QUEUE_TAGS.includes(item?.tag)?item.tag:null;
+    return {id,index,pickNo,kind,cleared:Boolean(item?.cleared),tag};
   }).filter(Boolean).sort((a,b)=>b.pickNo-a.pickNo);
+}
+// A tag is metadata on a queue entry — it cannot outlive the entry it
+// describes, so any tag whose id is not currently queued is dropped.
+function sanitizeQueueTags(raw,queueIds){
+  const out={};
+  if(!raw||typeof raw!=='object')return out;
+  const ids=new Set(queueIds);
+  Object.keys(raw).forEach(key=>{
+    const id=+key;
+    if(ids.has(id)&&QUEUE_TAGS.includes(raw[key]))out[id]=raw[key];
+  });
+  return out;
 }
 function pickedAtMap(list){
   const out=new Map();
@@ -15286,8 +15325,9 @@ function pickedAtMap(list){
   const pickedIds=pickedAtMap(picks);
   if(s.modelVersion>=5&&Array.isArray(s.queue))queue=sanitizeIdList(s.queue).filter(id=>!pickedIds.has(id));
   if(s.modelVersion>=5&&Array.isArray(s.queueArchive))queueArchive=sanitizeQueueArchive(s.queueArchive,pickedIds).filter(entry=>!queue.includes(entry.id));
+  if(s.modelVersion>=6&&s.queueTags)queueTags=sanitizeQueueTags(s.queueTags,queue);
 }catch(e){}}());
-function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify({picks,autoPickNos,queue,queueArchive,slot,lambda,ecrWeight,snakeView,modelVersion:STORAGE_VERSION}));}
+function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify({picks,autoPickNos,queue,queueArchive,queueTags,slot,lambda,ecrWeight,snakeView,modelVersion:STORAGE_VERSION}));}
 
 const $=s=>document.querySelector(s);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -15324,7 +15364,8 @@ function stashQueuedPlayer(id,pickNo,kind){
   if(index===-1)return;
   queue.splice(index,1);
   queueArchive=queueArchive.filter(entry=>entry.id!==id);
-  queueArchive.unshift({id,index,pickNo,kind,cleared:false});
+  queueArchive.unshift({id,index,pickNo,kind,cleared:false,tag:queueTags[id]||null});
+  delete queueTags[id];
 }
 function restoreQueuedPlayer(id,pickNo){
   const idx=queueArchiveEntry(id,pickNo);
@@ -15332,11 +15373,13 @@ function restoreQueuedPlayer(id,pickNo){
   const entry=queueArchive.splice(idx,1)[0];
   if(queueContains(id)||picks.includes(id))return;
   queue.splice(clamp(entry.index,0,queue.length),0,id);
+  if(entry.tag)queueTags[id]=entry.tag;
 }
 function toggleQueue(id){
   if(!byId.has(id)||picks.includes(id))return;
   if(queueContains(id)){
     queue=queue.filter(pid=>pid!==id);
+    delete queueTags[id];
     setNotice('warn',`${byId.get(id).name} removed from queue.`);
   }else{
     queueArchive=queueArchive.filter(entry=>entry.id!==id);
@@ -15356,12 +15399,14 @@ function moveQueue(id,delta){
 function removeQueueEntry(id){
   if(!queueContains(id))return;
   queue=queue.filter(pid=>pid!==id);
+  delete queueTags[id];
   setNotice('warn',`${byId.get(id).name} removed from queue.`);
   save(); render();
 }
 function clearQueue(){
   if(!queue.length)return;
   if(!confirm('Clear the active queue? Recently sniped players will stay listed until you clear snipes.'))return;
+  queue.forEach(id=>delete queueTags[id]);
   queue=[];
   save(); render();
 }
@@ -15371,9 +15416,21 @@ function clearSnipes(){
 }
 function restoreAllQueueEntries(){
   [...queueArchive].sort((a,b)=>a.index-b.index).forEach(entry=>{
-    if(!queueContains(entry.id))queue.splice(clamp(entry.index,0,queue.length),0,entry.id);
+    if(!queueContains(entry.id)){
+      queue.splice(clamp(entry.index,0,queue.length),0,entry.id);
+      if(entry.tag)queueTags[entry.id]=entry.tag;
+    }
   });
   queueArchive=[];
+}
+// A queued Pick stays an explicit override — a tag never changes what
+// draft(id)/toggleQueue do. Clicking the same tag again clears it (a queue
+// entry with no tag is just a plain pin, the original behavior).
+function setQueueTag(id,tag){
+  if(!queueContains(id)||!QUEUE_TAGS.includes(tag))return;
+  if(queueTags[id]===tag)delete queueTags[id];
+  else queueTags[id]=tag;
+  save(); render();
 }
 function posClass(p){return p?.pos?`pos-${String(p.pos).toLowerCase()}`:'';}
 function rosterSlots(mine){
@@ -15420,6 +15477,7 @@ function buildBackupState(){
     autoPickNos:[...autoPickNos],
     queue:[...queue],
     queueArchive:[...queueArchive],
+    queueTags:{...queueTags},
     slot,lambda,ecrWeight,snakeView,
     exportedAt:new Date().toISOString(),
     modelVersion:STORAGE_VERSION
@@ -15449,18 +15507,23 @@ function validateBackupState(raw){
   const picked=pickedAtMap(nextPicks);
   const archive=sanitizeQueueArchive(raw.queueArchive||[],picked).filter(entry=>!nextQueue.includes(entry.id));
   if(archive.length!==(raw.queueArchive||[]).length)throw new Error('Queue history is invalid.');
+  if(raw.queueTags!=null&&(typeof raw.queueTags!=='object'||Array.isArray(raw.queueTags)))
+    throw new Error('Queue tags are invalid.');
+  const nextQueueTags=sanitizeQueueTags(raw.queueTags,nextQueue);
+  if(Object.keys(nextQueueTags).length!==Object.keys(raw.queueTags||{}).length)
+    throw new Error('Queue tags are invalid.');
   const rosters=Array.from({length:TEAMS},()=>[]);
   nextPicks.forEach((id,index)=>{
     const roster=rosters[teamAtPick(index+1)-1], player=byId.get(id);
     if(!mockEligible(player,roster,false,Math.ceil((index+1)/TEAMS)))throw new Error(`Pick ${fmtPick(index+1)} violates a roster cap.`);
     roster.push(player);
   });
-  return {picks:nextPicks,autoPickNos:[...raw.autoPickNos],queue:nextQueue,queueArchive:archive,
+  return {picks:nextPicks,autoPickNos:[...raw.autoPickNos],queue:nextQueue,queueArchive:archive,queueTags:nextQueueTags,
     slot:nextSlot,lambda:nextLambda,ecrWeight:nextEcr,snakeView:raw.snakeView};
 }
 function restoreStateObject(raw){
   const next=validateBackupState(raw);
-  picks=next.picks; autoPickNos=next.autoPickNos; queue=next.queue; queueArchive=next.queueArchive;
+  picks=next.picks; autoPickNos=next.autoPickNos; queue=next.queue; queueArchive=next.queueArchive; queueTags=next.queueTags;
   slot=next.slot; lambda=next.lambda; ecrWeight=next.ecrWeight; snakeView=next.snakeView;
 }
 async function copyTextWithFallback(text,label){
@@ -15527,8 +15590,20 @@ function timingSd(p){
   const disagreementVar=w*(1-w)*(espn-market)**2;
   return Math.sqrt(base*base+disagreementVar);
 }
-function mockNoise(p){
-  const u=Math.max(Math.random(),1e-9),v=Math.max(Math.random(),1e-9);
+// Deterministic PRNG (Mulberry32), used only by the Smart Queue's forward
+// simulation so a fixed seed reproduces the exact same joint evaluation.
+// The live opponent model (mockNoise/chooseNeedAware called with no rng)
+// keeps using Math.random and is byte-for-byte unaffected by this addition.
+function mulberry32(seed){
+  return function(){
+    seed|=0; seed=seed+0x6D2B79F5|0;
+    let t=Math.imul(seed^seed>>>15,1|seed);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  };
+}
+function mockNoise(p,rng=Math.random){
+  const u=Math.max(rng(),1e-9),v=Math.max(rng(),1e-9);
   const sd=p?timingSd(p)*OPPONENT.noiseScale:4;
   return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)*sd;
 }
@@ -15594,10 +15669,10 @@ function mockEligible(p,roster,needsOnly=false,round=1){
   const needs=Object.entries(starterMinimum).reduce((sum,[pos,min])=>sum+Math.max(0,min-after[pos]),0);
   return needs<=picksLeft;
 }
-function chooseNeedAware(candidates,roster,round,meta,randomized=false){
+function chooseNeedAware(candidates,roster,round,meta,randomized=false,rng=Math.random){
   const scores=new Map(candidates.map(p=>[p.id,
     timingMetric(p)+OPPONENT.modelWeight*((meta.modelRank.get(p.id)||999)-timingMetric(p))
-      +OPPONENT.needWeight*mockNeedAdjustment(p,roster,round)+(randomized?mockNoise(p):0)]));
+      +OPPONENT.needWeight*mockNeedAdjustment(p,roster,round)+(randomized?mockNoise(p,rng):0)]));
   return [...candidates].sort((a,b)=>scores.get(a.id)-scores.get(b.id)||a.name.localeCompare(b.name))[0]||null;
 }
 function rostersFromDraft(){
@@ -15605,6 +15680,81 @@ function rostersFromDraft(){
   picks.forEach((id,i)=>{const p=byId.get(id);if(p)rosters[teamAtPick(i+1)-1].push(p);});
   return rosters;
 }
+// Pure conditional forward-simulation for the Smart Queue only. Operates on
+// a CLONED pick list/rosters and never touches the real picks/queue/
+// queueArchive/autoPickNos or localStorage — contrast with autoToMyPick()
+// below, which is single-shot, unseeded, and mutates the real ledger.
+function simulateForward(basePicks,fromPick,toPick,meta,rng){
+  const picks2=basePicks.slice();
+  const rosters=Array.from({length:TEAMS},()=>[]);
+  picks2.forEach((id,i)=>{const p=byId.get(id); if(p)rosters[teamAtPick(i+1)-1].push(p);});
+  for(let n=fromPick;n<=toPick;n++){
+    const round=Math.ceil(n/TEAMS), roster=rosters[teamAtPick(n)-1];
+    const pool=PLAYERS.filter(p=>!picks2.includes(p.id));
+    let candidates=pool.filter(p=>modelDraftable(p)&&mockEligible(p,roster,true,round));
+    if(!candidates.length)candidates=pool.filter(p=>modelDraftable(p)&&mockEligible(p,roster,false,round));
+    const pick=chooseNeedAware(candidates,roster,round,meta,true,rng);
+    if(!pick)break;
+    picks2.push(pick.id); roster.push(pick);
+  }
+  return picks2;
+}
+// Joint pick-22/27 evaluation for one candidate at pick 22: roll forward the
+// opponent picks 23-26 (via the calibrated need-aware model, seeded for
+// reproducibility), then re-derive the BEST pick-27 outcome against the
+// resulting roster/pool. This is deliberately not "gain(c22) + gain(27)"
+// computed independently — the pick-27 pool, roster, and STRATEGY-deadline
+// eligibility all depend on which player was actually taken at 22. Horizon
+// is fixed at 23-26 -> 27 (see smartQueue()); it does not extend to a
+// hypothetical pick after 27.
+function jointPickEvaluation(c22Id,meta,trials=SMART_QUEUE.trials,seed=SMART_QUEUE.seed){
+  const rng=mulberry32(seed);
+  const base=picks.concat([c22Id]);
+  const round27=Math.ceil(27/TEAMS);
+  const gains=[], topOptions=new Map();
+  for(let t=0;t<trials;t++){
+    const forward=simulateForward(base,23,26,meta,rng);
+    const mine=myPicks().filter(pk=>pk<=26).map(pk=>byId.get(forward[pk-1])).filter(Boolean);
+    const forecastPool=PLAYERS.filter(p=>!forward.includes(p.id)&&modelDraftable(p));
+    const skill=forecastPool.filter(p=>POS.includes(p.pos));
+    const {rep}=replacement(skill);
+    const rows=skill.filter(p=>recommendationEligibility(p,mine,round27).ok);
+    if(!rows.length){gains.push(0); continue;}
+    let best=null,bestGain=-Infinity;
+    rows.forEach(p=>{const g=value(p)-(rep[p.pos]||0); if(g>bestGain){bestGain=g;best=p;}});
+    gains.push(bestGain);
+    if(best)topOptions.set(best.id,(topOptions.get(best.id)||0)+1);
+  }
+  const meanBestGain27=gains.reduce((a,b)=>a+b,0)/gains.length;
+  return {c22Id,meanBestGain27,topOptions,trials};
+}
+// Orchestrator: evaluates the top SMART_QUEUE.candidates board rows as
+// pick-22 options and ranks them by jointValue = value(c22) + simulated
+// E[best pick-27 gain | that c22]. Read-only advisory: never calls draft(),
+// toggleQueue(), or mutates picks/queue/queueArchive/autoPickNos. Only
+// meaningful for the fixed 1.03 turn (slot 3, picks 22/27) at the exact
+// moment pick 22 is on the clock — before that, "candidates at 22" cannot
+// yet be grounded in the live board, and after it the decision is already
+// made.
+function smartQueue(boardRows){
+  if(slot!==3||curPick()!==22)return null;
+  const meta=modelMeta();
+  const cands=boardRows.filter(r=>r.eligible&&!r.isSpecial).sort(boardDecisionCompare).slice(0,SMART_QUEUE.candidates);
+  const evals=cands.map(r=>{
+    const {meanBestGain27,topOptions,trials}=jointPickEvaluation(r.p.id,meta,SMART_QUEUE.trials,SMART_QUEUE.seed);
+    const value22=value(r.p);
+    const ranked27=[...topOptions.entries()].sort((a,b)=>b[1]-a[1]||a[0]-b[0]);
+    const best27Id=ranked27[0]?.[0]??null;
+    return {
+      c22:r.p, value22, meanBestGain27, jointValue:value22+meanBestGain27,
+      surv22:r.surv, best27:best27Id!=null?byId.get(best27Id):null,
+      best27Share:best27Id!=null?ranked27[0][1]/trials:0, trials
+    };
+  });
+  evals.sort((a,b)=>b.jointValue-a.jointValue);
+  return evals;
+}
+
 // Draft-page rehearsal: simulated opponent picks are marked and remain in the
 // single HTML ledger so the Pick Board reflects the exact rehearsal state.
 // Reset draft before going live if this was only a practice run.
@@ -16034,6 +16184,34 @@ function urgency(r){
 }
 
 // ── render ───────────────────────────────────────────────────────
+// Smart Queue is expensive relative to a keystroke-driven render(), so it is
+// never recomputed automatically. It is cached under a key of the inputs
+// that could change its answer; render() only ever displays a cache hit and
+// otherwise shows a manual "Compute" prompt (see smartQueueBox()).
+function smartQueueCacheKey(){return `${curPick()}|${picks.length}|${lambda}|${ecrWeight}|${slot}`;}
+function computeSmartQueueNow(){
+  smartQueueCache={key:smartQueueCacheKey(),evals:smartQueue(computeBoard())};
+  render();
+}
+function smartQueueBox(boardRows){
+  if(slot!==3||curPick()!==22)return '';
+  const eyebrow=`Smart Queue · joint 22/27 simulation (N=${SMART_QUEUE.trials} trials) · read-only advisory`;
+  const intro='Simulates opponent picks 23–26 for each pick-22 candidate with the same calibrated opponent model used elsewhere, then re-derives the best pick-27 outcome against the resulting roster and pool — a real conditional simulation, not two independently ranked numbers added together.';
+  const key=smartQueueCacheKey();
+  const cached=smartQueueCache&&smartQueueCache.key===key?smartQueueCache.evals:null;
+  if(!cached){
+    return `<div class="runbox smart-queue"><div class="eyebrow" style="margin-bottom:5px">${eyebrow}</div><div class="t">${intro}<br><button class="mini-btn" type="button" data-action="smart-queue-compute">Compute Smart Queue</button></div></div>`;
+  }
+  if(!cached.length)
+    return `<div class="runbox smart-queue"><div class="eyebrow" style="margin-bottom:5px">${eyebrow}</div><div class="t">No eligible pick-22 candidate cleared the board screen.<br><button class="mini-btn" type="button" data-action="smart-queue-compute">Recompute</button></div></div>`;
+  const rows=cached.slice(0,3).map(e=>{
+    const queued=queueContains(e.c22.id), tag=queueTags[e.c22.id];
+    const flags=`${queued?' <span class="flag">queued</span>':''}${tag?` <span class="flag qtag-${tag}">${tag}</span>`:''}`;
+    const partner=e.best27?`${e.best27.name} ${e.best27.pos} (${Math.round(e.best27Share*100)}% of trials)`:'no consistent partner';
+    return `<div class="sqrow"><b>${e.c22.name}</b> ${e.c22.pos}${flags} · value ${e.value22.toFixed(1)} + E[best@27] ${e.meanBestGain27.toFixed(1)} = <b>${e.jointValue.toFixed(1)}</b> <button class="rowaction ${queued?'on':''}" type="button" data-action="toggle-queue" data-id="${e.c22.id}" aria-pressed="${queued}" aria-label="${queued?`Remove ${e.c22.name} from queue`:`Add ${e.c22.name} to queue`}">${queued?'Q':'+'}</button><br><small>survives to 22: ${Math.round((e.surv22||0)*100)}% · likely pick-27 partner if taken: ${partner}</small></div>`;
+  }).join('');
+  return `<div class="runbox smart-queue"><div class="eyebrow" style="margin-bottom:5px">${eyebrow}</div><div class="t">${intro}${rows}<button class="mini-btn" type="button" data-action="smart-queue-compute">Recompute</button></div></div>`;
+}
 // Keeps the pressed state of a toggle-button group visible to assistive tech,
 // not just to the eye.
 function setPressed(group,key,current){
@@ -16239,9 +16417,9 @@ function render(){
     : 0;
   const queueOverlap=queue.filter(id=>boardMap.has(id)&&!picks.includes(id)).slice(0,4).map(id=>boardMap.get(id)).filter(Boolean);
   const focusBox=isOTC&&topChoices.length
-    ? `<div class="runbox hot"><div class="eyebrow" style="margin-bottom:5px">On your pick</div><div class="t"><b>Top 3:</b> ${topChoices.map(r=>`${r.p.name} ${waitBandLabel(r.vonaTier)}`).join(' · ')}${queueOverlap.length?`<br><b>Queue overlap:</b> ${queueOverlap.map(r=>r.p.name).join(' · ')}`:''}${topBandCount?`<br><b>Current band:</b> ${topBandCount} left`:''}<br><b>Starter needs:</b> ${openLine}</div></div>`
+    ? `<div class="runbox hot"><div class="eyebrow" style="margin-bottom:5px">On your pick</div><div class="t"><b>Top 3:</b> ${topChoices.map(r=>`${r.p.name} ${waitBandLabel(r.vonaTier)}`).join(' · ')}${queueOverlap.length?`<br><b>Queue overlap:</b> ${queueOverlap.map(r=>`${r.p.name}${queueTags[r.p.id]?` <span class="flag qtag-${queueTags[r.p.id]}">${queueTags[r.p.id]}</span>`:''}`).join(' · ')}`:''}${topBandCount?`<br><b>Current band:</b> ${topBandCount} left`:''}<br><b>Starter needs:</b> ${openLine}</div></div>`
     : '';
-  $('#plan').innerHTML=focusBox+`<div class="runbox"><div class="t">${planText(mine)}${opponentDemandText()}</div></div>`+turnPairPlanner(boardRows)+nextTurnTargets(boardRows);
+  $('#plan').innerHTML=focusBox+`<div class="runbox"><div class="t">${planText(mine)}${opponentDemandText()}</div></div>`+turnPairPlanner(boardRows)+smartQueueBox(boardRows)+nextTurnTargets(boardRows);
   renderNotice();
   const dataAgeDays=Math.max(0,Math.floor((Date.now()-new Date(PROJECTION_META.updated+'T00:00:00Z').getTime())/86400000));
   const checks=[
@@ -16255,10 +16433,25 @@ function render(){
   $('#preflight').innerHTML=showPreflight
     ? `<div class="runbox ${checks.every(check=>check.ok)?'notice':'hot'}"><div class="eyebrow" style="margin-bottom:5px">Draft-day preflight</div><div class="t">${checks.map(check=>`<b>${check.label}:</b> <span style="color:${check.ok?'var(--text)':'var(--amber)'}">${check.text}</span>`).join(' · ')}</div></div>`
     : '';
+  const smartQueueIds=new Set(
+    smartQueueCache&&smartQueueCache.key===smartQueueCacheKey()&&smartQueueCache.evals
+      ? smartQueueCache.evals.map(e=>e.c22.id) : []
+  );
+  const queueTagBtn=(id,player,key,label)=>{
+    const on=queueTags[id]===key;
+    return `<button class="queue-btn ${on?'on':''}" type="button" data-action="queue-tag" data-id="${id}" data-tag="${key}" aria-pressed="${on}" aria-label="${on?`Remove ${label} tag from ${player.name}`:`Mark ${player.name} as ${label}`}">${label}</button>`;
+  };
   const queueRows=queue.map((id,index)=>{
-    const row=boardMap.get(id), player=byId.get(id);
+    const row=boardMap.get(id), player=byId.get(id), tag=queueTags[id];
     const surv=row?`${Math.round(row.surv*100)}% survive`:picks.includes(id)?'drafted':'queued';
-    return `<div class="qrow"><div class="qmain"><div class="qname">${player.name}</div><div class="qmeta">${player.pos} · ${player.team||'—'} · ${surv}</div></div><div class="qcontrols"><button class="queue-reorder" type="button" data-action="queue-up" data-id="${id}" aria-label="Move ${player.name} up" ${index===0?'disabled':''}>↑</button><button class="queue-reorder" type="button" data-action="queue-down" data-id="${id}" aria-label="Move ${player.name} down" ${index===queue.length-1?'disabled':''}>↓</button><button class="queue-btn" type="button" data-action="queue-remove" data-id="${id}" aria-label="Remove ${player.name} from queue">X</button><button class="queue-btn" type="button" data-action="queue-draft" data-id="${id}" aria-label="Draft ${player.name} from queue" ${isOTC?'':'disabled'}>Pick</button></div></div>`;
+    const guardrailWarning=row&&!row.eligible
+      ? `<span class="flag conflict-consensus" title="Blocked by recommendation guardrails">not recommended · ${row.blockedReason}</span>`
+      : '';
+    const fadeConflict=tag==='fade'&&smartQueueIds.has(id)
+      ? `<span class="flag conflict-projection">fade vs Smart Queue candidate</span>`
+      : '';
+    const warnings=[guardrailWarning,fadeConflict].filter(Boolean).join(' · ');
+    return `<div class="qrow"><div class="qmain"><div class="qname">${player.name}${tag?` <span class="flag qtag-${tag}">${tag}</span>`:''}</div><div class="qmeta">${player.pos} · ${player.team||'—'} · ${surv}</div>${warnings?`<div class="qwarn">${warnings}</div>`:''}</div><div class="qcontrols"><div class="qtags" role="group" aria-label="Tag ${player.name}">${queueTagBtn(id,player,'target','Target')}${queueTagBtn(id,player,'conditional','Conditional')}${queueTagBtn(id,player,'fade','Fade')}</div><button class="queue-reorder" type="button" data-action="queue-up" data-id="${id}" aria-label="Move ${player.name} up" ${index===0?'disabled':''}>↑</button><button class="queue-reorder" type="button" data-action="queue-down" data-id="${id}" aria-label="Move ${player.name} down" ${index===queue.length-1?'disabled':''}>↓</button><button class="queue-btn" type="button" data-action="queue-remove" data-id="${id}" aria-label="Remove ${player.name} from queue">X</button><button class="queue-btn" type="button" data-action="queue-draft" data-id="${id}" aria-label="Draft ${player.name} from queue" ${isOTC?'':'disabled'}>Pick</button></div></div>`;
   }).join('');
   const snipes=queueArchive.filter(entry=>entry.kind==='sniped'&&!entry.cleared).sort((a,b)=>b.pickNo-a.pickNo);
   const snipedRows=snipes.map(entry=>{
@@ -16323,7 +16516,7 @@ function resetDraft(){
   if(draftLocked())return;
   if(!confirm('Clear all picks and start over?'))return;
   restoreAllQueueEntries();
-  picks=[]; autoPickNos=[]; mockPicks=[]; mockRandom=false; mockUntilMine=false;
+  picks=[]; autoPickNos=[]; mockPicks=[]; mockRandom=false; mockUntilMine=false; smartQueueCache=null;
   save();
   setNotice('ok','Draft reset. Queue preserved.');
   render();
@@ -16378,7 +16571,7 @@ function buildState(){
   if(bench.length)L.push(`  BENCH (${bench.length}/5) `+bench.map(p=>`${p.name} (${p.pos})`).join(', '));
   L.push('  caps '+POS.map(k=>`${k} ${mine.filter(p=>p.pos===k).length}/${CAPS[k]}`).join(', '));
   L.push('  '+byeSummaryText(mine));
-  if(queue.length)L.push('  queue '+queue.map(id=>byId.get(id)).filter(Boolean).map(p=>`${p.name} (${p.pos})`).join(', '));
+  if(queue.length)L.push('  queue '+queue.map(id=>byId.get(id)).filter(Boolean).map(p=>`${p.name} (${p.pos})${queueTags[p.id]?` [${queueTags[p.id]}]`:''}`).join(', '));
   const snipes=queueArchive.filter(entry=>entry.kind==='sniped'&&!entry.cleared).sort((a,b)=>b.pickNo-a.pickNo);
   if(snipes.length)L.push('  recent snipes '+snipes.map(entry=>`${byId.get(entry.id)?.name||'?'} @ ${fmtPick(entry.pickNo)}`).join(', '));
   L.push('');
@@ -16594,6 +16787,9 @@ $('#roomcol').addEventListener('click',e=>{
   if(action.dataset.action==='queue-up'){moveQueue(id,-1);return;}
   if(action.dataset.action==='queue-down'){moveQueue(id,1);return;}
   if(action.dataset.action==='queue-remove'){removeQueueEntry(id);return;}
+  if(action.dataset.action==='queue-tag'){setQueueTag(id,action.dataset.tag);return;}
+  if(action.dataset.action==='toggle-queue'){toggleQueue(id);return;}
+  if(action.dataset.action==='smart-queue-compute'){computeSmartQueueNow();return;}
   if(action.dataset.action==='queue-draft'){
     if(!myPicks().includes(curPick())){
       setNotice('warn','Queue drafting is only enabled on your pick.');
