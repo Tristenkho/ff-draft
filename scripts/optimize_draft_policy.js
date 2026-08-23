@@ -5,28 +5,36 @@ const start=html.indexOf('const TEAMS=12, ROUNDS=14;');
 const end=html.indexOf('// ── render ───────────────────────────────────────');
 if(start<0||end<0)throw new Error('Could not locate embedded draft engine');
 
+const base={lambda:.40,ecrWeight:.35,decisionMode:'consensus_tier',coreEarly:3,coreDeadline:4,
+  wrDeadline:5,coreStarterDeadline:8,teDeadline:9,qbDeadline:10,coreTotal:10,minCoreEach:4};
 const policies=[
-  {id:'baseline',label:'Current tuned build',lambda:.40,coreEarly:3,coreDeadline:4,wrDeadline:5,coreStarterDeadline:8,teDeadline:9,qbDeadline:10,coreTotal:10,minCoreEach:4},
-  {id:'lambda_020',label:'Lower ceiling weight',lambda:.20,coreEarly:3,coreDeadline:4,wrDeadline:5,coreStarterDeadline:8,teDeadline:9,qbDeadline:10,coreTotal:10,minCoreEach:4},
-  {id:'lambda_060',label:'Higher ceiling weight',lambda:.60,coreEarly:3,coreDeadline:4,wrDeadline:5,coreStarterDeadline:8,teDeadline:9,qbDeadline:10,coreTotal:10,minCoreEach:4},
-  {id:'core_2',label:'Only two early RB/WR',lambda:.40,coreEarly:2,coreDeadline:4,wrDeadline:5,coreStarterDeadline:8,teDeadline:9,qbDeadline:10,coreTotal:10,minCoreEach:4},
-  {id:'core_4',label:'Four early RB/WR',lambda:.40,coreEarly:4,coreDeadline:4,wrDeadline:5,coreStarterDeadline:8,teDeadline:9,qbDeadline:10,coreTotal:10,minCoreEach:4},
-  {id:'core_starters_7',label:'Finish RB2/WR2/FLEX by R7',lambda:.40,coreEarly:3,coreDeadline:4,wrDeadline:5,coreStarterDeadline:7,teDeadline:9,qbDeadline:10,coreTotal:10,minCoreEach:4},
-  {id:'core_starters_9',label:'Finish RB2/WR2/FLEX by R9',lambda:.40,coreEarly:3,coreDeadline:4,wrDeadline:5,coreStarterDeadline:9,teDeadline:9,qbDeadline:10,coreTotal:10,minCoreEach:4},
-  {id:'wr_4',label:'Secure WR1 by R4',lambda:.40,coreEarly:3,coreDeadline:4,wrDeadline:4,coreStarterDeadline:8,teDeadline:9,qbDeadline:10,coreTotal:10,minCoreEach:4},
-  {id:'wr_6',label:'Delay WR1 deadline to R6',lambda:.40,coreEarly:3,coreDeadline:4,wrDeadline:6,coreStarterDeadline:8,teDeadline:9,qbDeadline:10,coreTotal:10,minCoreEach:4},
-  {id:'qb_9',label:'Secure QB by R9',lambda:.40,coreEarly:3,coreDeadline:4,wrDeadline:5,coreStarterDeadline:8,teDeadline:9,qbDeadline:9,coreTotal:10,minCoreEach:4},
-  {id:'qb_11',label:'Delay QB deadline to R11',lambda:.40,coreEarly:3,coreDeadline:4,wrDeadline:5,coreStarterDeadline:8,teDeadline:9,qbDeadline:11,coreTotal:10,minCoreEach:4},
-  {id:'loose_balance',label:'Allow 7/3 RB-WR split',lambda:.40,coreEarly:3,coreDeadline:4,wrDeadline:5,coreStarterDeadline:8,teDeadline:9,qbDeadline:10,coreTotal:10,minCoreEach:3}
+  {id:'baseline',label:'Current tuned build',...base},
+  {id:'model_tier',label:'Model first inside wait band',...base,decisionMode:'model'},
+  {id:'ecr_050',label:'50% ECR Model blend',...base,ecrWeight:.50},
+  {id:'model_tier_ecr_050',label:'Model-first band + 50% blend',...base,ecrWeight:.50,decisionMode:'model'},
+  {id:'review_15',label:'15-rank conservative review',...base,decisionMode:'review_15'},
+  {id:'lambda_020',label:'Lower ceiling weight',...base,lambda:.20},
+  {id:'lambda_060',label:'Higher ceiling weight',...base,lambda:.60},
+  {id:'core_2',label:'Only two early RB/WR',...base,coreEarly:2},
+  {id:'core_4',label:'Four early RB/WR',...base,coreEarly:4},
+  {id:'core_starters_7',label:'Finish RB2/WR2/FLEX by R7',...base,coreStarterDeadline:7},
+  {id:'core_starters_9',label:'Finish RB2/WR2/FLEX by R9',...base,coreStarterDeadline:9},
+  {id:'wr_4',label:'Secure WR1 by R4',...base,wrDeadline:4},
+  {id:'wr_6',label:'Delay WR1 deadline to R6',...base,wrDeadline:6},
+  {id:'qb_9',label:'Secure QB by R9',...base,qbDeadline:9},
+  {id:'qb_11',label:'Delay QB deadline to R11',...base,qbDeadline:11},
+  {id:'loose_balance',label:'Allow 7/3 RB-WR split',...base,minCoreEach:3}
 ];
 const stage1Drafts=Number(process.argv[2]||300);
 const stage2Drafts=Number(process.argv[3]||600);
 const seasonsPerDraft=Number(process.argv[4]||5);
 const strategyKeys=['coreEarly','coreDeadline','wrDeadline','coreStarterDeadline','teDeadline','qbDeadline','coreTotal','minCoreEach'];
 for(const p of policies){
-  const keys=Object.keys(p).filter(k=>!['id','label','lambda'].includes(k)).sort();
+  const keys=Object.keys(p).filter(k=>!['id','label','lambda','ecrWeight','decisionMode'].includes(k)).sort();
   if(JSON.stringify(keys)!==JSON.stringify([...strategyKeys].sort()))
     throw new Error('Policy '+p.id+' does not exactly match the live strategy schema');
+  if(!['model','consensus_tier','review_15'].includes(p.decisionMode))
+    throw new Error('Policy '+p.id+' has an unknown decision mode');
 }
 
 const engine=html.slice(start,end);
@@ -41,9 +49,25 @@ function u01(a,b,c,d=0){return (h32(a,b,c,d)+.5)/4294967296;}
 function norm(a,b,c,d=0){const u=Math.max(u01(a,b,c,d),1e-9),v=u01(a,b,c,d+7919);return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
 function strHash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
 function setPolicy(p){
-  const {id,label,lambda:ceiling,...strategy}=p;
+  const {id,label,lambda:ceiling,ecrWeight:expertWeight,decisionMode,...strategy}=p;
   Object.assign(STRATEGY,BASE_STRATEGY,strategy);
   lambda=ceiling;
+  ecrWeight=expertWeight;
+}
+function selectRecommendation(policy){
+  const rows=computeBoard().filter(r=>r.eligible);
+  if(!rows.length)return null;
+  const topBand=Math.min(...rows.map(r=>r.vonaTier));
+  const tied=rows.filter(r=>r.vonaTier===topBand);
+  if(policy.decisionMode==='model'){
+    tied.sort((a,b)=>a.decisionRank-b.decisionRank||b.gain-a.gain);
+  }else if(policy.decisionMode==='consensus_tier'){
+    tied.sort((a,b)=>a.ecrRank-b.ecrRank||a.decisionRank-b.decisionRank||b.gain-a.gain);
+  }else if(policy.decisionMode==='review_15'){
+    const reviewed=r=>Math.abs(r.modelRank-r.ecrRank)>=15?Math.max(r.modelRank,r.ecrRank):r.modelRank;
+    tied.sort((a,b)=>reviewed(a)-reviewed(b)||a.decisionRank-b.decisionRank||b.gain-a.gain);
+  }
+  return tied[0];
 }
 function ensembleOpponent(candidates,roster,round,meta,seed,team){
   return chooseNeedAware(candidates,roster,round,meta,true);
@@ -64,7 +88,7 @@ function draftLeague(policy,seed){
   const meta=modelMeta(),rosters=Array.from({length:TEAMS},()=>[]);
   autoEnsemble(seed,meta,rosters);
   for(let round=1;round<=ROUNDS;round++){
-    const rec=computeBoard()[0];
+    const rec=selectRecommendation(policy);
     if(!rec||!rec.eligible)throw new Error(policy.id+' has no eligible recommendation R'+round);
     picks.push(rec.p.id);rosters[slot-1].push(rec.p);
     autoEnsemble(seed,meta,rosters);
@@ -183,6 +207,6 @@ const pct=x=>(100*x).toFixed(2)+'%';
 const rows=result.final.map((r,i)=>`| ${i+1} | ${r.policy.label} | ${pct(r.champ)} | ${pct(r.playoff)} | ${r.pf.toFixed(1)} | ${pct(r.champVsBaseline.delta)} [${pct(r.champVsBaseline.lo)}, ${pct(r.champVsBaseline.hi)}] | ${r.legal}/${r.drafts} |`).join('\n');
 const stage=result.policies.map(p=>{const r=result.stage1[p.id];return `| ${p.label} | ${pct(r.champ)} | ${pct(r.playoff)} | ${r.pf.toFixed(1)} |`;}).join('\n');
 const winner=result.final[0],stable=winner.policy.id!=='baseline'&&winner.champVsBaseline.lo>0;
-const report=`# Draft policy championship optimizer\n\n## Outcome\n\n${stable?`**Synthetic candidate: ${winner.policy.label}.** Its multiplicity-adjusted room-clustered interval excludes zero in this model, so it advances to historical robustness testing; it is not automatically a live change.`:`**No challenger proved a statistically reliable championship-rate improvement over the current tuned build.** Keep the baseline configuration; the apparent leader's adjusted room-clustered interval still includes zero.`}\n\n## Method\n\n- Exact live-engine fingerprint: \`${result.method.engineSha256}\`.\n- Stage 1: 12 policies × ${stage1Drafts} seeded draft rooms × ${seasonsPerDraft} season outcomes per room.\n- Confirmation: baseline plus the top three challengers, each tested in ${stage2Drafts} new seeded rooms × ${seasonsPerDraft} outcomes. Confirmation rankings and intervals use this sample only; Stage 1 is screening data only. This is sample independence inside one synthetic model, not independent real-world evidence.\n- Opponents use the live market + roster-need selector and observed-ADP-dispersion-scaled randomness. Policy paths can consume randomness differently, so \"same seed\" does not guarantee identical opponent picks after paths diverge.\n- Evaluation is separate from draft selection: projection/consensus ensemble, season uncertainty, weekly volatility, team correlation, injuries, free replacement-level starter fill-ins, lineup setting, 14-week standings, and 8-team Weeks 15–17 playoffs. The free fill-in assumption makes this evaluator weak evidence for bench-depth, QB2, TE2, K, or D/ST strategy.\n- Confidence intervals cluster policy differences by seeded draft room after averaging the ${seasonsPerDraft} correlated season outcomes within each drafted roster. The 98.33% two-sided intervals (z = 2.394) are Bonferroni-adjusted for three finalist-versus-baseline comparisons.\n- Every tested policy must match the live strategy schema and every simulated roster must pass the legal-roster assertion.\n- This synthetic optimizer is subordinate to the historical weekly backtest in \`out/draft_historical_backtest.md\`.\n\n## Finalists (new confirmation sample)\n\n| Rank | Policy | Champion | Playoffs | Avg regular-season PF | Championship Δ vs baseline (adjusted CI) | Legal drafts |\n| ---: | --- | ---: | ---: | ---: | ---: | ---: |\n${rows}\n\n## Stage-one screen\n\n| Policy | Champion | Playoffs | Avg PF |\n| --- | ---: | ---: | ---: |\n${stage}\n\n## Decision\n\n${stable?`Test ${winner.policy.label} against actual historical weeks with fresh seeds before changing the live policy: \`${JSON.stringify(winner.policy)}\`.`:`Retain the current strategy configuration: \`${JSON.stringify(result.policies.find(p=>p.id==='baseline'))}\`. Historical holdout and robustness testing remain the final gate for live policy changes.`}\n`;
+const report=`# Draft policy championship optimizer\n\n## Outcome\n\n${stable?`**Synthetic candidate: ${winner.policy.label}.** Its multiplicity-adjusted room-clustered interval excludes zero in this model, so it advances to historical robustness testing; it is not automatically a live change.`:`**No challenger proved a statistically reliable championship-rate improvement over the current tuned build.** Keep the baseline configuration; the apparent leader's adjusted room-clustered interval still includes zero.`}\n\n## Method\n\n- Exact live-engine fingerprint: \`${result.method.engineSha256}\`.\n- Stage 1: ${policies.length} policies × ${stage1Drafts} seeded draft rooms × ${seasonsPerDraft} season outcomes per room.\n- Confirmation: baseline plus the top three challengers, each tested in ${stage2Drafts} new seeded rooms × ${seasonsPerDraft} outcomes. Confirmation rankings and intervals use this sample only; Stage 1 is screening data only. This is sample independence inside one synthetic model, not independent real-world evidence.\n- Opponents use the live market + roster-need selector and observed-ADP-dispersion-scaled randomness. Policy paths can consume randomness differently, so \"same seed\" does not guarantee identical opponent picks after paths diverge.\n- Evaluation is separate from draft selection: projection/consensus ensemble, season uncertainty, weekly volatility, team correlation, injuries, free replacement-level starter fill-ins, lineup setting, 14-week standings, and 8-team Weeks 15–17 playoffs. The free fill-in assumption makes this evaluator weak evidence for bench-depth, QB2, TE2, K, or D/ST strategy.\n- Ranking challengers alter only the recommendation selected from the live engine's uncertainty-aware top wait band. ECR-first uses expert rank before Model rank inside that band; it does not put ECR into projections, timing, survival, or VONA.\n- The synthetic talent evaluator includes an ADP/ECR-derived consensus component, so it is structurally favorable to consensus challengers. Any apparent win still needs historical robustness and is not independent evidence.\n- Confidence intervals cluster policy differences by seeded draft room after averaging the ${seasonsPerDraft} correlated season outcomes within each drafted roster. The 98.33% two-sided intervals (z = 2.394) are Bonferroni-adjusted for three finalist-versus-baseline comparisons.\n- Every tested policy must match the live strategy schema and every simulated roster must pass the legal-roster assertion.\n- This synthetic optimizer is subordinate to the historical weekly backtest in \`out/draft_historical_backtest.md\`.\n\n## Finalists (new confirmation sample)\n\n| Rank | Policy | Champion | Playoffs | Avg regular-season PF | Championship Δ vs baseline (adjusted CI) | Legal drafts |\n| ---: | --- | ---: | ---: | ---: | ---: | ---: |\n${rows}\n\n## Stage-one screen\n\n| Policy | Champion | Playoffs | Avg PF |\n| --- | ---: | ---: | ---: |\n${stage}\n\n## Decision\n\n${stable?`Test ${winner.policy.label} against actual historical weeks with fresh seeds before changing the live policy: \`${JSON.stringify(winner.policy)}\`.`:`Retain the current strategy configuration: \`${JSON.stringify(result.policies.find(p=>p.id==='baseline'))}\`. Historical holdout and robustness testing remain the final gate for live policy changes.`}\n`;
 fs.writeFileSync(process.env.DRAFT_OPT_REPORT||'out/draft_policy_optimization.md',report);
 console.log(report);
