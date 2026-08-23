@@ -415,6 +415,44 @@ if(reentrantMutationApplied)picks.pop();
 smartQueueComputing=false;
 smartQueueCache=null;
 
+// ── Smart Queue compute guard: exception safety ──────────────────────────
+// scheduleSmartQueueCompute()'s deferred work must run inside try/finally:
+// if computeBoard()/smartQueue() throws mid-simulation, smartQueueComputing
+// must still release (otherwise the Compute button stays disabled forever),
+// no stale/partial result may reach smartQueueCache, the surfaced error
+// must be readable via smartQueueError, and onPaint() must still fire so the
+// UI repaints out of "Computing…" into the failed state. A subsequent
+// compute must then be able to start clean.
+smartQueueError=null; smartQueueCache={key:'stale-should-be-cleared',evals:[{fake:true}]};
+let paintCallsErr=0;
+const capturedRunsErr=[];
+const throwingSmartQueue=()=>{throw new Error('boom: simulated smartQueue failure');};
+smartQueue=throwingSmartQueue;
+const startedThrow=scheduleSmartQueueCompute(fn=>capturedRunsErr.push(fn),()=>{paintCallsErr++;});
+if(!startedThrow||!smartQueueComputing)throw new Error('exception-safety fixture: compute did not start');
+capturedRunsErr[0]();
+smartQueue=originalSmartQueueFn;
+if(smartQueueComputing)
+  throw new Error('an exception inside the deferred Smart Queue work must still release smartQueueComputing');
+if(!smartQueueError||!smartQueueError.includes('boom'))
+  throw new Error('a thrown Smart Queue computation must surface its error via smartQueueError');
+if(!smartQueueCache||smartQueueCache.key!=='stale-should-be-cleared')
+  throw new Error('an exception inside the deferred Smart Queue work must not overwrite/clear an unrelated stale cache with a partial result');
+if(paintCallsErr!==2)
+  throw new Error('scheduleSmartQueueCompute must still call onPaint (Computing… then failed) even when the work throws');
+// Another computation must be able to start cleanly right after a failure.
+smartQueueCache=null;
+const capturedRunsAfterErr=[];
+const startedAfterErr=scheduleSmartQueueCompute(fn=>capturedRunsAfterErr.push(fn),()=>{});
+if(!startedAfterErr)throw new Error('a released Smart Queue guard must allow a fresh computation to start after a prior failure');
+capturedRunsAfterErr[0]();
+if(smartQueueComputing)throw new Error('the post-failure retry computation must also release smartQueueComputing when it completes');
+if(!smartQueueCache||smartQueueCache.key!==smartQueueCacheKey())
+  throw new Error('a successful retry after a prior failure must write a fresh cache entry');
+if(smartQueueError!==null)
+  throw new Error('a successful retry must clear the previous smartQueueError');
+smartQueueComputing=false; smartQueueCache=null; smartQueueError=null;
+
 // ── Manual Queue tags: Target / Conditional / Fade ──────────────────────
 // Pure presentation metadata: never read by computeBoard()/value()/
 // replacement()/survives()/recommendationEligibility().

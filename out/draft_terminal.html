@@ -15271,7 +15271,11 @@ let slot=3, lambda=0.40, ecrWeight=.35, picks=[], autoPickNos=[], queue=[], queu
 // never shown as current; see smartQueueCacheKey()/computeSmartQueueNow().
 // smartQueueComputing gates the single in-flight computation (see
 // scheduleSmartQueueCompute()) and drives the "Computing…" UI state.
-let smartQueueCache=null, smartQueueComputing=false;
+// smartQueueError holds the message of the most recent in-flight failure
+// (computeBoard()/smartQueue() throwing mid-simulation), cleared at the
+// start of every new computation; smartQueueBox() surfaces it with a retry
+// action instead of leaving the UI stuck on "Computing…" forever.
+let smartQueueCache=null, smartQueueComputing=false, smartQueueError=null;
 const byId=new Map(PLAYERS.map(p=>[p.id,p]));
 const decisionInputActive=()=>view==='prep'&&sortBy==='gain';
 const STORAGE_KEY='ff26-v3';
@@ -15790,18 +15794,34 @@ function smartQueueCacheKey(){return `${picks.join(',')}|${lambda}|${ecrWeight}|
 // scheduler runs) actually reaches the screen before the multi-second
 // simulation blocks the main thread. Returns false without side effects if
 // a computation was already in flight.
+//
+// The deferred work runs inside try/finally: computeBoard()/smartQueue() are
+// a lot of code (board math, opponent-model trials) that can throw on a bad
+// input combination, and an uncaught exception there must never leave
+// smartQueueComputing stuck true (which would permanently disable the
+// Compute button) or skip the repaint. On failure no cache write happens
+// (the assignment is inside the try, before the catch) and the error is
+// surfaced via smartQueueError, re-checked against requestKey the same way
+// the cache write is, so a stale/superseded computation can't clobber a
+// newer one's error state either.
 function scheduleSmartQueueCompute(scheduler,onPaint){
   if(smartQueueComputing)return false;
   smartQueueComputing=true;
+  smartQueueError=null;
   const requestKey=smartQueueCacheKey();
   onPaint();
   scheduler(()=>{
-    if(smartQueueCacheKey()===requestKey){
-      const evals=smartQueue(computeBoard());
-      if(smartQueueCacheKey()===requestKey)smartQueueCache={key:requestKey,evals};
+    try{
+      if(smartQueueCacheKey()===requestKey){
+        const evals=smartQueue(computeBoard());
+        if(smartQueueCacheKey()===requestKey)smartQueueCache={key:requestKey,evals};
+      }
+    }catch(err){
+      if(smartQueueCacheKey()===requestKey)smartQueueError=(err&&err.message)?err.message:String(err);
+    }finally{
+      smartQueueComputing=false;
+      onPaint();
     }
-    smartQueueComputing=false;
-    onPaint();
   });
   return true;
 }
@@ -16258,8 +16278,17 @@ function smartQueueBox(boardRows){
   if(slot!==3||curPick()!==22)return '';
   const eyebrow=`Smart Queue · joint 22/27 simulation (N=${SMART_QUEUE.trials} trials) · read-only advisory`;
   const intro='Simulates opponent picks 23–26 for each pick-22 candidate with the same calibrated opponent model used elsewhere, then re-derives the best pick-27 outcome against the resulting roster and pool — a real conditional simulation, not two independently ranked numbers added together. Ranked by VOR@22 + E[VOR@27], both value-over-replacement figures; this is a different quantity from the Pick Board\'s wait-cost/VONA gain (value vs. your NEXT pick), so do not compare the two numbers directly.';
+  // role=status/aria-live is only applied to the transient async states
+  // below (computing, failed) -- these are the moments assistive tech
+  // actually needs pinged. The idle "Compute" prompt and the cached-results
+  // view get repainted on every keystroke-driven render() (full innerHTML
+  // replace of #plan), so leaving them out of a live region avoids
+  // re-announcing identical, unchanged content on every unrelated render.
   if(smartQueueComputing){
-    return `<div class="runbox smart-queue"><div class="eyebrow" style="margin-bottom:5px">${eyebrow}</div><div class="t">${intro}<br><b>Computing…</b> this can take a few seconds.<button class="mini-btn" type="button" disabled>Computing…</button></div></div>`;
+    return `<div class="runbox smart-queue" role="status" aria-live="polite"><div class="eyebrow" style="margin-bottom:5px">${eyebrow}</div><div class="t">${intro}<br><b>Computing…</b> this can take a few seconds.<button class="mini-btn" type="button" disabled>Computing…</button></div></div>`;
+  }
+  if(smartQueueError){
+    return `<div class="runbox smart-queue" role="status" aria-live="polite"><div class="eyebrow" style="margin-bottom:5px">${eyebrow}</div><div class="t">${intro}<br><b class="flag conflict-consensus">Smart Queue computation failed: ${smartQueueError}</b><br><button class="mini-btn" type="button" data-action="smart-queue-compute">Retry Smart Queue</button></div></div>`;
   }
   const key=smartQueueCacheKey();
   const cached=smartQueueCache&&smartQueueCache.key===key?smartQueueCache.evals:null;
@@ -16582,7 +16611,7 @@ function resetDraft(){
   if(draftLocked())return;
   if(!confirm('Clear all picks and start over?'))return;
   restoreAllQueueEntries();
-  picks=[]; autoPickNos=[]; mockPicks=[]; mockRandom=false; mockUntilMine=false; smartQueueCache=null;
+  picks=[]; autoPickNos=[]; mockPicks=[]; mockRandom=false; mockUntilMine=false; smartQueueCache=null; smartQueueError=null;
   save();
   setNotice('ok','Draft reset. Queue preserved.');
   render();
