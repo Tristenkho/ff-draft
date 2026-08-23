@@ -69,7 +69,10 @@ main.snake-mode>.col:first-child,main.snake-mode>.col:last-child{display:none}
 .board{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:2px 0}
 .brow{position:relative;display:grid;grid-template-columns:16px minmax(120px,1fr) 46px 60px 44px 46px 44px 50px 50px;
   align-items:center;gap:8px;padding:7px 14px;border-bottom:1px solid #1A2029;cursor:pointer}
+.brow.tier-start{box-shadow:inset 0 2px 0 var(--rule)}
 .brow:hover{background:var(--panel)}
+.brow.focus-top{background:#1a222d}
+.brow.queued .nm{color:#ffce85}
 .brow.audit{cursor:default}
 .brow.audit:hover{background:transparent}
 /* Value bar is a faint audit-view cue only; the Pick Board drops it so the
@@ -78,8 +81,23 @@ main.snake-mode>.col:first-child,main.snake-mode>.col:last-child{display:none}
 #boardcol.pick-mode .bar{display:none}
 .brow .rk{color:var(--dimmer);font-size:11px}
 .nmwrap{display:flex;flex-direction:column;gap:2px;min-width:0;z-index:1}
+.nmline{display:flex;align-items:center;gap:6px;min-width:0}
+.nmline .nm{flex:1}
 .nm{font-size:15px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rowaction,.mini-btn,.queue-btn,.queue-reorder{
+  display:inline-flex;align-items:center;justify-content:center;min-width:28px;min-height:28px;
+  padding:0 8px;border:1px solid var(--rule);border-radius:3px;color:var(--dim);background:var(--panel2);
+  font:600 9px var(--sans);letter-spacing:.1em;text-transform:uppercase
+}
+.rowaction{flex:none;min-width:24px;min-height:24px;padding:0 6px;font-size:11px;line-height:1}
+.rowaction.on{color:#ffce85;border-color:var(--amber);background:#2b2113}
+.rowaction:hover,.mini-btn:hover,.queue-btn:hover,.queue-reorder:hover{color:var(--text);border-color:var(--dim)}
+.rowaction:focus-visible,.mini-btn:focus-visible,.queue-btn:focus-visible,.queue-reorder:focus-visible,.brow:focus-visible{
+  outline:2px solid var(--amber);outline-offset:2px
+}
 .sub{font-size:10.5px;color:var(--dim);letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub .flag{color:var(--amber);font-weight:700}
+.sub .tierflag{color:var(--text);font-weight:700}
 .status{color:var(--amber);font-weight:700}
 .newsflag{color:var(--dim);font-weight:600}
 .num{text-align:right;font-size:13px;z-index:1}
@@ -109,6 +127,22 @@ main.snake-mode>.col:first-child,main.snake-mode>.col:last-child{display:none}
 .runbox.hot{border-left-color:var(--red)}
 .runbox .t{font-size:11.5px;line-height:1.6;color:var(--dim)}
 .runbox .t b{color:var(--text)}
+.runbox.notice{border-left-color:var(--green)}
+.runbox.notice.warn{border-left-color:var(--amber)}
+.runbox.notice.err{border-left-color:var(--red)}
+.runbox.notice button{margin-left:8px}
+.queuebox .qhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:7px}
+.queuebox .qtitle{display:flex;flex-direction:column;gap:2px}
+.queue-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.queue-list{display:flex;flex-direction:column;gap:6px}
+.qrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:7px 8px;border:1px solid var(--rule);border-radius:4px;background:#11161e}
+.qrow.sniped{opacity:.66}
+.qmain{min-width:0}
+.qname{display:flex;align-items:center;gap:6px;color:var(--text);font-size:12px;font-weight:600}
+.qmeta{margin-top:3px;color:var(--dim);font:10px var(--sans);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qcontrols{display:flex;align-items:center;gap:4px}
+.queue-btn[disabled],.queue-reorder[disabled],.mini-btn[disabled]{opacity:.45;cursor:default}
+.queue-empty{color:var(--dimmer);font-size:11px;line-height:1.6}
 .log{margin-top:4px}
 .logrow{display:flex;gap:8px;padding:3px 0;font-size:11px;color:var(--dim);border-bottom:1px solid #171D25}
 .logrow .p{color:var(--dimmer);width:38px;flex:none}
@@ -152,7 +186,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
 .snake-mobile{display:none}
 .snakehead,.snakecorner{position:sticky;top:0;z-index:2;background:var(--panel);border-bottom:1px solid var(--rule);padding:7px 4px;text-align:center;color:var(--dim);font:600 9px var(--sans);letter-spacing:.1em;text-transform:uppercase}
 .snakecorner{left:0;z-index:3}.snakehead.mine{color:var(--amber);background:#2b2113}.snake-round{position:sticky;left:0;z-index:1;display:flex;align-items:center;justify-content:center;min-height:52px;background:var(--panel);border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);color:var(--dimmer);font:600 9px var(--sans);letter-spacing:.08em}
-.snakecell{min-height:52px;padding:6px 7px;border-right:1px solid #242c38;border-bottom:1px solid #242c38;background:#151a22;overflow:hidden}.snakecell.mock{background:#171e28}.snakecell.real{background:#1b2530}.snakecell.mine{box-shadow:inset 0 0 0 1px var(--amber);background:#302515}.snakecell .pick{display:block;color:var(--dimmer);font:9px var(--sans);letter-spacing:.06em}.snakecell .sname{display:block;margin-top:3px;color:var(--text);font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.snakecell.mine .sname{color:#ffce85}.snakecell .spos{display:block;margin-top:2px;color:var(--dim);font-size:9px}.snakeempty{color:#4b5769}
+.snakecell{min-height:52px;padding:6px 7px;border-right:1px solid #242c38;border-bottom:1px solid #242c38;background:#151a22;overflow:hidden}.snakecell.mock{background:#171e28}.snakecell.real{background:#1b2530}.snakecell.mine{box-shadow:inset 0 0 0 1px var(--amber);background:#302515}.snakecell.pos-qb,.snake-mobile-pick.pos-qb{--slot-accent:var(--red)}.snakecell.pos-rb,.snake-mobile-pick.pos-rb{--slot-accent:var(--green)}.snakecell.pos-wr,.snake-mobile-pick.pos-wr{--slot-accent:var(--cyan)}.snakecell.pos-te,.snake-mobile-pick.pos-te{--slot-accent:var(--amber)}.snakecell.pos-k,.snake-mobile-pick.pos-k{--slot-accent:var(--dim)}.snakecell.pos-dst,.snake-mobile-pick.pos-dst{--slot-accent:var(--text)}.snakecell[class*="pos-"],.snake-mobile-pick[class*="pos-"]{box-shadow:inset 0 3px 0 var(--slot-accent)}.snakecell.mine[class*="pos-"]{box-shadow:inset 0 0 0 1px var(--amber),inset 0 3px 0 var(--slot-accent)}.snakecell .pick{display:block;color:var(--dimmer);font:9px var(--sans);letter-spacing:.06em}.snakecell .sname{display:block;margin-top:3px;color:var(--text);font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.snakecell.mine .sname{color:#ffce85}.snakecell .spos{display:block;margin-top:2px;color:var(--dim);font-size:9px}.snakeempty{color:#4b5769}
 .why{font-family:var(--sans);font-size:9.5px;color:var(--dimmer);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* ── help dialog ─────────────────────────────── */
 /* Height is pinned to the dynamic viewport (not the layout viewport) so mobile
@@ -170,15 +204,31 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
 .helpbody{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:14px 18px 20px}
 .helpbody:focus-visible{outline:2px solid var(--amber);outline-offset:-3px}
 .helpbox p{margin:9px 0}.helpbox p:first-child{margin-top:0}.helpbox b{color:var(--amber)}
-#helpclose{flex:none;display:flex;align-items:center;justify-content:center;min-width:38px;min-height:38px;
+.statebody{display:flex;flex-direction:column;gap:10px;padding:14px 16px 16px;font-family:var(--sans);color:var(--dim)}
+.statebody textarea{width:100%;min-height:220px;resize:vertical;padding:10px;background:var(--ink);border:1px solid var(--rule);border-radius:3px;color:var(--text);font:11px/1.45 var(--mono);outline:none}
+.stateactions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px}.stateactions button{min-height:38px;padding:0 12px;border:1px solid var(--rule);border-radius:3px;color:var(--text);font:600 10px var(--sans);letter-spacing:.08em;text-transform:uppercase}.stateactions button.primary{border-color:var(--amber);color:var(--amber)}
+.state-error{min-height:18px;color:var(--red);font-size:11px;line-height:1.5}
+.state-error.ok{color:var(--green)}
+#helpclose,#stateclose{flex:none;display:flex;align-items:center;justify-content:center;min-width:38px;min-height:38px;
   color:var(--dim);font-size:21px;line-height:1;border:1px solid var(--rule);border-radius:3px}
-#helpclose:hover{color:var(--text);border-color:var(--dim)}
-#helpclose:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+#helpclose:hover,#stateclose:hover{color:var(--text);border-color:var(--dim)}
+#helpclose:focus-visible,#stateclose:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 
 /* ── on the clock ────────────────────────────── */
 @keyframes otcpulse{from{background:var(--panel)}to{background:#1A2C19}}
 .hcell.big.otc{animation:otcpulse 1.2s ease-in-out infinite alternate}
 .hcell.big.otc .v{color:var(--green)}
+@media (prefers-reduced-motion:reduce){
+  .hcell.big.otc{animation:none}
+}
+
+/* Recording and search feedback must remain visible while the Board tab is active. */
+.record-toast{position:fixed;left:50%;bottom:58px;z-index:45;display:none;align-items:center;gap:10px;
+  max-width:min(540px,calc(100vw - 24px));transform:translateX(-50%);padding:9px 11px;background:var(--panel2);
+  border:1px solid var(--rule);border-left:3px solid var(--green);box-shadow:0 10px 32px #000;color:var(--text);font:12px var(--sans)}
+.record-toast.on{display:flex}.record-toast.warn{border-left-color:var(--amber)}.record-toast.err{border-left-color:var(--red)}
+.record-toast span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.record-toast button{flex:none;min-height:32px;padding:0 9px;border:1px solid var(--rule);border-radius:3px;color:var(--amber);font-weight:700}
 
 /* ── footer buttons ──────────────────────────── */
 .fbtn{font-family:var(--sans);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
@@ -223,7 +273,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
   /* Keep all eight candidates visible on a typical phone without shrinking
      the rows below a comfortable touch target. News metadata stays on one
      line so a recent update cannot make only some rows taller. */
-  .brow{min-height:55px;padding-top:4px;padding-bottom:4px}
+  .brow{min-height:53px;padding-top:3px;padding-bottom:3px}
   .brow>:nth-child(6),.brow>:nth-child(7),.brow>:nth-child(8),.brow>:nth-child(9),
   .thead>:nth-child(5),.thead>:nth-child(6),.thead>:nth-child(7),.thead>:nth-child(8){display:none}
   /* Pick Board keeps Model on tablets/large phones; it is restored from the
@@ -263,6 +313,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
   .snake-mobile-pick{min-height:64px;padding:7px 8px;border:1px solid var(--rule);border-radius:4px;background:var(--panel);overflow:hidden}
   .snake-mobile-pick.real{background:#1b2530}.snake-mobile-pick.mock{background:#171e28}
   .snake-mobile-pick.mine{border-color:var(--amber);background:#302515}
+  .snake-mobile-pick.mine[class*="pos-"]{box-shadow:inset 0 0 0 1px var(--amber),inset 0 3px 0 var(--slot-accent)}
   .snake-mobile-pick .pick{display:flex;justify-content:space-between;gap:5px;color:var(--dimmer);font:9px var(--sans);letter-spacing:.06em}
   .snake-mobile-pick.mine .pick,.snake-mobile-pick.mine .sname{color:#ffce85}
   .snake-mobile-pick .sname{display:block;margin-top:5px;color:var(--text);font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -289,12 +340,16 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
   .help{padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
   .helphead{padding:11px 12px}
   .helpbody{padding:12px 14px 18px}
+  .nmline{position:relative}.nmline .nm{padding-right:42px}
+  .rowaction{position:absolute;right:0;top:-3px;min-width:40px;min-height:40px}
+  .record-toast{bottom:calc(145px + env(safe-area-inset-bottom))}
 }
 
 /* Narrow phones: drop the Model column so the player name stays readable.
    Model rank is still shown in the reasoning line under each name. */
 @media (max-width:479px){
-  #boardcol.pick-mode .thead,#boardcol.pick-mode .brow{grid-template-columns:20px minmax(0,1fr) 38px 58px 46px}
+  #boardcol.pick-mode .thead,#boardcol.pick-mode .brow{grid-template-columns:20px minmax(0,1fr) 58px 46px}
+  #boardcol.pick-mode .thead>:nth-child(3),#boardcol.pick-mode .brow>:nth-child(4){display:none}
   #boardcol.pick-mode .thead>:nth-child(5),#boardcol.pick-mode .brow>:nth-child(6){display:none}
 }
 @media (max-width:359px){
@@ -359,7 +414,9 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
     <div class="col" id="roomcol" tabindex="0" aria-label="Room keyboard controls">
       <div class="chead"><span class="eyebrow">Room</span><span class="eyebrow" id="roomhint">click for undo</span></div>
       <div class="rr">
+        <div id="preflight"></div>
         <div id="plan"></div>
+        <div id="queuebox"></div>
         <div id="runs"></div>
         <div class="eyebrow" style="margin:12px 0 5px">Recent picks</div>
         <div class="log" id="log"></div>
@@ -370,7 +427,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
   <nav class="mobile-nav" id="mobilenav" aria-label="Draft views">
     <button data-panel="rostercol" aria-pressed="false">Roster</button>
     <button class="on" data-panel="boardcol" aria-pressed="true">Board</button>
-    <button data-panel="roomcol" aria-pressed="false">Room</button>
+    <button data-panel="roomcol" aria-pressed="false">Room / Queue</button>
   </nav>
 
   <footer>
@@ -386,6 +443,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
     <button id="reset" class="fbtn">Reset draft</button>
   </footer>
 </div>
+<div class="record-toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 <div class="help" id="help" role="dialog" aria-modal="true" aria-labelledby="helptitle">
   <div class="helpbox">
     <div class="helphead">
@@ -401,9 +459,24 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
       <p><b>Availability</b> is market-first: RB/WR/TE blend 80% of Fantasy Football Calculator's current 12-team half-PPR market with 20% ESPN-only room rank/ADP, QB blends 50/50, and K/DST are unchanged since they never enter VONA. ESPN's room price for RB/WR runs later than the market; ESPN's room price for TE runs earlier than the market instead (about 15 picks among ranked TEs in the current sample). TE keeps the same 80% market weight as RB/WR for now — that is a provisional choice pending targeted validation, not a fit to this one snapshot. Observed market draft dispersion drives the survival curve when a player is matched, widened whenever ESPN and market disagree so a large source gap reads as genuine uncertainty instead of false precision; otherwise a conservative heuristic supplies the fallback. Unavailable and low-confidence players remain searchable for accurate bookkeeping but no longer occupy forecasted opponent picks or expected-next-player estimates.</p>
       <p><b>ESPN update</b> plus a date under a name is only the timestamp of that player's most recent ESPN news item, shown when it landed within the last three days. It is a recency marker, not a headline and not a sentiment signal — read the actual news before acting on it.</p>
       <p><b>Winning build</b> is QB1, TE1, ten RB/WR, K1 and D/ST1. It starts with three RB/WR through Round 4, secures WR1 by Round 5, fills RB2/WR2/FLEX by Round 8, TE by Round 9, QB by Round 10, and takes K/D/ST in Rounds 13–14. QB2 and TE2 are waiver positions in this shallow format.</p>
-      <p><b>Draft</b> keeps the top eight candidates in the first screen and lets you scroll through the full ranking below them. On the Pick Board, press <b>1–8</b> to record one of those top eight, type a name and press Enter, or click any player row. Model, Points, ECR and ADP are read-only audit views; switch back to the Pick Board before recording. <b>Auto to my pick</b> and <b>Ctrl/Cmd Enter</b> rehearse opponent picks through your next turn; simulated picks are marked <b>~</b> in the same ledger and Copy state, so reset the draft before using it live. Snake remains the planning-only board for comparing whole-room scenarios. While this guide is open the board is locked — nothing can be recorded or undone.</p>
+      <p><b>Draft</b> keeps the top eight candidates in the first screen and lets you scroll through the full ranking below them. On the Pick Board, press <b>1–8</b> to record one of those top eight, type an unambiguous name and press Enter, or click any player row. A partial name matching multiple players will never record automatically. Model, Points, ECR and ADP are read-only audit views; switch back to the Pick Board before recording. <b>Auto to my pick</b> and <b>Ctrl/Cmd Enter</b> rehearse opponent picks through your next turn; simulated picks are marked <b>~</b> in the same ledger and Copy state, so reset the draft before using it live. Snake remains the planning-only board for comparing whole-room scenarios. While this guide is open the board is locked — nothing can be recorded or undone.</p>
+      <p><b>Queue</b> is manual and persisted. Use + on a Pick Board row, reorder targets under Room / Queue, and use Pick there only while you are on the clock. Opponent picks move queued targets to Recently sniped; Undo reactivates them. Backup JSON copies a machine-restorable snapshot, and Import validates it before replacing local state. Reset draft preserves the queue.</p>
       <p>Record every real pick here. Copy state on your turn and paste it to Codex or Claude for a current-news top three. K/DST stay out of wait-cost ranking and are prioritized in rounds 13–14.</p>
       <p>Press <b>Esc</b>, click outside this panel, or use the × above to close.</p>
+    </div>
+  </div>
+</div>
+<div class="help" id="state-dialog" role="dialog" aria-modal="true" aria-labelledby="statetitle">
+  <div class="helpbox">
+    <div class="helphead">
+      <h2 id="statetitle">Restore draft backup</h2>
+      <button id="stateclose" type="button" aria-label="Close state backup">×</button>
+    </div>
+    <div class="statebody">
+      <p>Paste a Draft Terminal backup below. It must pass player, range, duplicate, and roster-cap validation before it can replace local state.</p>
+      <textarea id="statejson" spellcheck="false" aria-label="Draft backup JSON" placeholder="Paste backup JSON"></textarea>
+      <div class="state-error" id="stateerror" role="status" aria-live="polite"></div>
+      <div class="stateactions"><button id="statecopy" type="button">Copy current backup</button><button class="primary" id="staterestore" type="button">Validate and restore</button></div>
     </div>
   </div>
 </div>
@@ -15162,21 +15235,51 @@ const STRATEGY={
 // Forecast confidence remains separate from the existing upside/ceiling SD.
 
 // ── state ────────────────────────────────────────────────────────
-let slot=3, lambda=0.40, ecrWeight=.35, picks=[], autoPickNos=[], posFilter='', view='prep', sortBy='gain', visibleRows=[], mockPicks=[], mockMode='adp', mockRandom=false, mockUntilMine=false, snakeView='grid', roomKeys=false, snakeCenterPending=false;
+let slot=3, lambda=0.40, ecrWeight=.35, picks=[], autoPickNos=[], queue=[], queueArchive=[], posFilter='', view='prep', sortBy='gain', visibleRows=[], mockPicks=[], mockMode='adp', mockRandom=false, mockUntilMine=false, snakeView='grid', roomKeys=false, snakeCenterPending=false, notice=null, noticeTimer=null;
 const byId=new Map(PLAYERS.map(p=>[p.id,p]));
 const decisionInputActive=()=>view==='prep'&&sortBy==='gain';
+const STORAGE_KEY='ff26-v3';
+const STORAGE_VERSION=5;
+
+function sanitizeIdList(list){
+  if(!Array.isArray(list))return [];
+  const seen=new Set(), out=[];
+  list.forEach(id=>{
+    const pid=+id;
+    if(byId.has(pid)&&!seen.has(pid)){seen.add(pid);out.push(pid);}
+  });
+  return out;
+}
+function sanitizeQueueArchive(list,pickedIds){
+  if(!Array.isArray(list))return [];
+  return list.map(item=>{
+    const id=+item?.id, index=Math.max(0,parseInt(item?.index,10)||0), pickNo=parseInt(item?.pickNo,10)||0;
+    const kind=item?.kind==='sniped'||item?.kind==='drafted'?item.kind:'';
+    if(!kind||!byId.has(id)||pickNo<1||pickNo>TEAMS*ROUNDS)return null;
+    if(!pickedIds.has(id)||pickNo>pickedIds.get(id))return null;
+    return {id,index,pickNo,kind,cleared:Boolean(item?.cleared)};
+  }).filter(Boolean).sort((a,b)=>b.pickNo-a.pickNo);
+}
+function pickedAtMap(list){
+  const out=new Map();
+  list.forEach((id,i)=>{if(byId.has(+id))out.set(+id,i+1);});
+  return out;
+}
 
 // restore from localStorage
 (function(){try{
-  const s=JSON.parse(localStorage.getItem('ff26-v3')||'{}');
-  if(Array.isArray(s.picks))picks=s.picks;
+  const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+  if(Array.isArray(s.picks))picks=sanitizeIdList(s.picks).slice(0,TEAMS*ROUNDS);
   if(Array.isArray(s.autoPickNos))autoPickNos=s.autoPickNos.filter(n=>Number.isInteger(n)&&n>=1&&n<=picks.length);
   if(s.slot!=null)slot=Math.max(1,Math.min(12,+s.slot));
   if(s.modelVersion>=4&&s.lambda!=null)lambda=Math.max(0,Math.min(1,+s.lambda));
   if(s.modelVersion>=2&&s.ecrWeight!=null)ecrWeight=Math.max(0,Math.min(.5,+s.ecrWeight));
   if(s.snakeView==='cards'||s.snakeView==='grid')snakeView=s.snakeView;
+  const pickedIds=pickedAtMap(picks);
+  if(s.modelVersion>=5&&Array.isArray(s.queue))queue=sanitizeIdList(s.queue).filter(id=>!pickedIds.has(id));
+  if(s.modelVersion>=5&&Array.isArray(s.queueArchive))queueArchive=sanitizeQueueArchive(s.queueArchive,pickedIds).filter(entry=>!queue.includes(entry.id));
 }catch(e){}}());
-function save(){localStorage.setItem('ff26-v3',JSON.stringify({picks,autoPickNos,slot,lambda,ecrWeight,snakeView,modelVersion:4}));}
+function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify({picks,autoPickNos,queue,queueArchive,slot,lambda,ecrWeight,snakeView,modelVersion:STORAGE_VERSION}));}
 
 const $=s=>document.querySelector(s);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -15184,6 +15287,191 @@ function setRoomKeys(active){
   roomKeys=active;
   $('#roomcol').classList.toggle('keyboard-active',active);
   $('#roomhint').textContent=active?'undo active':'click for undo';
+}
+function setNotice(kind,text,opts={}){
+  notice={kind,text,undo:Boolean(opts.undo),action:opts.action||'',playerId:opts.playerId||null};
+  clearTimeout(noticeTimer);
+  noticeTimer=setTimeout(()=>{notice=null;renderNotice();},opts.undo?6500:4200);
+}
+function clearNotice(){clearTimeout(noticeTimer);notice=null;}
+function renderNotice(){
+  const toast=$('#toast');
+  if(!toast)return;
+  toast.className=`record-toast${notice?' on '+(notice.kind==='warn'?'warn':notice.kind==='err'?'err':''):''}`;
+  toast.innerHTML=notice?`<span>${notice.text}</span>${notice.undo?'<button type="button" data-action="undo-last">Undo</button>':''}`:'';
+}
+function storageReady(){
+  try{
+    localStorage.setItem('__ff26_probe__','ok');
+    localStorage.removeItem('__ff26_probe__');
+    return true;
+  }catch(e){return false;}
+}
+const storageAvailable=storageReady();
+function queueEntryPos(id){return queue.indexOf(id);}
+function queueContains(id){return queueEntryPos(id)!==-1;}
+function queueArchiveEntry(id,pickNo){return queueArchive.findIndex(entry=>entry.id===id&&entry.pickNo===pickNo);}
+function stashQueuedPlayer(id,pickNo,kind){
+  const index=queueEntryPos(id);
+  if(index===-1)return;
+  queue.splice(index,1);
+  queueArchive=queueArchive.filter(entry=>entry.id!==id);
+  queueArchive.unshift({id,index,pickNo,kind,cleared:false});
+}
+function restoreQueuedPlayer(id,pickNo){
+  const idx=queueArchiveEntry(id,pickNo);
+  if(idx===-1)return;
+  const entry=queueArchive.splice(idx,1)[0];
+  if(queueContains(id)||picks.includes(id))return;
+  queue.splice(clamp(entry.index,0,queue.length),0,id);
+}
+function toggleQueue(id){
+  if(!byId.has(id)||picks.includes(id))return;
+  if(queueContains(id)){
+    queue=queue.filter(pid=>pid!==id);
+    setNotice('warn',`${byId.get(id).name} removed from queue.`);
+  }else{
+    queueArchive=queueArchive.filter(entry=>entry.id!==id);
+    queue.push(id);
+    setNotice('ok',`${byId.get(id).name} added to queue.`);
+  }
+  save(); render();
+}
+function moveQueue(id,delta){
+  const index=queueEntryPos(id);
+  if(index===-1)return;
+  const next=index+delta;
+  if(next<0||next>=queue.length)return;
+  [queue[index],queue[next]]=[queue[next],queue[index]];
+  save(); render();
+}
+function removeQueueEntry(id){
+  if(!queueContains(id))return;
+  queue=queue.filter(pid=>pid!==id);
+  setNotice('warn',`${byId.get(id).name} removed from queue.`);
+  save(); render();
+}
+function clearQueue(){
+  if(!queue.length)return;
+  if(!confirm('Clear the active queue? Recently sniped players will stay listed until you clear snipes.'))return;
+  queue=[];
+  save(); render();
+}
+function clearSnipes(){
+  queueArchive=queueArchive.map(entry=>entry.kind==='sniped'?{...entry,cleared:true}:entry);
+  save(); render();
+}
+function restoreAllQueueEntries(){
+  [...queueArchive].sort((a,b)=>a.index-b.index).forEach(entry=>{
+    if(!queueContains(entry.id))queue.splice(clamp(entry.index,0,queue.length),0,entry.id);
+  });
+  queueArchive=[];
+}
+function posClass(p){return p?.pos?`pos-${String(p.pos).toLowerCase()}`:'';}
+function rosterSlots(mine){
+  const order=['QB','RB','RB','WR','WR','TE','FLEX','K','DST'];
+  const used=new Set(), slots=[];
+  for(const slotName of order){
+    let player=null;
+    for(const p of mine){
+      if(used.has(p.id))continue;
+      if(slotName==='FLEX'?['RB','WR','TE'].includes(p.pos):p.pos===slotName){player=p;break;}
+    }
+    if(player)used.add(player.id);
+    slots.push({slot:slotName,player});
+  }
+  return {slots,used};
+}
+function startingSkillPlayers(mine){
+  return rosterSlots(mine).slots
+    .filter(({slot,player})=>player&&['QB','RB','WR','TE','FLEX'].includes(slot))
+    .map(({player})=>player);
+}
+function byeCounts(mine){
+  const counts=new Map();
+  startingSkillPlayers(mine).forEach(p=>{
+    if(!p?.bye||['K','DST'].includes(p.pos))return;
+    counts.set(p.bye,(counts.get(p.bye)||0)+1);
+  });
+  return counts;
+}
+function byeSummaryText(mine){
+  const counts=[...byeCounts(mine).entries()].sort((a,b)=>a[0]-b[0]);
+  if(!counts.length)return 'Byes: clean';
+  return 'Byes: '+counts.map(([week,count])=>`W${week} ×${count}`).join(' · ');
+}
+function byeRiskForPlayer(player,mine){
+  if(!player?.bye||['K','DST'].includes(player.pos))return false;
+  return (byeCounts(mine).get(player.bye)||0)>=2;
+}
+function buildBackupState(){
+  return {
+    format:'ff26-draft-terminal-backup',
+    version:1,
+    picks:[...picks],
+    autoPickNos:[...autoPickNos],
+    queue:[...queue],
+    queueArchive:[...queueArchive],
+    slot,lambda,ecrWeight,snakeView,
+    exportedAt:new Date().toISOString(),
+    modelVersion:STORAGE_VERSION
+  };
+}
+function validateBackupIds(list,label,max){
+  if(!Array.isArray(list))throw new Error(`${label} must be an array.`);
+  if(list.length>max)throw new Error(`${label} has too many entries.`);
+  const ids=list.map(id=>+id);
+  if(ids.some(id=>!Number.isInteger(id)||!byId.has(id)))throw new Error(`${label} contains an unknown player.`);
+  if(new Set(ids).size!==ids.length)throw new Error(`${label} contains a duplicate player.`);
+  return ids;
+}
+function validateBackupState(raw){
+  if(!raw||typeof raw!=='object'||raw.format!=='ff26-draft-terminal-backup'||raw.version!==1)
+    throw new Error('This is not a Draft Terminal backup (format/version mismatch).');
+  const nextPicks=validateBackupIds(raw.picks,'Picks',TEAMS*ROUNDS);
+  const nextQueue=validateBackupIds(raw.queue,'Queue',PLAYERS.length);
+  if(nextQueue.some(id=>nextPicks.includes(id)))throw new Error('Queue contains a player already in the pick ledger.');
+  if(!Array.isArray(raw.autoPickNos)||raw.autoPickNos.some(n=>!Number.isInteger(n)||n<1||n>nextPicks.length))
+    throw new Error('Simulated-pick markers are invalid.');
+  const nextSlot=+raw.slot, nextLambda=+raw.lambda, nextEcr=+raw.ecrWeight;
+  if(!Number.isInteger(nextSlot)||nextSlot<1||nextSlot>TEAMS)throw new Error('Draft slot must be 1–12.');
+  if(!Number.isFinite(nextLambda)||nextLambda<0||nextLambda>1)throw new Error('Ceiling weight is out of range.');
+  if(!Number.isFinite(nextEcr)||nextEcr<0||nextEcr>.5)throw new Error('ECR guardrail is out of range.');
+  if(!['grid','cards'].includes(raw.snakeView))throw new Error('Snake layout is invalid.');
+  const picked=pickedAtMap(nextPicks);
+  const archive=sanitizeQueueArchive(raw.queueArchive||[],picked).filter(entry=>!nextQueue.includes(entry.id));
+  if(archive.length!==(raw.queueArchive||[]).length)throw new Error('Queue history is invalid.');
+  const rosters=Array.from({length:TEAMS},()=>[]);
+  nextPicks.forEach((id,index)=>{
+    const roster=rosters[teamAtPick(index+1)-1], player=byId.get(id);
+    if(!mockEligible(player,roster,false,Math.ceil((index+1)/TEAMS)))throw new Error(`Pick ${fmtPick(index+1)} violates a roster cap.`);
+    roster.push(player);
+  });
+  return {picks:nextPicks,autoPickNos:[...raw.autoPickNos],queue:nextQueue,queueArchive:archive,
+    slot:nextSlot,lambda:nextLambda,ecrWeight:nextEcr,snakeView:raw.snakeView};
+}
+function restoreStateObject(raw){
+  const next=validateBackupState(raw);
+  picks=next.picks; autoPickNos=next.autoPickNos; queue=next.queue; queueArchive=next.queueArchive;
+  slot=next.slot; lambda=next.lambda; ecrWeight=next.ecrWeight; snakeView=next.snakeView;
+}
+async function copyTextWithFallback(text,label){
+  try{
+    await navigator.clipboard.writeText(text);
+    return true;
+  }catch(e){
+    const fallback=document.createElement('textarea');
+    fallback.value=text;
+    fallback.setAttribute('readonly','');
+    fallback.setAttribute('aria-label',label);
+    fallback.style.cssText='position:fixed;left:-9999px;top:0';
+    document.body.appendChild(fallback);
+    fallback.select();
+    let copied=false;
+    try{copied=document.execCommand('copy');}catch(copyError){copied=false;}
+    fallback.remove();
+    return copied;
+  }
 }
 
 // normal CDF (Hart approximation)
@@ -15321,6 +15609,7 @@ function autoToMyPick(){
     if(!candidates.length)candidates=remaining().filter(p=>modelDraftable(p)&&mockEligible(p,roster,false,round));
     const pick=chooseNeedAware(candidates,roster,round,meta,true);
     if(!pick)break;
+    if(queueContains(pick.id))stashQueuedPlayer(pick.id,n,'sniped');
     picks.push(pick.id);autoPickNos.push(n);roster.push(pick);
   }
   save();render();
@@ -15372,7 +15661,7 @@ function renderSnake(){
     cells.push(`<div class="snake-round">R${r}${r%2?' →':' ←'}</div>`);
     for(let team=1;team<=TEAMS;team++){
       const n=pickForTeam(r,team), actual=picks[n-1], id=actual||mockPicks[n-1], p=byId.get(id);
-      const classes=`snakecell ${team===slot?'mine':''} ${actual?'real':p?'mock':''}`;
+      const classes=`snakecell ${team===slot?'mine':''} ${actual?'real':p?'mock':''} ${posClass(p)}`;
       const metric=mockMetric(p||{},mockMode,meta);
       cells.push(`<div class="${classes}"${p?` data-player-id="${p.id}" data-pick="${n}" tabindex="0" role="button"`:''}><span class="pick">${fmtPick(n)}${team===slot?' · YOU':''}</span>${p?`<span class="sname">${p.name}</span><span class="spos">${p.pos} · ${metricLabel} ${metric<900?metric:'—'}</span>`:`<span class="sname snakeempty">—</span>`}</div>`);
     }
@@ -15381,7 +15670,7 @@ function renderSnake(){
       const team=r%2?inRound:TEAMS-inRound+1, n=overallOf(r,inRound);
       const actual=picks[n-1], id=actual||mockPicks[n-1], p=byId.get(id);
       const metric=mockMetric(p||{},mockMode,meta);
-      const classes=`snake-mobile-pick ${team===slot?'mine':''} ${actual?'real':p?'mock':''}`;
+      const classes=`snake-mobile-pick ${team===slot?'mine':''} ${actual?'real':p?'mock':''} ${posClass(p)}`;
       mobile.push(`<div class="${classes}"${p?` data-player-id="${p.id}" data-pick="${n}" tabindex="0" role="button"`:''}><span class="pick"><span>${fmtPick(n)}</span><span>S${team}${team===slot?' · YOU':''}</span></span>${p?`<span class="sname">${p.name}</span><span class="spos">${p.pos} · ${metricLabel} ${metric<900?metric:'—'}</span>`:`<span class="sname snakeempty">Available</span><span class="spos">Awaiting source or real pick</span>`}</div>`);
     }
     mobile.push('</div></section>');
@@ -15596,6 +15885,23 @@ function planText(mine){
   const special=[open.K?'K':'',open.DST?'D/ST':''].filter(Boolean).join(' · ')||'best available depth';
   return `Finish special teams: take <b>${special}</b>.`;
 }
+function opponentDemandText(){
+  const onMine=myPicks().includes(curPick());
+  const target=onMine?pickAfterNext():nextMyPick();
+  if(!target)return '';
+  const first=curPick()+(onMine?1:0), teams=new Set();
+  for(let n=first;n<target;n++){
+    const team=teamAtPick(n);
+    if(team!==slot)teams.add(team);
+  }
+  if(!teams.size)return '';
+  const rosters=rostersFromDraft(), needs={QB:0,RB:0,WR:0,TE:0,FLEX:0};
+  teams.forEach(team=>{
+    const open=openStarterSlots(rosters[team-1]);
+    Object.keys(needs).forEach(pos=>needs[pos]+=open[pos]||0);
+  });
+  return `<br><b>Before ${fmtPick(target)}:</b> ${teams.size} opponent teams currently show ${Object.entries(needs).filter(([,n])=>n).map(([pos,n])=>`${pos} ${n}`).join(' · ')} open starter slots.`;
+}
 function nextTurnTargets(boardRows){
   const nxt=pickAfterNext();
   if(!nxt||isKDST())return '';
@@ -15677,6 +15983,13 @@ function render(){
   const kdst=recommendationRound()>=KDST_ROUND;
   const isOTC=myPicks().includes(curPick());
   const boardRows=computeBoard();
+  const boardMap=new Map(boardRows.map(r=>[r.p.id,r]));
+  const mine=myRoster();
+  const {slots:lineupSlots,used:starterIds}=rosterSlots(mine);
+  const open=openStarterSlots(mine);
+  const bench=benchSlotsFilled(mine);
+  const byeMap=byeCounts(mine);
+  const byeStacks=[...byeMap.entries()].filter(([,count])=>count>=3).sort((a,b)=>a[0]-b[0]);
 
   // header
   const warn=$('#warn');
@@ -15696,26 +16009,20 @@ function render(){
   const auto=$('#auto'), total=TEAMS*ROUNDS, autoDisabled=curPick()>total||isOTC;
   auto.disabled=autoDisabled;
   auto.textContent=curPick()>total?'Draft complete':isOTC?'Your pick':`Auto ${((nextMyPick()??(total+1))-curPick())} to ${nextMyPick()?fmtPick(nextMyPick()):'finish'}`;
+  const copy=$('#copy');
+  copy.textContent=isOTC?'Copy state for top 3':'Copy state';
+  copy.classList.toggle('ok',isOTC);
   $('#lamv').textContent=currentLambda().toFixed(2);
   $('#ecrwv').textContent=Math.round(ecrWeight*100)+'%';
 
   // roster rail (QB RB RB WR WR TE FLEX K DST + bench)
-  const mine=myRoster();
-  const order=['QB','RB','RB','WR','WR','TE','FLEX','K','DST'];
-  const used=new Set(); const rows=[];
-  for(const s of order){
-    let cand=null;
-    for(const p of mine){
-      if(used.has(p.id))continue;
-      if(s==='FLEX'?['RB','WR','TE'].includes(p.pos):p.pos===s){cand=p;break;}
-    }
-    if(cand)used.add(cand.id);
-    rows.push(`<div class="slotrow ${cand?'filled':'empty'}"><span class="lbl">${s}</span><span class="nm">${cand?cand.name:'—'}</span></div>`);
-  }
-  mine.filter(p=>!used.has(p.id)).forEach(p=>
+  const rows=[];
+  lineupSlots.forEach(({slot:slotName,player})=>
+    rows.push(`<div class="slotrow ${player?'filled':'empty'}"><span class="lbl">${slotName}</span><span class="nm">${player?player.name:'—'}</span></div>`));
+  mine.filter(p=>!starterIds.has(p.id)).forEach(p=>
     rows.push(`<div class="slotrow filled"><span class="lbl">BN</span><span class="nm">${p.name}</span></div>`));
-  $('#slots').innerHTML=rows.join('');
   $('#rcount').textContent=mine.length+'/14';
+  $('#slots').innerHTML=rows.join('');
 
   // needs: caps are legal limits, not recommended roster targets
   const posLine=POS.map(k=>{
@@ -15726,11 +16033,12 @@ function render(){
   }).join(' · ');
   const kLine=`K <span>${mine.filter(p=>p.pos==='K').length}</span>/${CAPS.K}`;
   const dLine=`DST <span>${mine.filter(p=>p.pos==='DST').length}</span>/${CAPS.DST}`;
-  const open=openStarterSlots(mine);
-  const bench=benchSlotsFilled(mine);
   const openLine=['QB','RB','WR','TE','FLEX','K','DST'].filter(k=>open[k]).map(k=>`${k} ${open[k]}`).join(' · ')||'starters set';
   const kdNote=kdst?`<br><span style="color:var(--amber)">▶ Pick K + D/ST now</span>`:`<br>K + D/ST: <span>rds 13–14</span>`;
-  $('#needs').innerHTML=`Caps: ${posLine} · ${kLine} · ${dLine}<br>Starter slots left: <span>${openLine}</span><br>Bench: <span>${bench}/5</span> · roster spots left: <span>${ROUNDS-mine.length}</span><br>Build: <span>QB1 · TE1 · RB/WR 10; no QB2/TE2</span>`+kdNote;
+  const byeNote=byeStacks.length
+    ? `<br><span style="color:var(--amber)">${byeSummaryText(mine)} · stacked: ${byeStacks.map(([week,count])=>`W${week} ×${count}`).join(' · ')}</span>`
+    : `<br>${byeSummaryText(mine)}`;
+  $('#needs').innerHTML=`Caps: ${posLine} · ${kLine} · ${dLine}<br>Starter slots left: <span>${openLine}</span><br>Bench: <span>${bench}/5</span> · roster spots left: <span>${ROUNDS-mine.length}</span><br>Build: <span>QB1 · TE1 · RB/WR 10; no QB2/TE2</span>${byeNote}`+kdNote;
 
   // board
   $('#boardcol').classList.toggle('pick-mode',decisionInputActive());
@@ -15792,7 +16100,26 @@ function render(){
   const show=rows2;
   visibleRows=show.slice(0,8);
   const gmax=Math.max(...visibleRows.map(r=>Math.abs(r.gain)),1);
-  $('#board').innerHTML=show.length?show.map((r,i)=>{
+  const focusIds=isOTC&&decisionInputActive()?new Set(show.filter(r=>r.eligible).slice(0,3).map(r=>r.p.id)):new Set();
+  const bandSummary=new Map();
+  show.filter(r=>r.eligible&&!r.isSpecial).forEach(r=>{
+    const info=bandSummary.get(r.vonaTier)||{count:0,pos:{}};
+    info.count++;
+    info.pos[r.p.pos]=(info.pos[r.p.pos]||0)+1;
+    bandSummary.set(r.vonaTier,info);
+  });
+  const bandLabel=tier=>{
+    const info=bandSummary.get(tier);
+    if(!info)return '';
+    const mix=['QB','RB','WR','TE'].filter(pos=>info.pos[pos]).map(pos=>`${info.pos[pos]} ${pos}`).join(', ');
+    return `${info.count} eligible left${mix?`: ${mix}`:''}`;
+  };
+  const rendered=[], seenBands=new Set(), showTierGuides=decisionInputActive()&&!q;
+  show.forEach((r,i)=>{
+    const tierStart=showTierGuides&&r.eligible&&!r.isSpecial&&!seenBands.has(r.vonaTier);
+    if(tierStart){
+      seenBands.add(r.vonaTier);
+    }
     const c=r.isSpecial?'var(--cyan)':urgency(r);
     const costTxt=r.isSpecial?'—':(r.gain>0?'+':'')+r.gain.toFixed(1);
     const band=r.isSpecial?'—':waitBandLabel(r.vonaTier);
@@ -15809,13 +16136,21 @@ function render(){
     const delta=r.ecrRank>500?'—':(r.ecrRank-r.modelRank);
     const deltaTxt=delta==='—'?'—':(delta>0?'+':'')+delta;
     const deltaCol=delta==='—'?'var(--dimmer)':delta>=10?'var(--green)':delta<=-10?'var(--amber)':'var(--dim)';
-    const trend=adpTrend(r.p),trendTxt=Math.abs(trend)>=.5?` · ADP ${trend<0?'▲':'▼'}${Math.abs(trend).toFixed(1)}`:'';
-    return `<div class="brow${sortBy==='gain'?'':' audit'}" data-id="${r.p.id}">
+    const queued=queueContains(r.p.id);
+    const starterNeed=open[r.p.pos]||(['RB','WR','TE'].includes(r.p.pos)&&open.FLEX);
+    const byeRisk=byeRiskForPlayer(r.p,mine);
+    const flags=[
+      tierStart?`<span class="tierflag">Band ${waitBandLabel(r.vonaTier)} · ${bandLabel(r.vonaTier)}</span>`:'',
+      starterNeed?'<span class="flag">starter need</span>':'',
+      byeRisk?'<span class="flag">bye stack risk</span>':'',
+      queued?'<span class="flag">queued</span>':''
+    ].filter(Boolean).join(' · ');
+    rendered.push(`<div class="brow${sortBy==='gain'?'':' audit'}${tierStart?' tier-start':''}${focusIds.has(r.p.id)?' focus-top':''}${queued?' queued':''}" data-id="${r.p.id}">
       <div class="bar" style="width:${clamp(Math.abs(r.gain)/gmax*100,0,100)}%;background:${c}"></div>
       <div class="rk">${i+1}</div>
-      <div class="nmwrap"><div class="nm">${r.p.name}</div>
-        <div class="sub">${r.p.pos} · ${r.p.team||'—'} · ECR T${r.p.tier||'—'}${r.p.bye?' · BYE '+r.p.bye:''}${trendTxt}${r.p.status&&r.p.status!=='ACTIVE'?` · <span class="status">${r.p.status.replaceAll('_',' ')}</span>`:''}${recentNewsText(r.p)}</div>
-        ${view==='prep'?`<div class="why">${r.isSpecial?`${r.p.pos==='DST'?'Early stream':'Kicker'} #${r.p.special_rank||'—'} · W1 ${r.p.week1_opp||''} ${r.p.week1_proj?.toFixed(1)??'—'} · W2 ${r.p.week2_opp||''} ${r.p.week2_proj?.toFixed(1)??'—'} · W3 ${r.p.week3_opp||''} ${r.p.week3_proj?.toFixed(1)??'—'}; excluded from wait-cost ranking`:why(r)}</div>`:''}</div>
+      <div class="nmwrap"><div class="nmline"><div class="nm">${r.p.name}</div>${decisionInputActive()?`<button class="rowaction ${queued?'on':''}" type="button" data-action="toggle-queue" data-id="${r.p.id}" aria-pressed="${queued}" aria-label="${queued?`Remove ${r.p.name} from queue`:`Add ${r.p.name} to queue`}" title="${queued?'Remove from queue':'Add to queue'}">${queued?'Q':'+'}</button>`:''}</div>
+        <div class="sub">${r.p.pos} · ${r.p.team||'—'}${r.p.bye?' · BYE '+r.p.bye:''}${r.p.status&&r.p.status!=='ACTIVE'?` · <span class="status">${r.p.status.replaceAll('_',' ')}</span>`:''}${flags?` · ${flags}`:''}${recentNewsText(r.p)}</div>
+        ${view==='prep'&&!decisionInputActive()?`<div class="why">${r.isSpecial?`${r.p.pos==='DST'?'Early stream':'Kicker'} #${r.p.special_rank||'—'} · W1 ${r.p.week1_opp||''} ${r.p.week1_proj?.toFixed(1)??'—'} · W2 ${r.p.week2_opp||''} ${r.p.week2_proj?.toFixed(1)??'—'} · W3 ${r.p.week3_opp||''} ${r.p.week3_proj?.toFixed(1)??'—'}; excluded from wait-cost ranking`:why(r)}</div>`:''}</div>
       <div class="num">${r.p.proj.toFixed(0)}</div>
       <div class="wait" title="${waitTitle}"><span class="band" style="color:${bandCol}">${band}</span><span class="waitcost">${costTxt}</span></div>
       <div class="num">${rankText(r.modelRank)}</div>
@@ -15823,21 +16158,58 @@ function render(){
       <div class="num" style="color:var(--dim)" title="ESPN average draft position">${r.p.adp.toFixed(1)}</div>
       <div class="num" style="color:${deltaCol}">${deltaTxt}</div>
       <div class="num" style="color:${survCol}">${survTxt}</div>
-    </div>`;
-  }).join('')
+    </div>`);
+  });
+  $('#board').innerHTML=show.length?rendered.join('')
     :`<div class="empty-state">${q
       ? `No player matches "${q}".<br>Check the spelling, or clear the search box to return to the ${decisionInputActive()?'Pick Board':'audit view'}.`
       : 'No players left at this position.<br>Choose All in the position filter to see the whole pool.'}</div>`;
   }
 
-  // positional runs (skill positions only)
-  $('#plan').innerHTML=`<div class="runbox"><div class="t">${planText(mine)}</div></div>`+nextTurnTargets(boardRows);
+  // plan, focus, queue, preflight
+  const topChoices=boardRows.filter(r=>r.eligible&&!r.isSpecial).slice(0,3);
+  const topBandCount=topChoices.length
+    ? boardRows.filter(r=>r.eligible&&!r.isSpecial&&r.vonaTier===topChoices[0].vonaTier).length
+    : 0;
+  const queueOverlap=queue.filter(id=>boardMap.has(id)&&!picks.includes(id)).slice(0,4).map(id=>boardMap.get(id)).filter(Boolean);
+  const focusBox=isOTC&&topChoices.length
+    ? `<div class="runbox hot"><div class="eyebrow" style="margin-bottom:5px">On your pick</div><div class="t"><b>Top 3:</b> ${topChoices.map(r=>`${r.p.name} ${waitBandLabel(r.vonaTier)}`).join(' · ')}${queueOverlap.length?`<br><b>Queue overlap:</b> ${queueOverlap.map(r=>r.p.name).join(' · ')}`:''}${topBandCount?`<br><b>Current band:</b> ${topBandCount} left`:''}<br><b>Starter needs:</b> ${openLine}</div></div>`
+    : '';
+  $('#plan').innerHTML=focusBox+`<div class="runbox"><div class="t">${planText(mine)}${opponentDemandText()}</div></div>`+nextTurnTargets(boardRows);
+  renderNotice();
+  const dataAgeDays=Math.max(0,Math.floor((Date.now()-new Date(PROJECTION_META.updated+'T00:00:00Z').getTime())/86400000));
+  const checks=[
+    {label:'Slot',ok:slot===3,text:`Slot ${slot}${slot===3?' ready':' should be 3'}`},
+    {label:'Ledger',ok:true,text:picks.length===0?'Ledger empty':`${picks.length} picks recorded`},
+    {label:'Data',ok:dataAgeDays<=7,text:`Data ${PROJECTION_META.updated} · ${dataAgeDays}d old`},
+    {label:'Storage',ok:storageAvailable,text:storageAvailable?'Storage ready':'Storage unavailable'},
+    {label:'Legacy sim',ok:autoPickNos.length===0,text:autoPickNos.length===0?'No legacy simulated picks':`${autoPickNos.length} simulated pick${autoPickNos.length===1?'':'s'} still recorded`}
+  ];
+  const showPreflight=curPick()===1||checks.some(check=>!check.ok);
+  $('#preflight').innerHTML=showPreflight
+    ? `<div class="runbox ${checks.every(check=>check.ok)?'notice':'hot'}"><div class="eyebrow" style="margin-bottom:5px">Draft-day preflight</div><div class="t">${checks.map(check=>`<b>${check.label}:</b> <span style="color:${check.ok?'var(--text)':'var(--amber)'}">${check.text}</span>`).join(' · ')}</div></div>`
+    : '';
+  const queueRows=queue.map((id,index)=>{
+    const row=boardMap.get(id), player=byId.get(id);
+    const surv=row?`${Math.round(row.surv*100)}% survive`:picks.includes(id)?'drafted':'queued';
+    return `<div class="qrow"><div class="qmain"><div class="qname">${player.name}</div><div class="qmeta">${player.pos} · ${player.team||'—'} · ${surv}</div></div><div class="qcontrols"><button class="queue-reorder" type="button" data-action="queue-up" data-id="${id}" aria-label="Move ${player.name} up" ${index===0?'disabled':''}>↑</button><button class="queue-reorder" type="button" data-action="queue-down" data-id="${id}" aria-label="Move ${player.name} down" ${index===queue.length-1?'disabled':''}>↓</button><button class="queue-btn" type="button" data-action="queue-remove" data-id="${id}" aria-label="Remove ${player.name} from queue">X</button><button class="queue-btn" type="button" data-action="queue-draft" data-id="${id}" aria-label="Draft ${player.name} from queue" ${isOTC?'':'disabled'}>Pick</button></div></div>`;
+  }).join('');
+  const snipes=queueArchive.filter(entry=>entry.kind==='sniped'&&!entry.cleared).sort((a,b)=>b.pickNo-a.pickNo);
+  const snipedRows=snipes.map(entry=>{
+    const player=byId.get(entry.id);
+    return `<div class="qrow sniped"><div class="qmain"><div class="qname"><s>${player.name}</s></div><div class="qmeta">${player.pos} · sniped at ${fmtPick(entry.pickNo)}</div></div></div>`;
+  }).join('');
+  $('#queuebox').innerHTML=`<div class="runbox queuebox"><div class="qhead"><div class="qtitle"><span class="eyebrow">Queue</span><div class="t">${queue.length?`${queue.length} active target${queue.length===1?'':'s'}`:'Build a manual queue from the Pick Board.'}</div></div><div class="queue-actions"><button class="mini-btn" type="button" data-action="backup-state">Backup JSON</button><button class="mini-btn" type="button" data-action="import-state">Import</button>${queue.length?'<button class="mini-btn" type="button" data-action="clear-queue">Clear queue</button>':''}${snipes.length?'<button class="mini-btn" type="button" data-action="clear-snipes">Clear snipes</button>':''}</div></div>${queueRows?`<div class="queue-list">${queueRows}</div>`:'<div class="queue-empty">No active queue yet. Use the + button on a Pick Board row.</div>'}${snipedRows?`<div class="eyebrow" style="margin:10px 0 5px">Recently sniped</div><div class="queue-list">${snipedRows}</div>`:''}</div>`;
+
+  // positional runs
   const last8=picks.slice(-8).map(id=>byId.get(id)).filter(p=>p&&!['K','DST'].includes(p.pos));
   const counts={}; last8.forEach(p=>counts[p.pos]=(counts[p.pos]||0)+1);
   const hot=Object.entries(counts).filter(([,n])=>n>=4);
-  $('#runs').innerHTML=hot.length
-    ? hot.map(([k,n])=>`<div class="runbox hot"><div class="t"><b>${k} run.</b> ${n} of last ${last8.length} picks. Survival numbers are optimistic right now.</div></div>`).join('')
-    : `<div class="runbox"><div class="t">No positional run in the last ${last8.length||0} picks.</div></div>`;
+  const specialRun=picks.slice(-8).map(id=>byId.get(id)).filter(Boolean).filter(p=>['K','DST'].includes(p.pos)).length;
+  const runBoxes=[];
+  if(hot.length)runBoxes.push(hot.map(([k,n])=>`<div class="runbox hot"><div class="t"><b>${k} run.</b> ${n} of last ${last8.length} picks. Survival numbers are optimistic right now.</div></div>`).join(''));
+  if(specialRun>=3)runBoxes.push(`<div class="runbox hot"><div class="t"><b>Special-teams run.</b> ${specialRun} of the last 8 picks were K or D/ST. Skill players are surviving longer than the board predicts.</div></div>`);
+  $('#runs').innerHTML=runBoxes.length?runBoxes.join(''):`<div class="runbox"><div class="t">No positional run in the last ${last8.length||0} picks.</div></div>`;
 
   // pick log
   $('#log').innerHTML=picks.slice(-14).reverse().map((id,i)=>{
@@ -15849,30 +16221,56 @@ function render(){
 // ── actions ──────────────────────────────────────────────────────
 // The ledger is frozen while the guide is open. Inert already blocks pointer
 // and tab access, but every mutation re-checks so no path can slip past it.
-function draftLocked(){return $('#help').classList.contains('on');}
+function draftLocked(){return $('#help').classList.contains('on')||$('#state-dialog').classList.contains('on');}
 function draft(id){
   if(draftLocked())return;
   if(picks.length>=TEAMS*ROUNDS)return;
   if(picks.includes(id))return;
+  clearNotice();
   const player=byId.get(id);
   if(!player)return;
-  const roster=rostersFromDraft()[teamAtPick(curPick())-1];
+  const pickNo=curPick(), myPick=myPicks().includes(pickNo);
+  const roster=rostersFromDraft()[teamAtPick(pickNo)-1];
   if(!mockEligible(player,roster)){
     window.alert(`${player.pos} cap reached for the team on the clock.`);
     return;
   }
-  picks.push(id); save(); $('#q').value=''; render();
+  if(queueContains(id))stashQueuedPlayer(id,pickNo,myPick?'drafted':'sniped');
+  picks.push(id);
+  save();
+  $('#q').value='';
+  setNotice('ok',`Recorded ${fmtPick(pickNo)} — ${player.name}.`,{undo:true});
+  render();
 }
 function undo(){
   if(draftLocked())return;
   if(!picks.length)return;
-  autoPickNos=autoPickNos.filter(n=>n!==picks.length);
-  picks.pop(); save(); render();
+  const pickNo=picks.length, id=picks[pickNo-1], player=byId.get(id);
+  autoPickNos=autoPickNos.filter(n=>n!==pickNo);
+  picks.pop();
+  restoreQueuedPlayer(id,pickNo);
+  save();
+  setNotice('warn',`Removed ${fmtPick(pickNo)} — ${player?.name||'unknown'}.`);
+  render();
 }
 function resetDraft(){
   if(draftLocked())return;
   if(!confirm('Clear all picks and start over?'))return;
-  picks=[]; autoPickNos=[]; mockPicks=[]; mockRandom=false; save(); render();
+  restoreAllQueueEntries();
+  picks=[]; autoPickNos=[]; mockPicks=[]; mockRandom=false; mockUntilMine=false;
+  save();
+  setNotice('ok','Draft reset. Queue preserved.');
+  render();
+}
+function resolveSearchDraft(query){
+  const needle=query.trim().toLowerCase();
+  if(!needle)return {error:'Type a player name first.'};
+  const rows=computeBoard().filter(r=>r.p.name.toLowerCase().includes(needle));
+  if(!rows.length)return {error:`No available player matches "${query}".`};
+  const exact=rows.filter(r=>r.p.name.toLowerCase()===needle);
+  if(exact.length===1)return {row:exact[0]};
+  if(rows.length===1)return {row:rows[0]};
+  return {error:`"${query}" matches ${rows.length} players. Keep typing until one remains.`};
 }
 
 // ── state export (paste into Claude for a top-3 sanity check) ────
@@ -15907,22 +16305,16 @@ function buildState(){
   L.push('  Treat this exported HTML state as the only draft ledger. Use the live board, roster needs, recent positional runs, wait bands, projection confidence, expert-consensus dispersion, room intelligence, and current player news to give a top 3 for this pick. Explicitly override the board when fresh health/discipline/role/QB information is not priced into projections. Do not invent, record or persist picks outside the HTML.');
   L.push('');
 
-  const order=['QB','RB','RB','WR','WR','TE','FLEX','K','DST'];
-  const used=new Set(), slots=[];
-  for(const s of order){
-    let cand=null;
-    for(const p of mine){
-      if(used.has(p.id))continue;
-      if(s==='FLEX'?['RB','WR','TE'].includes(p.pos):p.pos===s){cand=p;break;}
-    }
-    if(cand)used.add(cand.id);
-    slots.push(`${s} ${cand?cand.name:'—'}`);
-  }
+  const {slots:rosterView,used}=rosterSlots(mine);
   L.push(`MY ROSTER (${mine.length}/${ROUNDS})`);
-  L.push('  '+slots.join(' | '));
+  L.push('  '+rosterView.map(({slot,player})=>`${slot} ${player?player.name:'—'}`).join(' | '));
   const bench=mine.filter(p=>!used.has(p.id));
   if(bench.length)L.push(`  BENCH (${bench.length}/5) `+bench.map(p=>`${p.name} (${p.pos})`).join(', '));
   L.push('  caps '+POS.map(k=>`${k} ${mine.filter(p=>p.pos===k).length}/${CAPS[k]}`).join(', '));
+  L.push('  '+byeSummaryText(mine));
+  if(queue.length)L.push('  queue '+queue.map(id=>byId.get(id)).filter(Boolean).map(p=>`${p.name} (${p.pos})`).join(', '));
+  const snipes=queueArchive.filter(entry=>entry.kind==='sniped'&&!entry.cleared).sort((a,b)=>b.pickNo-a.pickNo);
+  if(snipes.length)L.push('  recent snipes '+snipes.map(entry=>`${byId.get(entry.id)?.name||'?'} @ ${fmtPick(entry.pickNo)}`).join(', '));
   L.push('');
 
   const rows=computeBoard().slice(0,8);
@@ -15948,20 +16340,67 @@ function buildState(){
 
 async function copyState(){
   const txt=buildState(), btn=$('#copy');
-  let ok=true;
-  try{ await navigator.clipboard.writeText(txt); }
-  catch(e){
-    const ta=document.createElement('textarea');
-    ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0';
-    document.body.appendChild(ta); ta.select();
-    try{ ok=document.execCommand('copy'); }catch(e2){ ok=false; }
-    document.body.removeChild(ta);
-  }
-  if(!ok)window.prompt('Copy the draft state below:',txt);
+  const ok=await copyTextWithFallback(txt,'Copy the draft state below:');
   btn.textContent=ok?'Copied':'Copy manually';
   btn.classList.toggle('ok',ok);
-  setTimeout(()=>{btn.textContent='Copy state';btn.classList.remove('ok');},1400);
+  setTimeout(()=>{
+    btn.textContent=myPicks().includes(curPick())?'Copy state for top 3':'Copy state';
+    btn.classList.toggle('ok',myPicks().includes(curPick()));
+  },1400);
   if(matchMedia('(pointer:fine)').matches)$('#q').focus();
+}
+async function copyBackupState(){
+  const ok=await copyTextWithFallback(JSON.stringify(buildBackupState(),null,2),'Copy the backup JSON below:');
+  setNotice(ok?'ok':'warn',ok?'Backup JSON copied.':'Backup JSON ready to copy manually.');
+  render();
+}
+let stateReturnFocus=null;
+function importBackupState(opener){
+  if(draftLocked())return;
+  stateReturnFocus=opener||document.activeElement;
+  $('#app').setAttribute('inert','');
+  $('#app').setAttribute('aria-hidden','true');
+  $('#statejson').value='';
+  $('#stateerror').textContent='';
+  $('#stateerror').classList.remove('ok');
+  $('#state-dialog').classList.add('on');
+  $('#statejson').focus();
+}
+function closeStateDialog(){
+  const dialog=$('#state-dialog');
+  if(!dialog.classList.contains('on'))return;
+  dialog.classList.remove('on');
+  $('#app').removeAttribute('inert');
+  $('#app').removeAttribute('aria-hidden');
+  const back=stateReturnFocus;
+  stateReturnFocus=null;
+  if(back&&typeof back.focus==='function'&&document.contains(back))back.focus();
+  else if(matchMedia('(pointer:fine)').matches)$('#q').focus();
+}
+async function copyBackupFromDialog(){
+  const text=JSON.stringify(buildBackupState(),null,2);
+  $('#statejson').value=text;
+  const ok=await copyTextWithFallback(text,'Copy the backup JSON below:');
+  $('#stateerror').classList.toggle('ok',ok);
+  $('#stateerror').textContent=ok?'Current backup copied.':'Use the selected JSON above to copy manually.';
+}
+function restoreBackupFromDialog(){
+  let parsed;
+  $('#stateerror').classList.remove('ok');
+  try{ parsed=JSON.parse($('#statejson').value); }
+  catch(e){ $('#stateerror').textContent='Backup JSON could not be parsed.'; return; }
+  try{ validateBackupState(parsed); }
+  catch(e){ $('#stateerror').textContent=e.message||'Backup validation failed.'; return; }
+  if((picks.length||queue.length||queueArchive.length)&&!confirm('Replace the current local draft state with this validated backup?'))return;
+  restoreStateObject(parsed);
+  mockPicks=[]; mockRandom=false; mockUntilMine=false;
+  save();
+  $('#slot').value=slot;
+  $('#lam').value=lambda;
+  $('#ecrw').value=ecrWeight;
+  closeStateDialog();
+  setNotice('ok','Validated backup restored.');
+  render();
 }
 
 // ── help dialog ──────────────────────────────────────────────────
@@ -16009,11 +16448,23 @@ $('#q').addEventListener('keydown',e=>{
   if(decisionInputActive()&&e.key==='Enter'){
     const val=$('#q').value.trim();
     if(!val)return;
-    const r=computeBoard().filter(r=>r.p.name.toLowerCase().includes(val.toLowerCase()));
-    if(r.length)draft(r[0].p.id);
+    const resolved=resolveSearchDraft(val);
+    if(resolved.row){draft(resolved.row.p.id);return;}
+    setNotice('warn',resolved.error);
+    render();
   }
 });
 document.addEventListener('keydown',e=>{
+  if($('#state-dialog').classList.contains('on')){
+    if(e.key==='Escape'){e.preventDefault();closeStateDialog();return;}
+    if(e.key==='Tab'){
+      const stops=[$('#stateclose'),$('#statejson'),$('#statecopy'),$('#staterestore')], at=stops.indexOf(document.activeElement);
+      e.preventDefault();
+      const next=e.shiftKey?(at<=0?stops.length-1:at-1):(at<0||at===stops.length-1?0:at+1);
+      stops[next].focus();
+    }
+    return;
+  }
   if($('#help').classList.contains('on')){
     if(e.key==='Escape'){e.preventDefault();closeHelp();return;}
     // Focus stays inside the dialog: close button ⇄ scrollable guide body.
@@ -16051,6 +16502,12 @@ document.addEventListener('keydown',e=>{
   if(e.key.length===1&&!e.ctrlKey&&!e.metaKey&&!e.altKey)$('#q').focus();
 });
 $('#board').addEventListener('click',e=>{
+  const action=e.target.closest('[data-action]');
+  if(action&&action.dataset.action==='toggle-queue'){
+    e.preventDefault();
+    toggleQueue(+action.dataset.id);
+    return;
+  }
   const cell=e.target.closest('[data-player-id]');
   if(cell&&view==='plan'){showSnakeDetail(cell.dataset.playerId,+cell.dataset.pick);return;}
   const row=e.target.closest('.brow');
@@ -16061,6 +16518,32 @@ $('#board').addEventListener('keydown',e=>{
     const cell=e.target.closest('[data-player-id]');
     if(cell){e.preventDefault();showSnakeDetail(cell.dataset.playerId,+cell.dataset.pick);}
   }
+});
+$('#roomcol').addEventListener('click',e=>{
+  const action=e.target.closest('[data-action]');
+  if(!action)return;
+  const id=+action.dataset.id;
+  if(action.dataset.action==='undo-last'){undo();return;}
+  if(action.dataset.action==='queue-up'){moveQueue(id,-1);return;}
+  if(action.dataset.action==='queue-down'){moveQueue(id,1);return;}
+  if(action.dataset.action==='queue-remove'){removeQueueEntry(id);return;}
+  if(action.dataset.action==='queue-draft'){
+    if(!myPicks().includes(curPick())){
+      setNotice('warn','Queue drafting is only enabled on your pick.');
+      render();
+      return;
+    }
+    draft(id);
+    return;
+  }
+  if(action.dataset.action==='clear-queue'){clearQueue();return;}
+  if(action.dataset.action==='clear-snipes'){clearSnipes();return;}
+  if(action.dataset.action==='backup-state'){copyBackupState();return;}
+  if(action.dataset.action==='import-state'){importBackupState(action);return;}
+});
+$('#toast').addEventListener('click',e=>{
+  const action=e.target.closest('[data-action]');
+  if(action?.dataset.action==='undo-last')undo();
 });
 document.addEventListener('pointerdown',e=>setRoomKeys(!!e.target.closest('#roomcol')),true);
 $('#roomcol').addEventListener('focusin',()=>setRoomKeys(true));
@@ -16095,6 +16578,10 @@ $('#clearmock').addEventListener('click',()=>{mockPicks=[];mockRandom=false;mock
 $('#helpbtn').addEventListener('click',e=>openHelp(e.currentTarget));
 $('#helpclose').addEventListener('click',closeHelp);
 $('#help').addEventListener('click',e=>{if(e.target===$('#help'))closeHelp();});
+$('#stateclose').addEventListener('click',closeStateDialog);
+$('#state-dialog').addEventListener('click',e=>{if(e.target===$('#state-dialog'))closeStateDialog();});
+$('#statecopy').addEventListener('click',copyBackupFromDialog);
+$('#staterestore').addEventListener('click',restoreBackupFromDialog);
 $('#reset').addEventListener('click',resetDraft);
 $('#copy').addEventListener('click',copyState);
 $('#backpick').addEventListener('click',undo);
@@ -16102,7 +16589,7 @@ $('#auto').addEventListener('click',autoToMyPick);
 
 setInterval(()=>{
   const active=document.activeElement;
-  if(matchMedia('(pointer:fine)').matches&&!$('#help').classList.contains('on')&&
+  if(matchMedia('(pointer:fine)').matches&&!$('#help').classList.contains('on')&&!$('#state-dialog').classList.contains('on')&&
     (active===document.body||active===$('#q')))$('#q').focus();
 },1200);
 
