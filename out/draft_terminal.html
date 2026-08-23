@@ -461,6 +461,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
       <p><b>Availability</b> is market-first: RB/WR/TE blend 80% of Fantasy Football Calculator's current 12-team half-PPR market with 20% ESPN-only room rank/ADP, QB blends 50/50, and K/DST are unchanged since they never enter VONA. ESPN's room price for RB/WR runs later than the market; ESPN's room price for TE runs earlier than the market instead (about 15 picks among ranked TEs in the current sample). TE keeps the same 80% market weight as RB/WR for now — that is a provisional choice pending targeted validation, not a fit to this one snapshot. Observed market draft dispersion drives the survival curve when a player is matched, widened whenever ESPN and market disagree so a large source gap reads as genuine uncertainty instead of false precision; otherwise a conservative heuristic supplies the fallback. Unavailable and low-source-coverage players remain searchable for accurate bookkeeping but no longer occupy forecasted opponent picks or expected-next-player estimates.</p>
       <p><b>ESPN update</b> plus a date under a name is only the timestamp of that player's most recent ESPN news item, shown when it landed within the last three days. It is a recency marker, not a headline and not a sentiment signal — read the actual news before acting on it.</p>
       <p><b>Winning build</b> is QB1, TE1, ten RB/WR, K1 and D/ST1. It starts with three RB/WR through Round 4, secures WR1 by Round 5, fills RB2/WR2/FLEX by Round 8, TE by Round 9, QB by Round 10, and takes K/D/ST in Rounds 13–14. QB2 and TE2 are waiver positions in this shallow format.</p>
+      <p><b>1.03 turn planner</b> is a read-only advisory: it separates current pick-22 targets from players likely to survive to pick 27, then offers independent pair ideas. Those pair ideas are not a joint simulation and never change the ledger or board ranking. Conditional fallers are labeled from low survival to pick 22.</p>
       <p><b>Draft</b> keeps the top eight candidates in the first screen and lets you scroll through the full ranking below them. On the Pick Board, press <b>1–8</b> to record one of those top eight, type an unambiguous name and press Enter, or click any player row. A partial name matching multiple players will never record automatically. Model, Projection, ECR and ADP are read-only audit views; switch back to the Pick Board before recording. A large Model/ECR gap is labeled projection-led or consensus-led for review; it does not change rank weights. <b>Auto to my pick</b> and <b>Ctrl/Cmd Enter</b> rehearse opponent picks through your next turn; simulated picks are marked <b>~</b> in the same ledger and Copy state, so reset the draft before using it live. Snake remains the planning-only board for comparing whole-room scenarios. While this guide is open the board is locked — nothing can be recorded or undone.</p>
       <p><b>Queue</b> is manual and persisted. Use + on a Pick Board row, reorder targets under Room / Queue, and use Pick there only while you are on the clock. Opponent picks move queued targets to Recently sniped; Undo reactivates them. Backup JSON copies a machine-restorable snapshot, and Import validates it before replacing local state. Reset draft preserves the queue.</p>
       <p>Record every real pick here. Copy state on your turn and paste it to Codex or Claude for a current-news top three. K/DST stay out of wait-cost ranking and are prioritized in rounds 13–14.</p>
@@ -15945,18 +15946,30 @@ function turnPairPlanner(boardRows){
     ...r,s22:survives(r.p,22,ranked),s27:survives(r.p,27,ranked)
   }));
   const liveOrder=boardDecisionCompare;
-  const realistic=rows.filter(r=>r.s27>=.30).sort(liveOrder).slice(0,6);
-  const miracles=rows.filter(r=>r.modelRank<90&&r.s27<.15).sort((a,b)=>a.modelRank-b.modelRank).slice(0,5);
+  const pick22=rows.filter(r=>r.s22>=.30).sort(liveOrder).slice(0,6);
+  const pick27=rows.filter(r=>r.s27>=.30).sort(liveOrder).slice(0,6);
+  const miracles=rows.filter(r=>r.modelRank<90&&r.s22<.15).sort((a,b)=>a.modelRank-b.modelRank).slice(0,5);
   const label=r=>`${r.p.name} <b>${r.p.pos}</b> ${Math.round(r.s22*100)}%/${Math.round(r.s27*100)}%`;
-  const best=(pos,min=.30)=>rows.filter(r=>r.p.pos===pos&&r.s27>=min).sort(liveOrder)[0]||rows.filter(r=>r.p.pos===pos).sort(liveOrder)[0];
-  const rb=best('RB'),wr=best('WR'),te=best('TE');
-  const secondWr=rows.filter(r=>r.p.pos==='WR'&&r!==wr&&r.s27>=.30).sort(liveOrder)[0];
-  const pairs=[
-    rb&&wr?`Balanced: ${rb.p.name} + ${wr.p.name}`:'',
-    rb&&te?`TE pivot: ${te.p.name} + ${rb.p.name}`:'',
-    wr&&secondWr?`WR/WR fallback: ${wr.p.name} + ${secondWr.p.name}`:''
-  ].filter(Boolean);
-  return `<div class="runbox turn-planner"><div class="eyebrow" style="margin-bottom:5px">1.03 turn planner · picks 22/27 · read only</div><div class="t"><b>Realistic at the turn</b> <small>(survival at 22% / 27%)</small><br>${realistic.length?realistic.map(label).join(' · '):'No current candidates clear the 30% survival screen.'}${pairs.length?`<br><b>Pair ideas:</b> ${pairs.join(' · ')}`:''}${miracles.length?`<br><b>Conditional fallers:</b> ${miracles.map(label).join(' · ')}`:''}<br><small>Use the realistic list for planning; conditional fallers require an actual slide. Survival is timing evidence, not a rank override.</small></div></div>`;
+  const core22=pick22.filter(r=>r.p.pos==='RB'||r.p.pos==='WR');
+  const core27=pick27.filter(r=>r.p.pos==='RB'||r.p.pos==='WR');
+  const firstCore=core22.find(r=>r.p.pos==='RB')||core22[0];
+  const secondCore=(firstCore&&core27.find(r=>r.p.id!==firstCore.p.id&&r.p.pos!==firstCore.p.pos))
+    ||core27.find(r=>!firstCore||r.p.id!==firstCore.p.id);
+  const pairs=[];
+  if(firstCore&&secondCore)pairs.push(`Balanced core: ${firstCore.p.name} + ${secondCore.p.name}`);
+  const teRows=rows.filter(r=>r.p.pos==='TE');
+  const te22=pick22.filter(r=>r.p.pos==='TE');
+  const eliteTe=te22.filter(r=>/Brock Bowers|Trey McBride/.test(r.p.name));
+  const overlap=(a,b)=>Number.isFinite(a?.p?.proj_low)&&Number.isFinite(a?.p?.proj_high)&&Number.isFinite(b?.p?.proj_low)&&Number.isFinite(b?.p?.proj_high)&&Math.max(a.p.proj_low,b.p.proj_low)<=Math.min(a.p.proj_high,b.p.proj_high);
+  const te=eliteTe.length>1&&overlap(eliteTe[0],eliteTe[1])
+    ?eliteTe.sort((a,b)=>(a.p.ecr||999)-(b.p.ecr||999)||liveOrder(a,b))[0]
+    :(te22.sort(liveOrder)[0]);
+  const teRb=core27.find(r=>r.p.pos==='RB'&&(!te||r.p.id!==te.p.id));
+  if(te&&teRb)pairs.push(`TE pivot: ${te.p.name} + ${teRb.p.name}`);
+  const secondWr=core27.find(r=>r.p.pos==='WR'&&(!firstCore||r.p.id!==firstCore.p.id));
+  const firstWr=core22.find(r=>r.p.pos==='WR');
+  if(firstWr&&secondWr&&firstWr.p.id!==secondWr.p.id)pairs.push(`WR/WR fallback: ${firstWr.p.name} + ${secondWr.p.name}`);
+  return `<div class="runbox turn-planner"><div class="eyebrow" style="margin-bottom:5px">1.03 turn planner · picks 22/27 · read-only advisory</div><div class="t"><b>Pick 22 targets</b> <small>(survival at pick 22 / pick 27)</small><br>${pick22.length?pick22.map(label).join(' · '):'No current candidates clear the 30% pick-22 survival screen.'}<br><b>Likely pick 27 survivors</b> <small>(survival at pick 22 / pick 27)</small><br>${pick27.length?pick27.map(label).join(' · '):'No current candidates clear the 30% pick-27 survival screen.'}${pairs.length?`<br><b>Pair ideas</b> <small>(advisory; not a joint simulation)</small>: ${pairs.join(' · ')}`:''}${miracles.length?`<br><b>Conditional fallers</b> <small>(low survival to 22)</small>: ${miracles.map(label).join(' · ')}`:''}<br><small>Use the 22 list for first-pick planning and the 27 list for the follow-up; survival is timing evidence, not a rank override.</small></div></div>`;
 }
 
 // ── the board ────────────────────────────────────────────────────
@@ -16369,6 +16382,7 @@ function buildState(){
 
   const rows=computeBoard().slice(0,8);
   L.push(`TOP CANDIDATES — PICK BOARD ORDER (eligibility → wait band → ${SAME_BAND_TIEBREAK==='consensus'?'ECR → Model → gain':'Model → exact wait cost'}); same-band tiebreak is isolated and does not change VONA, projection weights or survival; wait cost = raw value lost if I wait until ${nxt?fmtPick(nxt):'my next pick'}; wait bands expand with projection uncertainty (${VONA_TIER_MIN}–${VONA_TIER_MAX} points), so players sharing a band are ties`);
+  if(slot===3&&curPick()<=27)L.push('1.03 turn planner: read-only advisory separating pick-22 targets from likely pick-27 survivors; pair ideas are independent suggestions, not a joint simulation, and conditional fallers use low survival to pick 22.');
   L.push(`(survives = P(still on board at ${nxt?fmtPick(nxt):'next pick'}), using ESPN room timing blended with ${MARKET_META.source} (RB/WR/TE ${Math.round(MARKET_ADP_WEIGHT_BY_POS.RB*100)}% market, QB ${Math.round(MARKET_ADP_WEIGHT_BY_POS.QB*100)}% market, K/DST ${Math.round(MARKET_ADP_WEIGHT_BY_POS.K*100)}% market), re-ranked among draftable remaining players; spread widens when sources disagree)`);
   rows.forEach((r,i)=>L.push(
     `  ${String(i+1).padStart(2)}. ${r.p.name.padEnd(22)} ${r.p.pos.padEnd(3)} ${(r.p.team||'—').padEnd(4)}`+
