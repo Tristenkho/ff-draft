@@ -2,40 +2,39 @@
 
 ## Decision
 
-Holdout candidate: **Finish starters by R7**. It improved the sealed holdout, but must pass the separate fresh-seed, all-season robustness gate before any live change.
+Holdout candidate: **Two RB/WR through R4**. It improved the sealed holdout, but must pass the separate fresh-seed, all-season robustness gate before any live change.
 
 ## Sealed 2024 holdout
 
 | Policy | Champion | Playoffs | Regular-season points | Championship delta vs baseline (95% CI) |
 | --- | ---: | ---: | ---: | ---: |
-| Finish starters by R7 | 4.25% | 86.75% | 1578.6 | 2.75% [1.14%, 4.36%] |
-| Four RB/WR through R4 | 3.88% | 65.25% | 1491.2 | 2.38% [0.78%, 3.97%] |
-| Current tuned build | 1.50% | 76.50% | 1509.5 | 0.00% [0.00%, 0.00%] |
-| No QB2/TE2 | 1.38% | 74.38% | 1506.6 | -0.12% [-1.07%, 0.82%] |
+| Two RB/WR through R4 | 3.08% | 62.33% | 1476.5 | 1.92% [0.75%, 3.08%] |
+| No QB2/TE2 | 1.75% | 74.58% | 1506.1 | 0.58% [-0.23%, 1.40%] |
+| Current tuned build | 1.17% | 77.00% | 1510.3 | 0.00% [0.00%, 0.00%] |
 
 ## Training screen (2018–2022)
 
 | Policy | Champion | Playoffs | Regular-season points |
 | --- | ---: | ---: | ---: |
-| Four RB/WR through R4 | 9.33% | 62.67% | 1486.9 |
-| No QB2/TE2 | 5.33% | 66.00% | 1527.2 |
-| Finish starters by R7 | 3.33% | 78.00% | 1545.0 |
-| Ceiling weight 0.60 | 3.33% | 76.00% | 1556.1 |
-| Two RB/WR through R4 | 2.67% | 79.33% | 1554.5 |
-| Finish starters by R9 | 2.67% | 77.33% | 1550.2 |
-| Allow 7/3 RB-WR | 2.67% | 77.33% | 1546.0 |
-| Ceiling weight 0.20 | 2.00% | 78.67% | 1543.7 |
-| Current tuned build | 2.00% | 76.00% | 1544.9 |
-| Nine total RB/WR | 2.00% | 76.00% | 1544.9 |
-| Any superior late TE2 | 2.00% | 74.67% | 1540.8 |
-| No ceiling premium | 1.33% | 80.00% | 1543.9 |
+| No QB2/TE2 | 6.50% | 69.50% | 1528.5 |
+| Four RB/WR through R4 | 6.50% | 62.50% | 1488.9 |
+| Ceiling weight 0.60 | 5.50% | 77.50% | 1556.7 |
+| Two RB/WR through R4 | 5.50% | 77.00% | 1554.0 |
+| No ceiling premium | 5.00% | 78.75% | 1547.8 |
+| Finish starters by R7 | 5.00% | 77.50% | 1547.1 |
+| Ceiling weight 0.20 | 4.75% | 78.00% | 1549.3 |
+| Allow 7/3 RB-WR | 4.75% | 76.25% | 1548.1 |
+| Current tuned build | 4.75% | 76.00% | 1547.8 |
+| Nine total RB/WR | 4.75% | 76.00% | 1547.8 |
+| Any superior late TE2 | 4.75% | 74.00% | 1541.8 |
+| Finish starters by R9 | 4.50% | 76.25% | 1551.3 |
 
 ## Opponent selection validation (2023–2024)
 
 | Selector | Pick-error RMSE (ADP SD) | Mean pick bias | Simulated/observed dispersion |
 | --- | ---: | ---: | ---: |
-| Calibrated market blend | 0.756 | +2.78 | 0.52× |
-| Current fixed-noise logic | 3.100 | +3.80 | 0.52× |
+| Calibrated market blend | 0.748 | +2.78 | 0.53× |
+| Current fixed-noise logic | 3.094 | +3.89 | 0.53× |
 
 ## Method
 
