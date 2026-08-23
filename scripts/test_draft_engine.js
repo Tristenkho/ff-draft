@@ -105,10 +105,21 @@ if(!conflict||conflict.decisionRank!==Math.max(conflict.modelRank,conflict.ecrRa
   !conflictSignal(conflict).includes('rank gap'))
   throw new Error('Model/ECR conflict flag or conservative decision gate is missing');
 
+if(!ecrEvidenceText(bowers).includes('expert avg')||!ecrEvidenceText(bowers).includes('range'))
+  throw new Error('ECR evidence wording does not expose expert average and range');
+const qbEarly=computeBoard().find(r=>r.p.pos==='QB'&&r.eligible);
+if(!qbEarly||why(qbEarly).includes('starter need'))
+  throw new Error('early QB/TE onesie was treated as a required starter need');
+
 // The turn-pair planner should distinguish players who are conditional fallers
 // from realistic 22/27 targets using the timing/survival signal. It must not
 // turn an early conditional faller into a recommendation merely because the
 // player has a large projection.
+// This is the Chase turn snapshot used by the planner: the two opponents
+// before 1.03, Chase at my first pick, then one opponent selection before the
+// read-only 22/27 forecast is rendered.
+const love=playerNamed('Jeremiyah Love');
+picks=[gibbs.id,bijan.id,chase.id,love.id];
 const pairRows=computeBoard();
 const conditionalFaller=pairRows.filter(r=>r.eligible&&!r.isSpecial&&r.p.market_adp<15)
   .sort((a,b)=>a.p.market_adp-b.p.market_adp)[0];
@@ -123,10 +134,48 @@ if(SAME_BAND_TIEBREAK!=='consensus')
   throw new Error('same-band planner tiebreak is not explicitly consensus-first');
 const turnPairBefore=JSON.stringify(picks),turnPairText=turnPairPlanner(pairRows);
 if(JSON.stringify(picks)!==turnPairBefore||!turnPairText.includes('1.03 turn planner')||
-  !turnPairText.includes('picks 22/27')||!turnPairText.includes('read only')||
-  !turnPairText.includes('Realistic at the turn')||
-  !turnPairText.includes('conditional fallers require an actual slide'))
-  throw new Error('read-only realistic/conditional turn-pair planner is missing or mutating state');
+  !turnPairText.includes('picks 22/27')||!turnPairText.includes('read-only advisory')||
+  !turnPairText.includes('Pick 22 targets')||!turnPairText.includes('Likely pick 27 survivors')||
+  !turnPairText.includes('Use the 22 list for first-pick planning'))
+  throw new Error('read-only separate-pool turn-pair planner is missing or mutating state');
+
+const plannerForecast=remaining().filter(modelDraftable);
+const plannerRanked=new Map([...plannerForecast]
+  .sort((a,b)=>timingMetric(a)-timingMetric(b)||a.id-b.id)
+  .map((p,i)=>[p.id,curPick()+i]));
+const plannerRows=pairRows.filter(r=>r.eligible&&!r.isSpecial).map(r=>({...r,
+  s22:survives(r.p,22,plannerRanked),s27:survives(r.p,27,plannerRanked)}));
+const planner22Core=plannerRows.filter(r=>r.s22>=.30&&(r.p.pos==='RB'||r.p.pos==='WR'))
+  .sort(boardDecisionCompare);
+const planner27Core=plannerRows.filter(r=>r.s27>=.30&&(r.p.pos==='RB'||r.p.pos==='WR'))
+  .sort(boardDecisionCompare);
+const pairStart=turnPairText.indexOf('<b>Pair ideas</b>');
+const pairEnd=turnPairText.indexOf('<br><b>Conditional fallers</b>');
+const pairSection=pairStart>=0?turnPairText.slice(pairStart,pairEnd>=0?pairEnd:turnPairText.length):'';
+if(pairStart<0||!planner22Core.some(r=>pairSection.includes(r.p.name))||
+  !planner27Core.some(r=>pairSection.includes(r.p.name)))
+  throw new Error('turn-pair ideas do not combine separate pick-22 and pick-27 target pools');
+if(PLAYERS.filter(p=>p.pos==='QB').some(p=>pairSection.includes(p.name)))
+  throw new Error('turn-pair ideas incorrectly include a QB pair');
+const tePairStart=pairSection.indexOf('TE pivot:');
+const tePairText=tePairStart>=0?pairSection.slice(tePairStart):'';
+const bowersRow=plannerRows.find(r=>r.p.name==='Brock Bowers');
+const mcbrideRow=plannerRows.find(r=>r.p.name==='Trey McBride');
+const teOverlap=bowersRow&&mcbrideRow&&Number.isFinite(bowersRow.p.proj_low)&&
+  Number.isFinite(bowersRow.p.proj_high)&&Number.isFinite(mcbrideRow.p.proj_low)&&
+  Number.isFinite(mcbrideRow.p.proj_high)&&
+  Math.max(bowersRow.p.proj_low,mcbrideRow.p.proj_low)<=Math.min(bowersRow.p.proj_high,mcbrideRow.p.proj_high);
+if(teOverlap&&bowersRow.s22>=.30&&mcbrideRow.s22>=.30&&
+  (!tePairText.includes('TE pivot: Brock Bowers')||tePairText.includes('TE pivot: Trey McBride')))
+  throw new Error('overlapping elite-TE projections did not prefer Bowers in the pair advisory');
+if(!turnPairText.includes('Balanced core: Chris Olave + Kyren Williams')||
+  !turnPairText.includes('TE pivot: Brock Bowers + Kyren Williams'))
+  throw new Error('Chase turn scenario did not produce the Olave/Kyren and Bowers/Kyren pair plan');
+const expectedMiracles=plannerRows.filter(r=>r.modelRank<90&&r.s22<.15)
+  .sort((a,b)=>a.modelRank-b.modelRank).slice(0,5);
+if(expectedMiracles.length&&(!turnPairText.includes('Conditional fallers')||
+    !turnPairText.includes(expectedMiracles[0].p.name)))
+  throw new Error('conditional fallers are not based on survival to pick 22');
 
 // Auto-to-my-pick in the planning bar is a read-only turn-pair preview. Use a
 // valid opening ledger, stub only rendering, and prove that neither real picks
@@ -194,6 +243,8 @@ assert(html.includes('Projection audit view (read only)')&&
   html.includes('<b>Projection</b> is the median of ESPN, CBS, and FFToday')&&
   html.includes('not a calibrated confidence grade'),
   'projection audit naming is missing or misleading');
+assert(engine.includes('const miracles=rows.filter(r=>r.modelRank<90&&r.s22<.15)'),
+  'conditional fallers must use survival to pick 22');
 assert(html.includes('id="auto"')&&html.includes('autoPickNos.push(n)')&&html.includes('function autoToMyPick'),
   'Draft-page Auto rehearsal is not connected to the marked draft ledger');
 assert(engine.includes('Math.abs(modelRank-ecrRank)')&&!engine.includes('Math.abs(modelRank-p.ecr)'),
