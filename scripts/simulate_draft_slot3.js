@@ -113,6 +113,6 @@ globalThis.RESULT_CONTROL=simulate(Math.max(1,Math.round(samples/30)),false);
 `;
 const context={console, Math, Map, Set, Array, Object, JSON, SIM_RANDOM:true, SIM_MARKET:market, SIM_SEED_NAMES:seed,
   SIM_SAMPLES:Number(process.argv[2]||6000), SIM_TRACE:process.argv[4]==='trace', localStorage:{getItem:()=>null,setItem:()=>{}}, document:{querySelector:()=>({classList:{toggle:()=>{}},textContent:'',innerHTML:'',value:'',style:{}})}};
-vm.createContext(context); vm.runInContext(engine+'\n'+harness,context,{timeout:300000});
+vm.createContext(context); vm.runInContext(engine+'\n'+harness,context,{timeout:900000});
 fs.writeFileSync(process.argv[3]||'out/draft_slot3_simulation_raw.json',JSON.stringify({market,seed,random:context.RESULT_RANDOM,control:context.RESULT_CONTROL},null,2));
 console.log(JSON.stringify({market,seed,random:context.RESULT_RANDOM,control:context.RESULT_CONTROL}));

@@ -10,9 +10,12 @@ Writes raw JSON to out/espn_league.json and prints a settings summary.
 """
 import json
 import pathlib
+import ssl
 import sys
 import urllib.error
 import urllib.request
+
+import certifi
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 CREDS = ROOT / ".espn.json"
@@ -48,7 +51,10 @@ def fetch(creds):
         "Accept": "application/json",
     })
     try:
-        with urllib.request.urlopen(req, timeout=30) as r:
+        # Python.org's macOS build may not be linked to the system CA store.
+        # certifi keeps HTTPS verification enabled with a known CA bundle.
+        context = ssl.create_default_context(cafile=certifi.where())
+        with urllib.request.urlopen(req, timeout=30, context=context) as r:
             return json.loads(r.read())
     except urllib.error.HTTPError as e:
         if e.code in (401, 403):

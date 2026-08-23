@@ -6,3 +6,13 @@
 # Generated historical inputs and Python bytecode
 .cache/
 __pycache__/
+
+# Generated analysis payloads and authenticated league snapshots
+out/*_raw.json
+out/espn_league.json
+
+# Local review inputs and scratch render artifacts
+/Draft Recap - Lava Hound League - ESPN Fantasy Football.pdf
+/ff-draft-live-icon-current.png
+out/draft_slot3_simulation_analysis.md
+scripts/render_draft_slot3_report.js
