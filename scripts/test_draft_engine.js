@@ -261,13 +261,22 @@ if(JSON.stringify(picks)!==picksBefore||JSON.stringify(queue)!==queueBefore||
 localStorage.setItem=originalSetItem;
 
 // Determinism: identical inputs and a fixed seed must give byte-identical
-// jointValue/meanBestGain27/best-27-partner output across repeated calls.
+// jointValue/meanBestVor27/best-27-partner output across repeated calls.
 const evalsB=smartQueue(sqBoard);
 if(evalsA.length!==evalsB.length||!evalsA.every((e,i)=>
   e.c22.id===evalsB[i].c22.id&&Math.abs(e.jointValue-evalsB[i].jointValue)<1e-9&&
-  Math.abs(e.meanBestGain27-evalsB[i].meanBestGain27)<1e-9&&
+  Math.abs(e.meanBestVor27-evalsB[i].meanBestVor27)<1e-9&&
   (e.best27?.id??null)===(evalsB[i].best27?.id??null)))
   throw new Error('Smart Queue is not deterministic for a fixed seed and board state');
+
+// Dimensional consistency: jointValue must be VOR@22 (the candidate's r.vor
+// from the current board) plus E[VOR@27], not raw projected value(c22) plus
+// a value-over-replacement figure -- those are different units and would
+// misrank across positions with different replacement baselines.
+if(!evalsA.every(e=>Math.abs(e.jointValue-(e.vor22+e.meanBestVor27))<1e-9))
+  throw new Error('Smart Queue jointValue is not vor22+meanBestVor27');
+if(!evalsA.every(e=>{const row=sqBoard.find(r=>r.p.id===e.c22.id);return row&&Math.abs(e.vor22-row.vor)<1e-9;}))
+  throw new Error('Smart Queue vor22 must equal the candidate current-board value-over-replacement (r.vor)');
 
 // K/DST exclusion: never a pick-22 candidate or a pick-27 fallback.
 if(evalsA.some(e=>['K','DST'].includes(e.c22.pos))||evalsA.some(e=>e.best27&&['K','DST'].includes(e.best27.pos)))
@@ -324,6 +333,87 @@ const naiveGain27=(()=>{
 const naiveJointCore=value(coreCand.p)+naiveGain27, naiveJointTe=value(teCand.p)+naiveGain27;
 if(Math.abs((naiveJointCore-naiveJointTe)-(value(coreCand.p)-value(teCand.p)))>1e-9)
   throw new Error('naive fixed-baseline gap must reduce to a pure value(c22) difference, blind to eligibility');
+
+// noEligibleTrials: zero-fallback trials (no player clears recommendation
+// eligibility for the simulated pick-27 pool/roster) must be counted and
+// exposed, not silently folded into a mean that looks like a normal number.
+if(!evalsA.every(e=>typeof e.noEligibleTrials==='number'&&e.noEligibleTrials>=0&&e.noEligibleTrials<=e.trials))
+  throw new Error('smartQueue evals must expose a valid noEligibleTrials per candidate');
+const originalRecEligibility=recommendationEligibility;
+recommendationEligibility=()=>({ok:false,reason:'test-forced-ineligible'});
+const forcedZeroJoint=jointPickEvaluation(probeCandRow.p.id,meta,12,3);
+recommendationEligibility=originalRecEligibility;
+if(forcedZeroJoint.noEligibleTrials!==12||forcedZeroJoint.meanBestVor27!==0)
+  throw new Error('jointPickEvaluation did not track noEligibleTrials when every trial has no eligible pick-27 candidate');
+const normalJoint=jointPickEvaluation(probeCandRow.p.id,meta,40,3);
+if(normalJoint.noEligibleTrials!==0)
+  throw new Error('a normal, well-stocked board should not report any zero-fallback trials');
+
+// ── Smart Queue cache key: ordered pick IDs, not just count/curPick ─────
+// Two ledgers of equal length (same curPick(), same picks.length) but
+// different actual picks (e.g. a snipe swapped a different player into the
+// same slot) must never collide on the same cache key.
+const ledgerA=picks.slice(), otherOptA=sqBoard.filter(r=>r.eligible&&!r.isSpecial&&r.p.id!==picks[picks.length-1])[0];
+const swappedLast=picks.slice(0,-1).concat([otherOptA.p.id]);
+if(swappedLast.length!==ledgerA.length)throw new Error('cache-key fixture must keep pick count identical');
+picks=ledgerA;
+const keyForLedgerA=smartQueueCacheKey();
+picks=swappedLast;
+const keyForSwappedLedger=smartQueueCacheKey();
+picks=ledgerA;
+if(curPick()!==ledgerA.length+1)throw new Error('cache-key fixture setup is wrong');
+if(keyForLedgerA===keyForSwappedLedger)
+  throw new Error('smartQueueCacheKey collided for two same-length ledgers with different actual picks');
+if(!keyForLedgerA.includes(String(ledgerA[ledgerA.length-1])))
+  throw new Error('smartQueueCacheKey does not encode the actual ordered pick IDs');
+
+// ── Smart Queue compute guard: single-flight + before/after staleness ───
+// scheduleSmartQueueCompute() is the pure orchestration the UI's Compute
+// button drives; it is exercised directly here (deferring the DOM-facing
+// requestAnimationFrame/setTimeout wrapper, which is covered by the
+// html.includes() checks below) so its guard logic is regression-tested
+// without stubbing a browser scheduler.
+let paintCalls=0;
+const capturedRuns=[];
+const captureScheduler=fn=>capturedRuns.push(fn);
+const startedFirst=scheduleSmartQueueCompute(captureScheduler,()=>{paintCalls++;});
+if(!startedFirst||!smartQueueComputing||paintCalls!==1||capturedRuns.length!==1)
+  throw new Error('scheduleSmartQueueCompute must flip smartQueueComputing and paint the Computing state immediately, before the heavy work runs');
+const startedSecond=scheduleSmartQueueCompute(captureScheduler,()=>{paintCalls++;});
+if(startedSecond||paintCalls!==1||capturedRuns.length!==1)
+  throw new Error('scheduleSmartQueueCompute must refuse a second computation while one is already in flight');
+// "Before" guard: the ledger changes while the computation is still queued
+// (captured but not yet run) -- when it finally runs, it must not overwrite
+// the cache with a result computed against the stale request key.
+smartQueueCache=null;
+picks.push(remaining().find(p=>!picks.includes(p.id)).id);
+capturedRuns[0]();
+if(smartQueueCache!==null)
+  throw new Error('a ledger change before the deferred Smart Queue computation ran must prevent it from writing the cache');
+if(smartQueueComputing)throw new Error('scheduleSmartQueueCompute must release the single-flight guard once its deferred work finishes');
+if(paintCalls!==2)throw new Error('scheduleSmartQueueCompute must paint again once the deferred work finishes');
+picks.pop();
+// "After" guard: the ledger changes DURING the (normally atomic) heavy
+// computation itself. Simulate reentrancy by monkeypatching smartQueue() to
+// mutate picks as a side effect before returning, and confirm the
+// post-computation key re-check still refuses to cache the result.
+const originalSmartQueueFn=smartQueue;
+let reentrantMutationApplied=false;
+smartQueue=function(...args){
+  const out=originalSmartQueueFn.apply(null,args);
+  if(!reentrantMutationApplied){reentrantMutationApplied=true;picks.push(remaining()[0].id);}
+  return out;
+};
+smartQueueCache=null;
+const capturedRuns2=[];
+scheduleSmartQueueCompute(fn=>capturedRuns2.push(fn),()=>{});
+capturedRuns2[0]();
+smartQueue=originalSmartQueueFn;
+if(smartQueueCache!==null)
+  throw new Error('a ledger mutation occurring during the Smart Queue computation must be caught by the post-computation guard');
+if(reentrantMutationApplied)picks.pop();
+smartQueueComputing=false;
+smartQueueCache=null;
 
 // ── Manual Queue tags: Target / Conditional / Fade ──────────────────────
 // Pure presentation metadata: never read by computeBoard()/value()/
@@ -406,10 +496,15 @@ if(restored.queueTags[tagA]!=='conditional')throw new Error('validateBackupState
 queue=[]; queueArchive=[]; queueTags={};
 
 // ── Performance: computational bound for a live 90s pick clock ─────────
+// Observed ~3.8s locally for SMART_QUEUE.candidates x SMART_QUEUE.trials.
+// The cap here is deliberately loose (not a tight perf budget) -- it exists
+// to catch an accidental O(n^2)/runaway-loop regression, not to police
+// exact timing, so it tolerates a slower/shared CI box without being flaky
+// while still leaving a large margin under the real 90s pick clock.
 const perfStart=Date.now();
 smartQueue(sqBoard);
 const perfMs=Date.now()-perfStart;
-if(perfMs>5000)throw new Error('Smart Queue took '+perfMs+'ms for '+SMART_QUEUE.candidates+' candidates x '+SMART_QUEUE.trials+' trials -- too slow for a 90s pick clock');
+if(perfMs>20000)throw new Error('Smart Queue took '+perfMs+'ms for '+SMART_QUEUE.candidates+' candidates x '+SMART_QUEUE.trials+' trials -- too slow for a 90s pick clock');
 globalThis.SMART_QUEUE_PERF_MS=perfMs;
 
 globalThis.TEST_RESULT={
@@ -472,4 +567,13 @@ assert(html.includes('id="auto"')&&html.includes('function autoToMyPick()')&&
 assert(!html.includes('NEWS today')&&!/NEWS \d+d/.test(html)&&html.includes('ESPN update ${NEWS_MONTHS'),
   'news recency is not shown as a neutral exact-date stamp');
 assert(/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/.test(html),'mobile footer button grid is stale');
+assert(html.includes('function computeSmartQueueNow(){')&&html.includes('scheduleSmartQueueCompute(fn=>{')&&
+  html.includes('requestAnimationFrame')&&html.includes('smartQueueComputing'),
+  'Smart Queue Compute must defer the heavy work via requestAnimationFrame/setTimeout through scheduleSmartQueueCompute');
+assert(html.includes('<b>Computing…</b>')&&html.includes('<button class="mini-btn" type="button" disabled>Computing…</button>'),
+  'Smart Queue must render a Computing state and disable the Compute button while a computation is in flight');
+assert(html.includes('VOR@22')&&html.includes('E[VOR@27]')&&html.includes('e.vor22.toFixed(1)')&&html.includes('e.meanBestVor27.toFixed(1)'),
+  'Smart Queue UI must present VOR@22 + E[VOR@27], not raw projected value plus a value-over-replacement figure');
+assert(html.includes('noEligibleTrials')&&html.includes('had no eligible candidate'),
+  'Smart Queue must surface a noEligibleTrials warning in the UI, not silently hide zero-fallback trials');
 console.log(JSON.stringify(result,null,2));

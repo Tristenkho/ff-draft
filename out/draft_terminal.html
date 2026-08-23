@@ -472,7 +472,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
       <p><b>ESPN update</b> plus a date under a name is only the timestamp of that player's most recent ESPN news item, shown when it landed within the last three days. It is a recency marker, not a headline and not a sentiment signal — read the actual news before acting on it.</p>
       <p><b>Winning build</b> is QB1, TE1, ten RB/WR, K1 and D/ST1. It starts with three RB/WR through Round 4, secures WR1 by Round 5, fills RB2/WR2/FLEX by Round 8, TE by Round 9, QB by Round 10, and takes K/D/ST in Rounds 13–14. QB2 and TE2 are waiver positions in this shallow format.</p>
       <p><b>1.03 turn planner</b> is a read-only advisory: it separates current pick-22 targets from players likely to survive to pick 27, then offers independent pair ideas. Those pair ideas are not a joint simulation and never change the ledger or board ranking. Conditional fallers are labeled from low survival to pick 22.</p>
-      <p><b>Smart Queue</b> is a model-generated, read-only advisory that appears once pick 22 is on the clock. Unlike the turn planner's pair ideas, it is a genuine conditional simulation: for each top pick-22 candidate it rolls forward opponent picks 23–26 with the same calibrated opponent model, then re-derives eligibility, roster state and the best pick-27 outcome against that specific resulting pool — not two independently ranked numbers added together. It never changes the ledger, board ranking or your manual Queue; press Compute to run it (it does not run automatically on every render).</p>
+      <p><b>Smart Queue</b> is a model-generated, read-only advisory that appears once pick 22 is on the clock. Unlike the turn planner's pair ideas, it is a genuine conditional simulation: for each top pick-22 candidate it rolls forward opponent picks 23–26 with the same calibrated opponent model, then re-derives eligibility, roster state and the best pick-27 outcome against that specific resulting pool — not two independently ranked numbers added together. Candidates are ranked by VOR@22 + E[VOR@27], both value-over-replacement figures, which is a different quantity from the Pick Board's wait-cost/VONA gain (value vs. your next pick) — the two numbers are not directly comparable. It never changes the ledger, board ranking or your manual Queue; press Compute to run it (it does not run automatically on every render, and while it is running the button is disabled and shows Computing…).</p>
       <p><b>Draft</b> keeps the top eight candidates in the first screen and lets you scroll through the full ranking below them. On the Pick Board, press <b>1–8</b> to record one of those top eight, type an unambiguous name and press Enter, or click any player row. A partial name matching multiple players will never record automatically. Model, Projection, ECR and ADP are read-only audit views; switch back to the Pick Board before recording. A large Model/ECR gap is labeled projection-led or consensus-led for review; it does not change rank weights. <b>Auto to my pick</b> and <b>Ctrl/Cmd Enter</b> rehearse opponent picks through your next turn; simulated picks are marked <b>~</b> in the same ledger and Copy state, so reset the draft before using it live. Snake remains the planning-only board for comparing whole-room scenarios. While this guide is open the board is locked — nothing can be recorded or undone.</p>
       <p><b>Queue</b> is manual and persisted — your explicit override layer, separate from any model advisory. Use + on a Pick Board row, reorder targets under Room / Queue, and use Pick there only while you are on the clock. Tag a queued entry <b>Target</b>, <b>Conditional</b>, or <b>Fade</b> for your own bookkeeping; tags persist, export, and survive Reset with the entry, but never influence Model rank, wait cost, or survival. A queued player who fails the recommendation guardrails, or a Fade tagged on a current Smart Queue candidate, is flagged in the queue row so the conflict is visible before you draft it. Opponent picks move queued targets to Recently sniped, tag included; Undo reactivates them. Backup JSON copies a machine-restorable snapshot, and Import validates it before replacing local state. Reset draft preserves the queue and its tags.</p>
       <p>Record every real pick here. Copy state on your turn and paste it to Codex or Claude for a current-news top three. K/DST stay out of wait-cost ranking and are prioritized in rounds 13–14.</p>
@@ -15269,7 +15269,9 @@ let slot=3, lambda=0.40, ecrWeight=.35, picks=[], autoPickNos=[], queue=[], queu
 // (see save()) and never read by any ranking function. Keyed so a stale
 // cache (from before the most recent pick, a lambda/ECR change, etc.) is
 // never shown as current; see smartQueueCacheKey()/computeSmartQueueNow().
-let smartQueueCache=null;
+// smartQueueComputing gates the single in-flight computation (see
+// scheduleSmartQueueCompute()) and drives the "Computing…" UI state.
+let smartQueueCache=null, smartQueueComputing=false;
 const byId=new Map(PLAYERS.map(p=>[p.id,p]));
 const decisionInputActive=()=>view==='prep'&&sortBy==='gain';
 const STORAGE_KEY='ff26-v3';
@@ -15707,11 +15709,16 @@ function simulateForward(basePicks,fromPick,toPick,meta,rng){
 // eligibility all depend on which player was actually taken at 22. Horizon
 // is fixed at 23-26 -> 27 (see smartQueue()); it does not extend to a
 // hypothetical pick after 27.
+// noEligibleTrials counts trials where NO player cleared recommendation
+// eligibility for the resulting pick-27 pool/roster (a structural
+// zero-fallback, not noise). It is surfaced to the UI rather than silently
+// folded into the mean — see smartQueue()/smartQueueBox().
 function jointPickEvaluation(c22Id,meta,trials=SMART_QUEUE.trials,seed=SMART_QUEUE.seed){
   const rng=mulberry32(seed);
   const base=picks.concat([c22Id]);
   const round27=Math.ceil(27/TEAMS);
   const gains=[], topOptions=new Map();
+  let noEligibleTrials=0;
   for(let t=0;t<trials;t++){
     const forward=simulateForward(base,23,26,meta,rng);
     const mine=myPicks().filter(pk=>pk<=26).map(pk=>byId.get(forward[pk-1])).filter(Boolean);
@@ -15719,40 +15726,84 @@ function jointPickEvaluation(c22Id,meta,trials=SMART_QUEUE.trials,seed=SMART_QUE
     const skill=forecastPool.filter(p=>POS.includes(p.pos));
     const {rep}=replacement(skill);
     const rows=skill.filter(p=>recommendationEligibility(p,mine,round27).ok);
-    if(!rows.length){gains.push(0); continue;}
+    if(!rows.length){gains.push(0); noEligibleTrials++; continue;}
     let best=null,bestGain=-Infinity;
     rows.forEach(p=>{const g=value(p)-(rep[p.pos]||0); if(g>bestGain){bestGain=g;best=p;}});
     gains.push(bestGain);
     if(best)topOptions.set(best.id,(topOptions.get(best.id)||0)+1);
   }
-  const meanBestGain27=gains.reduce((a,b)=>a+b,0)/gains.length;
-  return {c22Id,meanBestGain27,topOptions,trials};
+  const meanBestVor27=gains.reduce((a,b)=>a+b,0)/gains.length;
+  return {c22Id,meanBestVor27,topOptions,trials,noEligibleTrials};
 }
 // Orchestrator: evaluates the top SMART_QUEUE.candidates board rows as
-// pick-22 options and ranks them by jointValue = value(c22) + simulated
-// E[best pick-27 gain | that c22]. Read-only advisory: never calls draft(),
-// toggleQueue(), or mutates picks/queue/queueArchive/autoPickNos. Only
-// meaningful for the fixed 1.03 turn (slot 3, picks 22/27) at the exact
-// moment pick 22 is on the clock — before that, "candidates at 22" cannot
-// yet be grounded in the live board, and after it the decision is already
-// made.
+// pick-22 options and ranks them by jointValue = VOR@22 (r.vor, the
+// candidate's value over replacement on the CURRENT board) + simulated
+// E[VOR@27 of the best available player | that c22]. Both terms are value
+// OVER REPLACEMENT so they are dimensionally comparable across positions
+// with different replacement baselines -- unlike Pick Board wait-cost/VONA
+// gain (value minus the expected best-at-my-NEXT-pick, a different
+// quantity), Smart Queue's jointValue is a value-over-replacement pair
+// utility and the two are not interchangeable. Read-only advisory: never
+// calls draft(), toggleQueue(), or mutates picks/queue/queueArchive/
+// autoPickNos. Only meaningful for the fixed 1.03 turn (slot 3, picks
+// 22/27) at the exact moment pick 22 is on the clock — before that,
+// "candidates at 22" cannot yet be grounded in the live board, and after it
+// the decision is already made.
 function smartQueue(boardRows){
   if(slot!==3||curPick()!==22)return null;
   const meta=modelMeta();
   const cands=boardRows.filter(r=>r.eligible&&!r.isSpecial).sort(boardDecisionCompare).slice(0,SMART_QUEUE.candidates);
   const evals=cands.map(r=>{
-    const {meanBestGain27,topOptions,trials}=jointPickEvaluation(r.p.id,meta,SMART_QUEUE.trials,SMART_QUEUE.seed);
-    const value22=value(r.p);
+    const {meanBestVor27,topOptions,trials,noEligibleTrials}=jointPickEvaluation(r.p.id,meta,SMART_QUEUE.trials,SMART_QUEUE.seed);
+    const vor22=r.vor;
     const ranked27=[...topOptions.entries()].sort((a,b)=>b[1]-a[1]||a[0]-b[0]);
     const best27Id=ranked27[0]?.[0]??null;
     return {
-      c22:r.p, value22, meanBestGain27, jointValue:value22+meanBestGain27,
+      c22:r.p, vor22, meanBestVor27, jointValue:vor22+meanBestVor27,
       surv22:r.surv, best27:best27Id!=null?byId.get(best27Id):null,
-      best27Share:best27Id!=null?ranked27[0][1]/trials:0, trials
+      best27Share:best27Id!=null?ranked27[0][1]/trials:0, trials, noEligibleTrials
     };
   });
   evals.sort((a,b)=>b.jointValue-a.jointValue);
   return evals;
+}
+// smartQueueCacheKey/scheduleSmartQueueCompute live in the engine (not the
+// render section below) purely so the node test harness -- which extracts
+// everything up to "── render" as the testable engine slice -- can exercise
+// the cache-key and compute-guard logic directly, without stubbing
+// requestAnimationFrame/DOM. See computeSmartQueueNow() for the real
+// browser-facing wrapper.
+//
+// Keyed on the actual ordered pick IDs (picks.join(',')), not just
+// picks.length/curPick(): two ledgers of identical length but different
+// picks (a snipe swapped in, an undo reordering) must never share a cached
+// Smart Queue answer.
+function smartQueueCacheKey(){return `${picks.join(',')}|${lambda}|${ecrWeight}|${slot}`;}
+// Single-flight compute guard: refuses to start a second computation while
+// one is already in flight (the caller/UI uses this to disable the Compute
+// button), and re-checks the request key both BEFORE the heavy work starts
+// and AFTER it finishes, so a ledger/settings change that lands while the
+// computation is queued or running can never write a stale result into the
+// live cache. scheduler(fn) is called exactly once with the heavy
+// synchronous work; production passes a rAF+setTimeout double-defer so the
+// "Computing…" paint (triggered by the first onPaint() call, before
+// scheduler runs) actually reaches the screen before the multi-second
+// simulation blocks the main thread. Returns false without side effects if
+// a computation was already in flight.
+function scheduleSmartQueueCompute(scheduler,onPaint){
+  if(smartQueueComputing)return false;
+  smartQueueComputing=true;
+  const requestKey=smartQueueCacheKey();
+  onPaint();
+  scheduler(()=>{
+    if(smartQueueCacheKey()===requestKey){
+      const evals=smartQueue(computeBoard());
+      if(smartQueueCacheKey()===requestKey)smartQueueCache={key:requestKey,evals};
+    }
+    smartQueueComputing=false;
+    onPaint();
+  });
+  return true;
 }
 
 // Draft-page rehearsal: simulated opponent picks are marked and remain in the
@@ -16186,17 +16237,30 @@ function urgency(r){
 // ── render ───────────────────────────────────────────────────────
 // Smart Queue is expensive relative to a keystroke-driven render(), so it is
 // never recomputed automatically. It is cached under a key of the inputs
-// that could change its answer; render() only ever displays a cache hit and
-// otherwise shows a manual "Compute" prompt (see smartQueueBox()).
-function smartQueueCacheKey(){return `${curPick()}|${picks.length}|${lambda}|${ecrWeight}|${slot}`;}
+// that could change its answer (smartQueueCacheKey(), defined in the engine
+// above); render() only ever displays a cache hit, a "Computing…" state, or
+// a manual "Compute" prompt (see smartQueueBox()).
+//
+// The heavy simulation is fully synchronous and can run for multiple
+// seconds, which would otherwise freeze the tab with no feedback: this
+// wrapper defers the actual work behind requestAnimationFrame+setTimeout(0)
+// so the "Computing…" state committed by the render() just before it has a
+// chance to paint first. scheduleSmartQueueCompute() (engine section) does
+// the single-flight + stale-result guarding; this function only supplies
+// the real browser scheduler.
 function computeSmartQueueNow(){
-  smartQueueCache={key:smartQueueCacheKey(),evals:smartQueue(computeBoard())};
-  render();
+  scheduleSmartQueueCompute(fn=>{
+    if(typeof requestAnimationFrame==='function')requestAnimationFrame(()=>setTimeout(fn,0));
+    else setTimeout(fn,0);
+  },render);
 }
 function smartQueueBox(boardRows){
   if(slot!==3||curPick()!==22)return '';
   const eyebrow=`Smart Queue · joint 22/27 simulation (N=${SMART_QUEUE.trials} trials) · read-only advisory`;
-  const intro='Simulates opponent picks 23–26 for each pick-22 candidate with the same calibrated opponent model used elsewhere, then re-derives the best pick-27 outcome against the resulting roster and pool — a real conditional simulation, not two independently ranked numbers added together.';
+  const intro='Simulates opponent picks 23–26 for each pick-22 candidate with the same calibrated opponent model used elsewhere, then re-derives the best pick-27 outcome against the resulting roster and pool — a real conditional simulation, not two independently ranked numbers added together. Ranked by VOR@22 + E[VOR@27], both value-over-replacement figures; this is a different quantity from the Pick Board\'s wait-cost/VONA gain (value vs. your NEXT pick), so do not compare the two numbers directly.';
+  if(smartQueueComputing){
+    return `<div class="runbox smart-queue"><div class="eyebrow" style="margin-bottom:5px">${eyebrow}</div><div class="t">${intro}<br><b>Computing…</b> this can take a few seconds.<button class="mini-btn" type="button" disabled>Computing…</button></div></div>`;
+  }
   const key=smartQueueCacheKey();
   const cached=smartQueueCache&&smartQueueCache.key===key?smartQueueCache.evals:null;
   if(!cached){
@@ -16208,7 +16272,9 @@ function smartQueueBox(boardRows){
     const queued=queueContains(e.c22.id), tag=queueTags[e.c22.id];
     const flags=`${queued?' <span class="flag">queued</span>':''}${tag?` <span class="flag qtag-${tag}">${tag}</span>`:''}`;
     const partner=e.best27?`${e.best27.name} ${e.best27.pos} (${Math.round(e.best27Share*100)}% of trials)`:'no consistent partner';
-    return `<div class="sqrow"><b>${e.c22.name}</b> ${e.c22.pos}${flags} · value ${e.value22.toFixed(1)} + E[best@27] ${e.meanBestGain27.toFixed(1)} = <b>${e.jointValue.toFixed(1)}</b> <button class="rowaction ${queued?'on':''}" type="button" data-action="toggle-queue" data-id="${e.c22.id}" aria-pressed="${queued}" aria-label="${queued?`Remove ${e.c22.name} from queue`:`Add ${e.c22.name} to queue`}">${queued?'Q':'+'}</button><br><small>survives to 22: ${Math.round((e.surv22||0)*100)}% · likely pick-27 partner if taken: ${partner}</small></div>`;
+    const fallbackWarn=e.noEligibleTrials>0
+      ?`<br><span class="flag conflict-consensus">${e.noEligibleTrials}/${e.trials} simulated pick-27 scenarios had no eligible candidate (counted as 0)</span>`:'';
+    return `<div class="sqrow"><b>${e.c22.name}</b> ${e.c22.pos}${flags} · VOR@22 ${e.vor22.toFixed(1)} + E[VOR@27] ${e.meanBestVor27.toFixed(1)} = <b>${e.jointValue.toFixed(1)}</b> <button class="rowaction ${queued?'on':''}" type="button" data-action="toggle-queue" data-id="${e.c22.id}" aria-pressed="${queued}" aria-label="${queued?`Remove ${e.c22.name} from queue`:`Add ${e.c22.name} to queue`}">${queued?'Q':'+'}</button><br><small>survives to 22: ${Math.round((e.surv22||0)*100)}% · likely pick-27 partner if taken: ${partner}</small>${fallbackWarn}</div>`;
   }).join('');
   return `<div class="runbox smart-queue"><div class="eyebrow" style="margin-bottom:5px">${eyebrow}</div><div class="t">${intro}${rows}<button class="mini-btn" type="button" data-action="smart-queue-compute">Recompute</button></div></div>`;
 }
