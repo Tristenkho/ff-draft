@@ -311,6 +311,9 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
   .band{font-size:12px;min-width:21px;padding:1px 5px}.waitcost{font-size:10px}
   .slots{padding:8px}.slotrow{min-height:38px;font-size:14px}.needs{font-size:12px}
   .rr{padding:10px;overscroll-behavior:contain}
+  /* Queue controls are draft-day touch targets on phones, not desktop-sized
+     utility buttons. Keep every tag/reorder action comfortably tappable. */
+  .qcontrols>.queue-btn,.qcontrols>.queue-reorder,.qtags .queue-btn{min-width:40px;min-height:40px}
   .snake-layout-label{display:block}
   .snakegrid{display:none;grid-template-columns:30px repeat(12,90px);min-width:1110px}
   #board.snakeboard[data-snake-view="grid"] .snakegrid{display:grid}
