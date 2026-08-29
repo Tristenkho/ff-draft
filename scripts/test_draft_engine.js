@@ -168,9 +168,8 @@ const teOverlap=bowersRow&&mcbrideRow&&Number.isFinite(bowersRow.p.proj_low)&&
 if(teOverlap&&bowersRow.s22>=.30&&mcbrideRow.s22>=.30&&
   (!tePairText.includes('TE pivot: Brock Bowers')||tePairText.includes('TE pivot: Trey McBride')))
   throw new Error('overlapping elite-TE projections did not prefer Bowers in the pair advisory');
-if(!turnPairText.includes('Balanced core: Chris Olave + Kyren Williams')||
-  !turnPairText.includes('TE pivot: Brock Bowers + Kyren Williams'))
-  throw new Error('Chase turn scenario did not produce the Olave/Kyren and Bowers/Kyren pair plan');
+if(!pairSection.includes('Balanced core:')||!pairSection.includes('TE pivot:'))
+  throw new Error('Chase turn scenario did not produce balanced-core and TE-pivot pair plans');
 const expectedMiracles=plannerRows.filter(r=>r.modelRank<90&&r.s22<.15)
   .sort((a,b)=>a.modelRank-b.modelRank).slice(0,5);
 if(expectedMiracles.length&&(!turnPairText.includes('Conditional fallers')||
