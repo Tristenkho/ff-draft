@@ -1,6 +1,6 @@
 # Early-season special-teams streaming board
 
-Generated from ESPN's authenticated weekly projections retrieved 2026-08-29 and scored under this league's custom settings.
+Generated from ESPN's authenticated weekly projections retrieved 2026-08-30 and scored under this league's custom settings.
 
 ## Draft policy
 
@@ -13,11 +13,11 @@ Generated from ESPN's authenticated weekly projections retrieved 2026-08-29 and 
 
 | Rank | Defense | Team | W1 opp | W1 pts | W2 opp | W2 pts | W3 opp | W3 pts | Season | ECR pos |
 | ---: | --- | --- | --- | ---: | --- | ---: | --- | ---: | ---: | ---: |
-| 1 | Seahawks D/ST | SEA | vs NE | 7.1 | @ ARI | 7.7 | @ WAS | 6.4 | 122.3 | 3 |
+| 1 | Seahawks D/ST | SEA | vs NE | 7.1 | @ ARI | 7.7 | @ WAS | 6.4 | 122.3 | 4 |
 | 2 | Steelers D/ST | PIT | vs ATL | 7.5 | @ NE | 5.9 | vs CIN | 6.3 | 122.7 | 8 |
 | 3 | Chargers D/ST | LAC | vs ARI | 7.5 | vs LV | 6.8 | @ BUF | 3.4 | 94.8 | 9 |
 | 4 | Ravens D/ST | BAL | @ IND | 6.8 | vs NO | 6.9 | @ DAL | 4.6 | 120.0 | 12 |
-| 5 | Rams D/ST | LAR | vs SF | 6.0 | vs NYG | 7.1 | @ DEN | 5.9 | 121.9 | 4 |
+| 5 | Rams D/ST | LAR | vs SF | 6.0 | vs NYG | 7.1 | @ DEN | 5.9 | 121.9 | 3 |
 | 6 | Lions D/ST | DET | vs NO | 7.4 | @ BUF | 3.9 | vs NYJ | 8.1 | 107.8 | 14 |
 | 7 | Eagles D/ST | PHI | vs WAS | 6.1 | @ TEN | 6.8 | @ CHI | 4.7 | 106.7 | 6 |
 | 8 | Broncos D/ST | DEN | @ KC | 5.7 | vs JAX | 6.9 | vs LAR | 4.5 | 130.6 | 2 |
@@ -26,9 +26,9 @@ Generated from ESPN's authenticated weekly projections retrieved 2026-08-29 and 
 | 11 | Bears D/ST | CHI | @ CAR | 6.6 | vs MIN | 6.0 | vs PHI | 5.2 | 89.0 | 21 |
 | 12 | Packers D/ST | GB | @ MIN | 5.4 | @ NYJ | 6.5 | vs ATL | 5.9 | 90.3 | 13 |
 | 13 | Chiefs D/ST | KC | vs DEN | 5.2 | vs IND | 6.1 | @ MIA | 6.3 | 100.4 | 11 |
-| 14 | Titans D/ST | TEN | vs NYJ | 6.7 | vs PHI | 4.5 | @ NYG | 4.2 | 66.7 | 26 |
+| 14 | Titans D/ST | TEN | vs NYJ | 6.7 | vs PHI | 4.5 | @ NYG | 4.2 | 66.7 | 27 |
 | 15 | Buccaneers D/ST | TB | @ CIN | 4.4 | vs CLE | 7.9 | vs MIN | 5.8 | 92.8 | 25 |
-| 16 | Jets D/ST | NYJ | @ TEN | 6.5 | vs GB | 4.2 | @ DET | 3.3 | 84.5 | 31 |
+| 16 | Jets D/ST | NYJ | @ TEN | 6.5 | vs GB | 4.2 | @ DET | 3.3 | 84.5 | 30 |
 
 ## Kicker draft/fallback board
 

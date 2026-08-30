@@ -12,6 +12,7 @@ import re
 import ssl
 import statistics
 import unicodedata
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -63,8 +64,17 @@ def download(url: str, path: Path, refresh: bool) -> str:
         path.parent.mkdir(parents=True, exist_ok=True)
         request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 ff-draft-projection-refresh"})
         context = ssl.create_default_context(cafile=certifi.where())
-        with urllib.request.urlopen(request, timeout=120, context=context) as response:
-            path.write_bytes(response.read())
+        try:
+            with urllib.request.urlopen(request, timeout=120, context=context) as response:
+                path.write_bytes(response.read())
+        except (urllib.error.HTTPError, urllib.error.URLError):
+            # A source may throttle a second same-day refresh. Reuse only a
+            # complete artifact retrieved today; never stamp an older cache as
+            # fresh. The caller's normal parser/shape checks still apply.
+            same_day = (path.exists() and path.stat().st_size >= 1000
+                        and cache_date(path) == dt.date.today().isoformat())
+            if not same_day:
+                raise
     return path.read_text(errors="replace")
 
 

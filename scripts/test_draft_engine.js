@@ -132,6 +132,10 @@ if(!conditionalFaller||!realisticFaller||
 
 if(SAME_BAND_TIEBREAK!=='consensus')
   throw new Error('same-band planner tiebreak is not explicitly consensus-first');
+const syntheticConsensusFirst={vonaTier:4,ecrRank:10,modelRank:30,decisionRank:30,gain:1};
+const syntheticModelFirst={vonaTier:4,ecrRank:20,modelRank:1,decisionRank:1,gain:20};
+if(boardDecisionCompare(syntheticConsensusFirst,syntheticModelFirst)>=0)
+  throw new Error('consensus tiebreak does not actually put lower ECR first inside one wait band');
 const turnPairBefore=JSON.stringify(picks),turnPairText=turnPairPlanner(pairRows);
 if(JSON.stringify(picks)!==turnPairBefore||!turnPairText.includes('1.03 turn planner')||
   !turnPairText.includes('picks 22/27')||!turnPairText.includes('read-only advisory')||
@@ -188,12 +192,35 @@ if(JSON.stringify(picks)!==realBefore||JSON.stringify(autoPickNos)!==autoBefore|
   mockPicks[2]!==chase.id||new Set(mockPicks.filter(Boolean)).size!==mockPicks.filter(Boolean).length)
   throw new Error('turn-pair planner changed or mixed the real draft ledger');
 
-const oldStatus=puka.status;
-puka.status='OUT';picks=[gibbs.id,bijan.id];
-const outRow=computeBoard().find(r=>r.p.id===puka.id);
-puka.status=oldStatus;
-if(outRow.eligible||outRow.surv!==0||outRow.vonaTier!==999)
-  throw new Error('unavailable player leaked into recommendation/forecast modeling');
+const jacobs=playerNamed('Josh Jacobs'),lloyd=playerNamed('MarShawn Lloyd');
+picks=[gibbs.id,bijan.id];
+const jacobsRow=computeBoard().find(r=>r.p.id===jacobs.id);
+if(jacobs.status!=='COMMISSIONER_EXEMPT'||!jacobs.availability_note?.includes('cannot practice or play')||
+  !jacobs.availability_url?.includes('nfl.com')||modelDraftable(jacobs)||jacobsRow.eligible||
+  jacobsRow.surv!==0||jacobsRow.vonaTier!==999||!jacobsRow.blockedReason.includes('no return timetable'))
+  throw new Error('authoritative Jacobs availability override is missing or leaked into forecast modeling');
+if(!modelDraftable(lloyd))throw new Error('MarShawn Lloyd was incorrectly removed with Jacobs');
+// Slot-3 thesis rails preserve VONA but narrow roster choices at the stated
+// deadlines. A WR opener must leave 22/27 with RB1; two-WR starts must have
+// RB1 by 51 and RB2 by 75.
+const allen=playerNamed('Josh Allen');
+const liveRb=PLAYERS.find(p=>p.pos==='RB'&&modelDraftable(p)&&![gibbs.id,bijan.id].includes(p.id));
+if(!liveRb)throw new Error('no draftable RB available for thesis fixtures');
+const bowersFixture=playerNamed('Brock Bowers');
+const allenAt27=recommendationEligibility(allen,[chase,bowersFixture],3,27),rbAt27=recommendationEligibility(liveRb,[chase,bowersFixture],3,27);
+if(allenAt27.ok||!rbAt27.ok)
+  throw new Error('WR-at-1.03 fixture does not force RB1 at pick 27: '+JSON.stringify({allenAt27,rbAt27,rb:liveRb.name,slot}));
+if(!recommendationEligibility(allen,[chase,liveRb],3,27).ok)
+  throw new Error('taking RB at 22 did not release the pick-27 RB guardrail');
+const wrHeavyNoRb=[chase,puka,bowersFixture,allen];
+if(recommendationEligibility(playerNamed('Jaxon Smith-Njigba'),wrHeavyNoRb,5,51).ok||
+  !recommendationEligibility(liveRb,wrHeavyNoRb,5,51).ok)
+  throw new Error('two-WR start does not repair RB1 by pick 51');
+const secondRb=PLAYERS.find(p=>p.pos==='RB'&&modelDraftable(p)&&p.id!==liveRb.id);
+const wrHeavyWithRb=[chase,puka,liveRb,bowersFixture,allen,playerNamed('Jaylen Waddle')];
+if(recommendationEligibility(playerNamed('Jaxon Smith-Njigba'),wrHeavyWithRb,7,75).ok||
+  !recommendationEligibility(secondRb,wrHeavyWithRb,7,75).ok)
+  throw new Error('two-WR start does not secure RB2 by pick 75');
 
 picks=[];autoPickNos=[];autoOppUntilMineForTest();
 const selected=[];
@@ -267,6 +294,8 @@ if(evalsA.length!==evalsB.length||!evalsA.every((e,i)=>
   Math.abs(e.meanBestVor27-evalsB[i].meanBestVor27)<1e-9&&
   (e.best27?.id??null)===(evalsB[i].best27?.id??null)))
   throw new Error('Smart Queue is not deterministic for a fixed seed and board state');
+if(!evalsA.length||evalsA[0].c22.pos==='QB')
+  throw new Error('joint 22/27 thesis still ranks an early QB first');
 
 // Dimensional consistency: jointValue must be VOR@22 (the candidate's r.vor
 // from the current board) plus E[VOR@27], not raw projected value(c22) plus
@@ -299,14 +328,14 @@ if(!evalsWithQueue.every((e,i)=>Math.abs(e.jointValue-evalsA[i].jointValue)<1e-9
 // jointValue a genuine conditional evaluation rather than value(c22) plus a
 // fixed, c22-independent pick-27 number.
 const round27=Math.ceil(27/TEAMS);
-const coreCand=sqBoard.find(r=>r.eligible&&!r.isSpecial&&(r.p.pos==='RB'||r.p.pos==='WR')&&r.p.id!==pick3Row.p.id);
+const coreCand=sqBoard.find(r=>r.eligible&&!r.isSpecial&&r.p.pos==='RB'&&r.p.id!==pick3Row.p.id);
 const teCand=sqBoard.find(r=>r.eligible&&!r.isSpecial&&r.p.pos==='TE');
 if(!coreCand||!teCand)throw new Error('Smart Queue fixture needs both an RB/WR and a TE candidate at pick 22');
 const probeQb=remaining().find(p=>p.pos==='QB'&&p.id!==coreCand.p.id&&p.id!==teCand.p.id&&modelDraftable(p));
 if(!probeQb)throw new Error('no probe QB available for the eligibility re-check test');
-const eligBeforeC22=recommendationEligibility(probeQb,[pick3Row.p],round27);
-const eligAfterCoreC22=recommendationEligibility(probeQb,[pick3Row.p,coreCand.p],round27);
-const eligAfterTeC22=recommendationEligibility(probeQb,[pick3Row.p,teCand.p],round27);
+const eligBeforeC22=recommendationEligibility(probeQb,[pick3Row.p],round27,27);
+const eligAfterCoreC22=recommendationEligibility(probeQb,[pick3Row.p,coreCand.p],round27,27);
+const eligAfterTeC22=recommendationEligibility(probeQb,[pick3Row.p,teCand.p],round27,27);
 if(eligBeforeC22.ok||eligAfterTeC22.ok||!eligAfterCoreC22.ok)
   throw new Error('pick-22 candidate eligibility narrowing/widening at pick 27 is not being recomputed per-candidate');
 // The onesie (TE) candidate's simulated pick-27 pool must NEVER include a
@@ -326,7 +355,7 @@ const naiveGain27=(()=>{
   const forecastPool=PLAYERS.filter(p=>!picks.includes(p.id)&&modelDraftable(p));
   const skill=forecastPool.filter(p=>POS.includes(p.pos));
   const {rep}=replacement(skill);
-  const rows=skill.filter(p=>recommendationEligibility(p,[pick3Row.p],round27).ok);
+  const rows=skill.filter(p=>recommendationEligibility(p,[pick3Row.p],round27,27).ok);
   return rows.reduce((best,p)=>Math.max(best,value(p)-(rep[p.pos]||0)),-Infinity);
 })();
 const naiveJointCore=value(coreCand.p)+naiveGain27, naiveJointTe=value(teCand.p)+naiveGain27;
@@ -551,6 +580,7 @@ globalThis.TEST_RESULT={
   puka:{projection:puka.proj,value:+pukaRow.v.toFixed(2),vona:+pukaRow.gain.toFixed(2),tier:pukaRow.vonaTier,market:puka.market_adp,marketSd:puka.adp_sd},
   chase:{projection:chase.proj,value:+chaseRow.v.toFixed(2),vona:+chaseRow.gain.toFixed(2),tier:chaseRow.vonaTier,market:chase.market_adp,marketSd:chase.adp_sd},
   expertPanel:ECR_META,
+  smartQueueTop:evalsA.slice(0,6).map(e=>({pick22:e.c22.name,pos:e.c22.pos,joint:+e.jointValue.toFixed(1),best27:e.best27?.name||null})),
   deterministicBuild:counts,
   deterministicPicks:selected.map(p=>p.name)
 };
@@ -572,6 +602,15 @@ assert(html.includes('Projection audit view (read only)')&&
   html.includes('<b>Projection</b> is the median of ESPN, CBS, and FFToday')&&
   html.includes('not a calibrated confidence grade'),
   'projection audit naming is missing or misleading');
+assert(html.includes('AUTHORITATIVE AVAILABILITY OVERRIDES')&&
+  html.includes('Removed from projections, opponent forecasts, survival and recommendations'),
+  'Copy state does not expose authoritative availability overrides');
+assert(html.includes('function thesisConfirmation(player,pickNo)')&&
+  html.includes('Recommendation guardrail: ${eligibility.reason}.')&&
+  html.includes('Compute Smart Queue before choosing; the simple board does not evaluate pick 22 and 27 jointly.')&&
+  html.includes("openingThesis?'Thesis top 3':'Board top 3'")&&
+  html.includes('Current-news safety order; the board below remains the unchanged VONA audit.'),
+  'draft-thesis override confirmation or joint-turn focus is missing');
 assert(engine.includes('const miracles=rows.filter(r=>r.modelRank<90&&r.s22<.15)'),
   'conditional fallers must use survival to pick 22');
 assert(html.includes('id="auto"')&&html.includes('autoPickNos.push(n)')&&html.includes('function autoToMyPick'),

@@ -52,6 +52,25 @@ BYE_BY_TEAM = {
     "ARI": 14, "DAL": 14,
 }
 
+# ESPN can lag official league transactions. These narrow, dated overrides
+# keep confirmed availability facts authoritative without guessing a return
+# date or changing the player's projection. Remove/update an entry as soon as
+# the cited league status changes.
+AUTHORITATIVE_AVAILABILITY = {
+    4047365: {
+        "status": "COMMISSIONER_EXEMPT",
+        "availability_note": "Commissioner's Exempt List — cannot practice or play; no return timetable",
+        "availability_updated": "2026-08-30",
+        "availability_source": "NFL",
+        "availability_url": "https://www.nfl.com/news/nfl-places-packers-rb-josh-jacobs-commissioner-exempt-list",
+    },
+}
+AUTHORITATIVE_TEAM = {
+    # Acquired by Green Bay on 2026-08-30; ESPN's player team can lag trades.
+    4819231: "GB",  # Kaleb Johnson
+}
+REQUIRED_SKILL_PLAYERS = {"Kaleb Johnson", "Chris Brooks"}
+
 
 def fetch(url: str, path: Path, refresh: bool, headers: dict | None = None) -> str:
     if refresh or not path.exists() or path.stat().st_size < 1000:
@@ -197,7 +216,7 @@ def candidate(row: dict, fp_by_name: dict[str, dict], ffc_by_player: dict[tuple[
               ffc_meta: dict, old_by_id: dict[int, dict]) -> dict | None:
     p = row["player"]
     position = POSITION_ID.get(p.get("defaultPositionId"))
-    team = TEAM_BY_ID.get(p.get("proTeamId"))
+    team = AUTHORITATIVE_TEAM.get(p["id"], TEAM_BY_ID.get(p.get("proTeamId")))
     if not position or not team:
         return None
     fp = fp_by_name.get(ensemble.normalize(p["fullName"]))
@@ -224,7 +243,7 @@ def candidate(row: dict, fp_by_name: dict[str, dict], ffc_by_player: dict[tuple[
     old_adp = float(old.get("adp_prev" if same_day else "espn_adp", old.get("adp", espn_adp)))
     old_adp_delta = espn_adp - old_adp
     sd = projection * ensemble.CEILING_RATE[position]
-    return {
+    result = {
         "id": p["id"], "name": p["fullName"], "pos": position, "team": team,
         "bye": BYE_BY_TEAM[team], "status": p.get("injuryStatus") or "ACTIVE",
         "injured": bool(p.get("injured")), "last_news": p.get("lastNewsDate"),
@@ -248,6 +267,8 @@ def candidate(row: dict, fp_by_name: dict[str, dict], ffc_by_player: dict[tuple[
         "ecr_pos": position_rank(fp, position), "fp_ranked": bool(fp),
         "percent_owned": round(float(ownership.get("percentOwned") or 0), 1),
     }
+    result.update(AUTHORITATIVE_AVAILABILITY.get(p["id"], {}))
+    return result
 
 
 def choose_pool(candidates: list[dict]) -> list[dict]:
@@ -258,6 +279,11 @@ def choose_pool(candidates: list[dict]) -> list[dict]:
         useful.sort(key=lambda p: (min(p["ecr"], p["room_rank"]), p["room_rank"], -p["percent_owned"], -p["proj"], p["name"]))
         group = useful + [p for p in group if p not in useful]
         output.extend(group[:quota])
+
+    # Keep newly relevant depth-chart players searchable even before their
+    # projection/ownership rises enough to clear the fixed positional quota.
+    chosen = {p["id"] for p in output}
+    output.extend(p for p in candidates if p["name"] in REQUIRED_SKILL_PLAYERS and p["id"] not in chosen)
 
     # One projected kicker per NFL team; all 32 team defenses.
     kickers = defaultdict(list)
