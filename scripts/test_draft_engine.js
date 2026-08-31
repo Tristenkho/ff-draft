@@ -200,6 +200,20 @@ if(jacobs.status!=='COMMISSIONER_EXEMPT'||!jacobs.availability_note?.includes('c
   jacobsRow.surv!==0||jacobsRow.vonaTier!==999||!jacobsRow.blockedReason.includes('no return timetable'))
   throw new Error('authoritative Jacobs availability override is missing or leaked into forecast modeling');
 if(!modelDraftable(lloyd))throw new Error('MarShawn Lloyd was incorrectly removed with Jacobs');
+// Qualitative sleeper research is a dated advisory layer, not another hidden
+// score. Every target must be in the player pool, cite independent families,
+// and map to one of our actual skill-position picks.
+const mySkillPicks=new Set([3,22,27,46,51,70,75,94,99,118,123,142]);
+for(const [name,target] of Object.entries(TARGET_THESIS.players)){
+  const p=playerNamed(name);
+  if(!p||target.sources.length<TARGET_THESIS.minimumIndependentSources||
+    !target.picks.length||target.picks.some(pick=>!mySkillPicks.has(pick)))
+    throw new Error('invalid target-thesis entry for '+name);
+}
+const watsonTarget=TARGET_THESIS.players['Christian Watson'];
+if(!targetWindowActive(watsonTarget,70)||targetWindowActive(watsonTarget,94)||
+  !targetPriceText(playerNamed('Christian Watson')).includes('ESPN'))
+  throw new Error('target-thesis pick window or live ESPN/market price text is broken');
 // Slot-3 thesis rails preserve VONA but narrow roster choices at the stated
 // deadlines. A WR opener must leave 22/27 with RB1; two-WR starts must have
 // RB1 by 51 and RB2 by 75.
@@ -605,6 +619,16 @@ assert(html.includes('Projection audit view (read only)')&&
 assert(html.includes('AUTHORITATIVE AVAILABILITY OVERRIDES')&&
   html.includes('Removed from projections, opponent forecasts, survival and recommendations'),
   'Copy state does not expose authoritative availability overrides');
+assert(html.includes('INDEPENDENT-SOURCE TARGET WATCH')&&
+  html.includes('advisory only, never a ranking bonus')&&
+  html.includes('target.sources.length')&&
+  html.includes('positive means ESPN later'),
+  'Copy state does not expose the dated target thesis and live ESPN/market gap');
+assert(html.includes('<b>Target thesis</b> is a separate, dated watchlist')&&
+  html.includes("label:'Projections'")&&html.includes("label:'Market'")&&
+  html.includes("label:'ECR'")&&html.includes("label:'Targets'")&&
+  html.includes('projectionAge<=1')&&html.includes('targetAge<=1'),
+  'draft-eve source-by-source freshness preflight is missing');
 assert(html.includes('function thesisConfirmation(player,pickNo)')&&
   html.includes('Recommendation guardrail: ${eligibility.reason}.')&&
   html.includes('Compute Smart Queue before choosing; the simple board does not evaluate pick 22 and 27 jointly.')&&

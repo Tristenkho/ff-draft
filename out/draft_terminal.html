@@ -475,6 +475,7 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
       <p><b>ESPN update</b> plus a date under a name is only the timestamp of that player's most recent ESPN news item, shown when it landed within the last three days. It is a recency marker, not a headline and not a sentiment signal — read the actual news before acting on it.</p>
       <p><b>Winning build</b> is QB1, TE1, ten RB/WR, K1 and D/ST1. It starts with three RB/WR through Round 4, secures WR1 by Round 5, fills RB2/WR2/FLEX by Round 8, TE by Round 9, QB by Round 10, and takes K/D/ST in Rounds 13–14. The current slot-3 thesis adds conditional rails: after a WR at 1.03, leave 22/27 with RB1; after a two-WR first three, secure RB1 by 51 and RB2 by 75. QB2 and TE2 are waiver positions in this shallow format.</p>
       <p><b>Draft thesis</b> is a dated, visible judgment layer. It currently treats Ja'Marr Chase as the 1.03 safety anchor while Puka Nacua's practice and discipline questions remain unresolved, uses the joint Smart Queue for 22/27, and treats 70/75 as the default QB window. Earlier QB is still shown because VONA is unchanged, but it is an exception that must rank first in the joint turn evaluation rather than a preset Josh Allen target.</p>
+      <p><b>Target thesis</b> is a separate, dated watchlist for our exact later picks. A player needs support from at least two independent source families. The terminal calculates the current ESPN-versus-market discount after every refresh, but the watchlist never changes projection, VONA, survival, Model rank, or eligibility. On the day before the draft, refresh the numeric feeds, re-check official availability and depth charts, then update the target review date and names only after the qualitative sources have been reviewed again.</p>
       <p><b>1.03 turn planner</b> is a read-only advisory: it separates current pick-22 targets from players likely to survive to pick 27, then offers independent pair ideas. Those pair ideas are not a joint simulation and never change the ledger or board ranking. Conditional fallers are labeled from low survival to pick 22.</p>
       <p><b>Smart Queue</b> is a model-generated, read-only advisory that appears once pick 22 is on the clock. Unlike the turn planner's pair ideas, it is a genuine conditional simulation: for each top pick-22 candidate it rolls forward opponent picks 23–26 with the same calibrated opponent model, then re-derives eligibility, roster state and the best pick-27 outcome against that specific resulting pool — not two independently ranked numbers added together. Candidates are ranked by VOR@22 + E[VOR@27], both value-over-replacement figures, which is a different quantity from the Pick Board's wait-cost/VONA gain (value vs. your next pick) — the two numbers are not directly comparable. It never changes the ledger, board ranking or your manual Queue; press Compute to run it (it does not run automatically on every render, and while it is running the button is disabled and shows Computing…).</p>
       <p><b>Draft</b> keeps the top eight candidates in the first screen and lets you scroll through the full ranking below them. On the Pick Board, press <b>1–8</b> to record one of those top eight, type an unambiguous name and press Enter, or click any player row. A partial name matching multiple players will never record automatically. Model, Projection, ECR and ADP are read-only audit views; switch back to the Pick Board before recording. A large Model/ECR gap is labeled projection-led or consensus-led for review; it does not change rank weights. <b>Auto to my pick</b> and <b>Ctrl/Cmd Enter</b> rehearse opponent picks through your next turn; simulated picks are marked <b>~</b> in the same ledger and Copy state, so reset the draft before using it live. Snake remains the planning-only board for comparing whole-room scenarios. While this guide is open the board is locked — nothing can be recorded or undone.</p>
@@ -15373,6 +15374,26 @@ const DRAFT_THESIS={
   qbException:'take an earlier QB only if the joint Smart Queue ranks him first after the actual board is known',
   upsideRbWindows:'94/99 and 118/123'
 };
+// Dated qualitative evidence for exact-pick planning. This is deliberately
+// advisory: editorial sleeper mentions are correlated with ECR and must never
+// become another hidden projection/rank weight. ESPN/market gaps are calculated
+// live from the refreshed player payload instead of being copied here.
+const TARGET_THESIS={
+  updated:'2026-08-30',minimumIndependentSources:2,
+  players:{
+    'Christian Watson':{picks:[70,75],profile:'ceiling WR',sources:['PFF','Fantasy Life'],risk:'health and target competition'},
+    'Chris Godwin Jr.':{picks:[70,75],profile:'bounce-back WR',sources:['FantasyPros','RotoWire'],risk:'age and recent leg injuries'},
+    'Parker Washington':{picks:[70,75,94],profile:'breakout WR',sources:['Fantasy Life','CBS'],risk:'crowded Jacksonville target tree'},
+    'Jonathon Brooks':{picks:[94,99],profile:'ceiling RB',sources:['PFF','NFL Fantasy'],risk:'knee history and uncertain workload'},
+    'Jordan Mason':{picks:[94,99,118],profile:'standalone + contingent RB',sources:['PFF','FanDuel'],risk:'limited receiving role'},
+    'Josh Downs':{picks:[118,123],profile:'target-efficiency WR',sources:['RotoWire','NFL Fantasy'],risk:'health and quarterback uncertainty'},
+    'Isaiah Likely':{picks:[118,123],profile:'breakout TE',sources:['CBS','FantasyPros'],risk:'foot recovery and rookie quarterback'},
+    'Tyler Shough':{picks:[118,123],profile:'late-QB upside',sources:['PFF','CBS'],risk:'small sample and deep-ball volatility'},
+    'MarShawn Lloyd':{picks:[118,123,142],profile:'Packers lead-role bet',sources:['NFL','DraftSharks','DraftKings'],risk:'durability and Kaleb Johnson competition'},
+    'Chris Rodriguez Jr.':{picks:[118,123,142],profile:'goal-line RB',sources:['NFL Fantasy','CBS','PFF'],risk:'low receiving floor and committee risk'},
+    'Denzel Boston':{picks:[142],profile:'rookie WR ceiling',sources:['NFL Fantasy','PFF'],risk:'quarterback and target competition'}
+  }
+};
 // Projections: robust median of ESPN, CBS, and FFToday, refreshed 2026-08-30.
 // CBS and FFToday raw stat lines are rescored locally for the league.
 // ESPN-only rank/ADP remains the primary room signal; current 12-team half-PPR market ADP
@@ -16234,6 +16255,19 @@ function recentNewsText(p){
   return days>=0&&days<=3?` · <span class="newsflag">${newsStamp(p)}</span>`:'';
 }
 function statusText(p){return p.status&&p.status!=='ACTIVE'?`${p.status.replaceAll('_',' ').toLowerCase()} · `:'';}
+const targetThesisFor=p=>TARGET_THESIS.players[p?.name]||null;
+const targetWindowActive=(meta,pick=nextMyPick()??curPick())=>!!meta&&meta.picks.includes(pick);
+function espnMarketGap(p){
+  return Number.isFinite(p?.adp)&&Number.isFinite(p?.market_adp)?p.adp-p.market_adp:null;
+}
+function targetPriceText(p){
+  const gap=espnMarketGap(p);
+  if(gap===null)return 'market gap unavailable';
+  return gap>=0?`ESPN ${gap.toFixed(0)} picks later than market`:`ESPN ${Math.abs(gap).toFixed(0)} picks earlier than market`;
+}
+function activeTargetRows(boardRows,pick=nextMyPick()??curPick()){
+  return boardRows.filter(r=>!r.isSpecial&&modelDraftable(r.p)&&targetWindowActive(targetThesisFor(r.p),pick));
+}
 function thesisPlayerFlag(p){
   if(slot===3&&curPick()<=3&&p.name===DRAFT_THESIS.openingTarget)
     return '<span class="flag qtag-target">thesis target</span>';
@@ -16241,6 +16275,8 @@ function thesisPlayerFlag(p){
     return '<span class="flag qtag-conditional">conditional on news</span>';
   if(p.pos==='QB'&&nextMyPick()&&nextMyPick()<DRAFT_THESIS.qbDefaultWindow)
     return '<span class="flag qtag-conditional">early-QB exception</span>';
+  const target=targetThesisFor(p);
+  if(targetWindowActive(target))return `<span class="flag qtag-target">${target.sources.length}-source ${target.profile}</span>`;
   return '';
 }
 const optionalEarlyOnesie=p=>curRound()<=4&&(p.pos==='QB'||p.pos==='TE');
@@ -16260,16 +16296,20 @@ function why(r){
   return `${statusText(r.p)}${need?'starter need · ':''}${valueFlag}${gate}${audit}${qbThesis} · ${projectionText(r.p)}`;
 }
 
-function thesisGuidance(mine){
+function thesisGuidance(mine,boardRows){
   const have=rosterCounts(mine), pick=nextMyPick()??curPick();
   const openedWR=mine[0]?.pos==='WR', wrHeavy=mine.slice(0,3).filter(p=>p.pos==='WR').length>=2;
+  const targetRows=activeTargetRows(boardRows,pick).slice(0,5);
+  const targetLine=targetRows.length
+    ? `<br><small><b>Independent-source watch:</b> ${targetRows.map(r=>`${r.p.name} (${targetPriceText(r.p)}${r.eligible?'':`; blocked: ${r.blockedReason}`})`).join(' · ')}. Advisory only; use the live wait band and roster gates.</small>`
+    : '';
   let current='Keep VONA as the board score; use this layer only for the stated news and build decisions.';
   if(slot===3&&pick<=3)current=`If Gibbs and Bijan are gone, <b>${DRAFT_THESIS.openingTarget}</b> is the safety anchor; <b>${DRAFT_THESIS.openingConditional}</b> stays conditional ${DRAFT_THESIS.openingCondition}.`;
   else if(slot===3&&pick<=27)current=`Use the joint <b>Smart Queue</b> for 22/27. ${openedWR&&!have.RB?'Leave the turn with <b>RB1</b>. ':''}Default QB window is <b>${fmtPick(DRAFT_THESIS.qbDefaultWindow)}/${fmtPick(75)}</b>; ${DRAFT_THESIS.qbException}.`;
   else if(slot===3&&[46,51].includes(pick))current=`${wrHeavy?'WR-heavy start: ':''}<b>RB acquisition window.</b> Secure RB1 by 51; prefer the live ECR/VONA tier over a predetermined name.`;
   else if(slot===3&&[70,75].includes(pick))current=`${have.RB<2?'<b>Secure RB2 on this turn.</b> ':'RB2 is secured. '}This is also the default QB decision window; compare the remaining QB tier with RB/WR value.`;
   else if(slot===3&&[94,99,118,123].includes(pick))current=`Use ${DRAFT_THESIS.upsideRbWindows} for contingent-upside RBs; do not spend these picks merely repairing a low-ceiling depth chart.`;
-  return `<div class="runbox notice warn thesis-box"><div class="eyebrow" style="margin-bottom:5px">Draft thesis · updated ${DRAFT_THESIS.updated}</div><div class="t">${current}</div></div>`;
+  return `<div class="runbox notice warn thesis-box"><div class="eyebrow" style="margin-bottom:5px">Draft thesis · strategy ${DRAFT_THESIS.updated} · targets ${TARGET_THESIS.updated}</div><div class="t">${current}${targetLine}</div></div>`;
 }
 
 function planText(mine){
@@ -16678,13 +16718,20 @@ function render(){
   const focusBox=isOTC&&topChoices.length
     ? `<div class="runbox hot"><div class="eyebrow" style="margin-bottom:5px">On your pick</div><div class="t"><b>${focusLabel}:</b> ${focusChoices.map(r=>`${r.p.name} ${waitBandLabel(r.vonaTier)}`).join(' · ')}${openingThesis?'<br><small>Current-news safety order; the board below remains the unchanged VONA audit.</small>':''}${jointTurn&&!liveSmartQueue?'<br><b class="flag conflict-consensus">Compute Smart Queue before choosing; the simple board does not evaluate pick 22 and 27 jointly.</b>':''}${queueOverlap.length?`<br><b>Queue overlap:</b> ${queueOverlap.map(r=>`${r.p.name}${queueTags[r.p.id]?` <span class="flag qtag-${queueTags[r.p.id]}">${queueTags[r.p.id]}</span>`:''}`).join(' · ')}`:''}${topBandCount?`<br><b>Current band:</b> ${topBandCount} left`:''}<br><b>Starter needs:</b> ${openLine}</div></div>`
     : '';
-  $('#plan').innerHTML=focusBox+thesisGuidance(mine)+`<div class="runbox"><div class="t">${planText(mine)}${opponentDemandText()}</div></div>`+turnPairPlanner(boardRows)+smartQueueBox(boardRows)+nextTurnTargets(boardRows);
+  $('#plan').innerHTML=focusBox+thesisGuidance(mine,boardRows)+`<div class="runbox"><div class="t">${planText(mine)}${opponentDemandText()}</div></div>`+turnPairPlanner(boardRows)+smartQueueBox(boardRows)+nextTurnTargets(boardRows);
   renderNotice();
-  const dataAgeDays=Math.max(0,Math.floor((Date.now()-new Date(PROJECTION_META.updated+'T00:00:00Z').getTime())/86400000));
+  const sourceAgeDays=date=>Math.max(0,Math.floor((Date.now()-new Date(date+'T00:00:00Z').getTime())/86400000));
+  const projectionAge=sourceAgeDays(PROJECTION_META.updated);
+  const marketAge=sourceAgeDays(MARKET_META.updated);
+  const ecrAge=sourceAgeDays(ECR_META.updated);
+  const targetAge=sourceAgeDays(TARGET_THESIS.updated);
   const checks=[
     {label:'Slot',ok:slot===3,text:`Slot ${slot}${slot===3?' ready':' should be 3'}`},
     {label:'Ledger',ok:true,text:picks.length===0?'Ledger empty':`${picks.length} picks recorded`},
-    {label:'Data',ok:dataAgeDays<=7,text:`Data ${PROJECTION_META.updated} · ${dataAgeDays}d old`},
+    {label:'Projections',ok:projectionAge<=1,text:`${PROJECTION_META.updated} · ${projectionAge}d old`},
+    {label:'Market',ok:marketAge<=1&&MARKET_META.drafts>=10,text:`${MARKET_META.updated} · ${marketAge}d old · ${MARKET_META.drafts} drafts`},
+    {label:'ECR',ok:ecrAge<=1&&ECR_META.updated7d===ECR_META.experts,text:`${ECR_META.updated} · ${ecrAge}d old · ${ECR_META.updated1d}/${ECR_META.experts} experts updated in 1d`},
+    {label:'Targets',ok:targetAge<=1,text:`reviewed ${TARGET_THESIS.updated} · ${targetAge}d old`},
     {label:'Storage',ok:storageAvailable,text:storageAvailable?'Storage ready':'Storage unavailable'},
     {label:'Legacy sim',ok:autoPickNos.length===0,text:autoPickNos.length===0?'No legacy simulated picks':`${autoPickNos.length} simulated pick${autoPickNos.length===1?'':'s'} still recorded`}
   ];
@@ -16823,6 +16870,13 @@ function buildState(){
   L.push(`  · 1.03 safety override: ${DRAFT_THESIS.openingTarget} over ${DRAFT_THESIS.openingConditional} ${DRAFT_THESIS.openingCondition}. This is a visible news judgment, not a hidden projection adjustment.`);
   L.push(`  · QB: default decision window ${fmtPick(DRAFT_THESIS.qbDefaultWindow)}/${fmtPick(75)}; ${DRAFT_THESIS.qbException}. Early QB remains visible on the board but is an explicit exception, not the plan.`);
   L.push(`  · RB: leave 22/27 with RB1 after a WR opener; after a two-WR first three, RB1 by 51 and RB2 by 75; use ${DRAFT_THESIS.upsideRbWindows} for contingent upside.`);
+  L.push(`INDEPENDENT-SOURCE TARGET WATCH — reviewed ${TARGET_THESIS.updated}; advisory only, never a ranking bonus`);
+  Object.entries(TARGET_THESIS.players).forEach(([name,target])=>{
+    const p=PLAYERS.find(player=>player.name===name);
+    if(!p){L.push(`  · ${name}: MISSING FROM PLAYER POOL — re-check target thesis`);return;}
+    const gap=espnMarketGap(p),state=picks.includes(p.id)?'drafted':modelDraftable(p)?'available':'not model-draftable';
+    L.push(`  · ${name} (${p.pos}) at ${target.picks.map(fmtPick).join('/')}: ${target.profile}; ${target.sources.length} independent families [${target.sources.join(', ')}]; ESPN ${p.adp.toFixed(1)} vs market ${p.market_adp?.toFixed(1)??'—'}${gap===null?'':` (${gap>=0?'+':''}${gap.toFixed(1)}; positive means ESPN later)`}; ECR ${p.ecr}; ${state}; risk: ${target.risk}.`);
+  });
   const availabilityOverrides=PLAYERS.filter(p=>p.availability_source);
   if(availabilityOverrides.length){
     L.push('AUTHORITATIVE AVAILABILITY OVERRIDES');
