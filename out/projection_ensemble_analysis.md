@@ -6,8 +6,8 @@
 - CBS and FFToday raw stat lines are rescored under the league's passing, rushing, receiving, first-down, and fumble rules.
 - ADP and ECR are not projection inputs.
 - Player-specific 2023-25 first-down rates are regressed toward position averages before CBS/FFToday are rescored; matched players: 195/218.
-- Mean absolute projection change among matched players: 6.6 points.
-- Three-source coverage: 199/218 skill players (91.3%).
+- Mean absolute projection change among matched players: 6.2 points.
+- Three-source coverage: 202/218 skill players (92.7%).
 - Two-or-more-source coverage: 212/218 skill players (97.2%).
 
 ## Coverage
@@ -15,8 +15,8 @@
 | Position | Three sources | At least two sources |
 | --- | ---: | ---: |
 | QB | 30/30 | 30/30 |
-| RB | 66/72 | 70/72 |
-| WR | 78/90 | 87/90 |
+| RB | 69/72 | 71/72 |
+| WR | 78/90 | 86/90 |
 | TE | 25/26 | 25/26 |
 
 ## Largest overall projection-rank changes
@@ -25,51 +25,51 @@ Positive means the ensemble moves the player up.
 
 | Player | Pos | ESPN/custom | Ensemble | Old rank | New rank | Change |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| MarShawn Lloyd | RB | 86.9 | 141.5 | 184 | 137 | +47 |
-| Tyrone Tracy Jr. | RB | 39.4 | 101.2 | 209 | 175 | +34 |
-| Matthew Golden | WR | 172.4 | 143.0 | 103 | 133 | -30 |
-| Blake Corum | RB | 165.8 | 138.4 | 115 | 141 | -26 |
-| Chris Rodriguez Jr. | RB | 76.0 | 102.3 | 195 | 172 | +23 |
-| Mike Evans | WR | 171.9 | 195.3 | 106 | 83 | +23 |
-| Chris Godwin Jr. | WR | 144.1 | 163.3 | 134 | 112 | +22 |
-| Jacoby Brissett | QB | 218.8 | 246.6 | 68 | 48 | +20 |
-| Aaron Jones Sr. | RB | 172.4 | 157.4 | 102 | 121 | -19 |
-| Adonai Mitchell | WR | 120.7 | 100.6 | 158 | 177 | -19 |
-| Tank Dell | WR | 89.3 | 112.4 | 183 | 164 | +19 |
-| Malik Willis | QB | 263.4 | 295.0 | 45 | 27 | +18 |
-| Dylan Sampson | RB | 82.9 | 103.3 | 188 | 171 | +17 |
-| Josh Jacobs | RB | 265.5 | 231.5 | 43 | 59 | -16 |
-| Kyle Monangai | RB | 180.5 | 161.5 | 97 | 113 | -16 |
-| Breece Hall | RB | 275.7 | 243.0 | 35 | 50 | -15 |
-| Jacory Croskey-Merritt | RB | 166.6 | 153.3 | 113 | 128 | -15 |
-| Keaton Mitchell | RB | 93.4 | 79.0 | 179 | 194 | -15 |
-| Carnell Tate | WR | 188.1 | 168.6 | 92 | 107 | -15 |
-| Gunnar Helm | TE | 111.7 | 96.5 | 164 | 179 | -15 |
+| MarShawn Lloyd | RB | 137.4 | 168.3 | 145 | 108 | +37 |
+| Tyrone Tracy Jr. | RB | 39.4 | 101.2 | 210 | 177 | +33 |
+| Matthew Golden | WR | 176.1 | 148.1 | 99 | 132 | -33 |
+| Chris Godwin Jr. | WR | 144.0 | 163.3 | 135 | 111 | +24 |
+| Blake Corum | RB | 165.7 | 141.5 | 115 | 138 | -23 |
+| Chris Rodriguez Jr. | RB | 76.1 | 102.3 | 198 | 175 | +23 |
+| Jacoby Brissett | QB | 218.4 | 246.6 | 67 | 46 | +21 |
+| Josh Jacobs | RB | 168.1 | 153.1 | 110 | 130 | -20 |
+| Adonai Mitchell | WR | 121.1 | 100.6 | 159 | 179 | -20 |
+| Zach Charbonnet | RB | 136.2 | 111.3 | 146 | 164 | -18 |
+| Keaton Mitchell | RB | 93.4 | 79.0 | 181 | 198 | -17 |
+| Jordyn Tyson | WR | 93.0 | 109.8 | 183 | 166 | +17 |
+| Dalton Schultz | TE | 117.5 | 133.3 | 161 | 144 | +17 |
+| Malik Willis | QB | 264.1 | 295.0 | 43 | 27 | +16 |
+| Jacory Croskey-Merritt | RB | 166.1 | 153.3 | 113 | 129 | -16 |
+| Aaron Jones Sr. | RB | 173.3 | 157.4 | 105 | 121 | -16 |
+| Dylan Sampson | RB | 82.8 | 103.3 | 188 | 172 | +16 |
+| Mike Evans | WR | 171.1 | 189.7 | 106 | 90 | +16 |
+| Gunnar Helm | TE | 111.6 | 96.5 | 166 | 182 | -16 |
+| Kyle Monangai | RB | 179.3 | 161.6 | 98 | 113 | -15 |
 
 ## Largest source disagreements
 
 | Player | Pos | ESPN | CBS | FFToday | Median | Uncertainty |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| Josh Jacobs | RB | 265.5 | 231.5 | 122.4 | 231.5 | 85.7 |
-| Tyrone Tracy Jr. | RB | 39.4 | 136.8 | 101.2 | 101.2 | 48.1 |
-| Jordan James | RB | 30.0 | 121.6 | 43.4 | 43.4 | 41.9 |
-| MarShawn Lloyd | RB | 86.9 | 141.5 | 177.9 | 141.5 | 52.5 |
-| Kaelon Black | RB | 62.4 | 121.2 | 38.4 | 62.4 | 38.4 |
-| Mike Washington Jr. | RB | 67.6 | 137.0 | 64.6 | 67.6 | 37.8 |
-| Denzel Boston | WR | 130.5 | 160.8 | 96.5 | 130.5 | 38.1 |
-| George Pickens | WR | 224.3 | 277.7 | 214.2 | 224.3 | 55.1 |
-| Ja'Kobi Lane | WR | 95.1 | 142.4 | 79.4 | 95.1 | 33.5 |
-| Rashee Rice | WR | 242.0 | 281.7 | 222.8 | 242.0 | 56.9 |
-| George Kittle | TE | 172.0 | 199.8 | 141.4 | 172.0 | 46.0 |
-| Breece Hall | RB | 275.7 | 220.5 | 243.0 | 243.0 | 67.1 |
-| Chris Rodriguez Jr. | RB | 76.0 | 130.6 | 102.3 | 102.3 | 34.7 |
-| Jacoby Brissett | QB | 218.8 | 272.6 | 246.7 | 246.6 | 44.3 |
-| Oronde Gadsden | TE | 70.0 | 122.5 | 85.5 | 85.5 | 29.5 |
-| Jauan Jennings | WR | 103.5 | 144.2 | 94.5 | 103.5 | 30.8 |
-| Javonte Williams | RB | 265.9 | 216.6 | 235.1 | 235.1 | 64.4 |
-| Isaiah Likely | TE | 140.8 | 180.9 | 132.1 | 140.8 | 38.6 |
-| Jonah Coleman | RB | 73.3 | 25.5 | 57.5 | 57.5 | 24.9 |
-| Jonathan Taylor | RB | 322.3 | 339.9 | 292.6 | 322.3 | 86.0 |
+| Kaelon Black | RB | 62.3 | 121.2 | 38.4 | 62.3 | 38.4 |
+| Mike Washington Jr. | RB | 69.4 | 136.9 | 64.6 | 69.4 | 37.6 |
+| Ja'Kobi Lane | WR | 103.9 | 142.3 | 79.4 | 103.9 | 34.0 |
+| Tyrone Tracy Jr. | RB | 39.4 | 101.8 | 101.2 | 101.2 | 39.3 |
+| George Pickens | WR | 224.9 | 276.4 | 214.2 | 224.9 | 54.9 |
+| George Kittle | TE | 175.9 | 200.4 | 141.4 | 175.9 | 47.0 |
+| Rashee Rice | WR | 240.8 | 280.8 | 222.8 | 240.8 | 56.5 |
+| Breece Hall | RB | 276.1 | 220.5 | 243.0 | 243.0 | 67.2 |
+| Chris Rodriguez Jr. | RB | 76.1 | 130.7 | 102.3 | 102.3 | 34.7 |
+| Denzel Boston | WR | 130.5 | 149.7 | 96.5 | 130.5 | 35.3 |
+| Jacoby Brissett | QB | 218.4 | 271.0 | 246.7 | 246.6 | 44.1 |
+| Jeremiyah Love | RB | 273.1 | 221.1 | 254.8 | 254.8 | 69.7 |
+| Isaiah Likely | TE | 140.4 | 182.2 | 132.1 | 140.4 | 38.9 |
+| Jauan Jennings | WR | 103.8 | 144.3 | 94.5 | 103.8 | 30.8 |
+| Malik Willis | QB | 264.1 | 313.6 | 295.0 | 295.0 | 50.3 |
+| Jonah Coleman | RB | 73.2 | 25.5 | 57.5 | 57.5 | 24.9 |
+| Jonathan Taylor | RB | 322.2 | 339.9 | 292.6 | 322.2 | 86.0 |
+| Dallas Goedert | TE | 160.3 | 190.0 | 142.9 | 160.3 | 41.6 |
+| Kayshon Boutte | WR | 128.6 | 126.9 | 82.0 | 126.9 | 34.5 |
+| De'Von Achane | RB | 292.2 | 308.5 | 262.0 | 292.2 | 78.4 |
 
 ## Uncertainty
 
