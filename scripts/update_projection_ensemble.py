@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Refresh the 2026 ESPN/CBS/FFToday projection ensemble in the HTML app."""
+"""Refresh the 2026 ESPN/CBS/FFToday/Sleeper projection ensemble in the HTML app."""
 
 from __future__ import annotations
 
@@ -33,6 +33,16 @@ CEILING_RATE = {"QB": .14, "RB": .26, "WR": .23, "TE": .25, "K": .10, "DST": .18
 CBS_URL = "https://www.cbssports.com/fantasy/football/stats/{pos}/2026/season/projections/ppr/"
 FFTODAY_URL = "https://www.fftoday.com/rankings/playerproj.php?Season=2026&PosID={pos_id}&LeagueID=1&cur_page={page}"
 FFTODAY_POS = {"QB": 10, "RB": 20, "WR": 30, "TE": 40}
+SLEEPER_URL = ("https://api.sleeper.com/projections/nfl/2026"
+               "?season_type=regular&position%5B%5D={pos}&order_by=pts_half_ppr")
+# Sleeper republishes Rotowire's season projection over the entire player
+# universe, so require a real board per position: a truncated payload must fail
+# loudly rather than quietly thin the median back toward three sources.
+SLEEPER_MIN_ROWS = {"QB": 40, "RB": 70, "WR": 100, "TE": 60}
+# A season projection is republished far less often than ADP or ECR, so this
+# window is wider than the 3-day guards on the market and consensus feeds.
+SLEEPER_MAX_AGE_DAYS = 7
+SOURCE_ORDER = ("ESPN", "CBS", "FFToday", "Sleeper")
 PASS_FD_PER_COMPLETION = .518
 REC_FD = {"RB": .325, "WR": .597, "TE": .511}
 RUSH_FD = {"QB": .344, "RB": .224, "WR": .291, "TE": .224}
@@ -168,6 +178,56 @@ def parse_fftoday(position: str, pages: list[str]) -> dict[str, dict]:
     return output
 
 
+
+def parse_sleeper(position: str, payload: str) -> dict[str, dict]:
+    """Parse Sleeper's Rotowire season projection into the shared stat schema.
+
+    Sleeper returns every player it knows about, most of them projected at zero.
+    A zero row means "no projection published", not "forecast of zero points",
+    so it must never reach the median.
+    """
+    try:
+        rows = json.loads(payload)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"Sleeper returned unparseable {position} projections") from exc
+    if not isinstance(rows, list):
+        raise RuntimeError(f"Sleeper returned an unexpected {position} projection payload")
+    output, latest = {}, 0
+    for row in rows:
+        player = row.get("player") or {}
+        stats = row.get("stats") or {}
+        if row.get("season") != "2026" or row.get("season_type") != "regular":
+            continue
+        if player.get("position") != position or float(stats.get("pts_half_ppr") or 0) <= 0:
+            continue
+        name = f"{player.get('first_name', '')} {player.get('last_name', '')}".strip()
+        if not name:
+            continue
+        latest = max(latest, int(row.get("last_modified") or 0))
+        # Sleeper publishes pass_fd/rush_fd directly, but they are deliberately
+        # ignored: every source is rescored through the same league first-down
+        # rates so the four projections stay comparable inside one median.
+        output[normalize(name)] = {
+            "source": "Sleeper", "name": name, "pos": position,
+            "team": row.get("team") or player.get("team") or "",
+            "pass_att": stats.get("pass_att", 0), "completions": stats.get("pass_cmp", 0),
+            "pass_yds": stats.get("pass_yd", 0), "pass_td": stats.get("pass_td", 0),
+            "interceptions": stats.get("pass_int", 0),
+            "rush_att": stats.get("rush_att", 0), "rush_yds": stats.get("rush_yd", 0),
+            "rush_td": stats.get("rush_td", 0),
+            "receptions": stats.get("rec", 0), "rec_yds": stats.get("rec_yd", 0),
+            "rec_td": stats.get("rec_td", 0), "fumbles": stats.get("fum_lost", 0),
+        }
+    if len(output) < SLEEPER_MIN_ROWS[position]:
+        raise RuntimeError(f"Sleeper {position} projection pool is incomplete ({len(output)} rows)")
+    if not latest:
+        raise RuntimeError(f"Sleeper {position} projections carry no publication timestamp")
+    updated = dt.datetime.fromtimestamp(latest / 1000).date()
+    if not 0 <= (dt.date.today() - updated).days <= SLEEPER_MAX_AGE_DAYS:
+        raise RuntimeError(f"Sleeper {position} projections are stale ({updated.isoformat()})")
+    return output
+
+
 def player_first_down_rates(refresh: bool) -> dict[tuple[str, str], dict]:
     """Return 2023-25 player rates shrunk toward the empirical position mean."""
     totals: dict[tuple[str, str], dict[str, float]] = {}
@@ -218,9 +278,10 @@ def custom_score(stats: dict, rates: dict | None = None) -> float:
     return score
 
 
-def source_data(refresh: bool) -> tuple[dict, dict, dict]:
-    cbs, fftoday, metadata = {}, {}, {"season": 2026, "fetched": dt.date.today().isoformat(), "sources": {}}
-    cbs_paths, fftoday_paths = [], []
+def source_data(refresh: bool) -> tuple[dict, dict, dict, dict]:
+    cbs, fftoday, sleeper = {}, {}, {}
+    metadata = {"season": 2026, "fetched": dt.date.today().isoformat(), "sources": {}}
+    cbs_paths, fftoday_paths, sleeper_paths = [], [], []
     for pos in POSITIONS:
         cbs_path = CACHE / f"cbs_{pos.lower()}.html"
         cbs_paths.append(cbs_path)
@@ -232,12 +293,17 @@ def source_data(refresh: bool) -> tuple[dict, dict, dict]:
             fftoday_paths.append(fftoday_path)
             pages.append(download(FFTODAY_URL.format(pos_id=FFTODAY_POS[pos], page=page), fftoday_path, refresh))
         fftoday[pos] = parse_fftoday(pos, pages)
+        sleeper_path = CACHE / f"sleeper_{pos.lower()}.json"
+        sleeper_paths.append(sleeper_path)
+        sleeper[pos] = parse_sleeper(pos, download(SLEEPER_URL.format(pos=pos), sleeper_path, refresh))
     metadata["sources"] = {
         "ESPN": {"date": "supplied by draft refresh", "role": "existing custom projection"},
         "CBS": {"date": max(map(cache_date, cbs_paths)), "role": "raw stat projection rescored locally"},
         "FFToday": {"date": max(map(cache_date, fftoday_paths)), "role": "raw stat projection rescored locally"},
+        "Sleeper": {"date": max(map(cache_date, sleeper_paths)),
+                    "role": "Rotowire raw stat projection rescored locally"},
     }
-    return cbs, fftoday, metadata
+    return cbs, fftoday, sleeper, metadata
 
 
 def rank_map(players: list[dict], field: str) -> dict[int, int]:
@@ -246,7 +312,7 @@ def rank_map(players: list[dict], field: str) -> dict[int, int]:
     return {player["id"]: index + 1 for index, player in enumerate(ordered)}
 
 
-def build_ensemble(players: list[dict], cbs: dict, fftoday: dict, metadata: dict,
+def build_ensemble(players: list[dict], cbs: dict, fftoday: dict, sleeper: dict, metadata: dict,
                    fd_rates: dict[tuple[str, str], dict] | None = None) -> tuple[list[dict], dict]:
     espn_players = [{**player, "proj": player.get("proj_espn", player["proj"])} for player in players]
     original_rank = rank_map(espn_players, "proj")
@@ -262,6 +328,8 @@ def build_ensemble(players: list[dict], cbs: dict, fftoday: dict, metadata: dict
                 sources["CBS"] = custom_score(cbs[player["pos"]][key], rates)
             if key in fftoday[player["pos"]]:
                 sources["FFToday"] = custom_score(fftoday[player["pos"]][key], rates)
+            if key in sleeper[player["pos"]]:
+                sources["Sleeper"] = custom_score(sleeper[player["pos"]][key], rates)
         else:
             rates = {}
         values = list(sources.values())
@@ -278,7 +346,7 @@ def build_ensemble(players: list[dict], cbs: dict, fftoday: dict, metadata: dict
         # `sd` is the app's upside/ceiling input. Projection disagreement is a
         # confidence measure, not player upside, so keep those concepts separate.
         spread_ratio = (max(values) - min(values)) / projection if projection > 0 else 1
-        reliability = "low" if len(sources) <= 1 or projection <= 0 else "medium" if len(sources) == 2 or spread_ratio > .25 else "high"
+        reliability = "low" if len(sources) <= 1 or projection <= 0 else "medium" if len(sources) <= 2 or spread_ratio > .25 else "high"
         changed.update(proj=round(projection, 1), proj_espn=round(espn, 1),
                        sd=round(projection * CEILING_RATE[player["pos"]], 1),
                        sd_source="position-rate proxy",
@@ -302,7 +370,8 @@ def build_ensemble(players: list[dict], cbs: dict, fftoday: dict, metadata: dict
     skill_rows = [row for row in rows if row["pos"] in POSITIONS]
     coverage = {pos: {
         "players": sum(row["pos"] == pos for row in skill_rows),
-        "three_sources": sum(row["pos"] == pos and len(row["sources"]) == 3 for row in skill_rows),
+        "all_sources": sum(row["pos"] == pos and len(row["sources"]) == len(SOURCE_ORDER) for row in skill_rows),
+        "three_plus_sources": sum(row["pos"] == pos and len(row["sources"]) >= 3 for row in skill_rows),
         "two_plus_sources": sum(row["pos"] == pos and len(row["sources"]) >= 2 for row in skill_rows),
     } for pos in POSITIONS}
     analysis = {"metadata": metadata, "coverage": coverage,
@@ -314,20 +383,25 @@ def build_ensemble(players: list[dict], cbs: dict, fftoday: dict, metadata: dict
 def render_report(analysis: dict) -> str:
     skill = [row for row in analysis["players"] if row["pos"] in POSITIONS]
     covered = [row for row in skill if len(row["sources"]) >= 2]
-    three = [row for row in skill if len(row["sources"]) == 3]
+    three = [row for row in skill if len(row["sources"]) >= 3]
+    full = [row for row in skill if len(row["sources"]) == len(SOURCE_ORDER)]
     movers = sorted(covered, key=lambda row: abs(row.get("rank_change", 0)), reverse=True)[:20]
     disagreements = sorted(three, key=lambda row: max(row["sources"].values()) - min(row["sources"].values()), reverse=True)[:20]
     coverage_rows = "\n".join(
-        f"| {pos} | {value['three_sources']}/{value['players']} | {value['two_plus_sources']}/{value['players']} |"
+        f"| {pos} | {value['all_sources']}/{value['players']} | {value['three_plus_sources']}/{value['players']}"
+        f" | {value['two_plus_sources']}/{value['players']} |"
         for pos, value in analysis["coverage"].items()
     )
     mover_rows = "\n".join(
         f"| {row['name']} | {row['pos']} | {row['old_proj']:.1f} | {row['new_proj']:.1f} | {row['old_rank']} | {row['new_rank']} | {row['rank_change']:+d} |"
         for row in movers
     )
+    def source_cells(row: dict) -> str:
+        return " | ".join(f"{row['sources'][name]:.1f}" if name in row["sources"] else "—"
+                          for name in SOURCE_ORDER)
+
     disagreement_rows = "\n".join(
-        f"| {row['name']} | {row['pos']} | {row['sources'].get('ESPN', float('nan')):.1f} | {row['sources']['CBS']:.1f} | {row['sources']['FFToday']:.1f} | "
-        f"{row['new_proj']:.1f} | {row['proj_unc']:.1f} |"
+        f"| {row['name']} | {row['pos']} | {source_cells(row)} | {row['new_proj']:.1f} | {row['proj_unc']:.1f} |"
         for row in disagreements
     )
     mean_change = statistics.mean(abs(row["new_proj"] - row["old_proj"]) for row in covered)
@@ -335,18 +409,19 @@ def render_report(analysis: dict) -> str:
 
 ## Outcome
 
-- ESPN, CBS, and FFToday are combined with a robust median when available.
-- CBS and FFToday raw stat lines are rescored under the league's passing, rushing, receiving, first-down, and fumble rules.
+- ESPN, CBS, FFToday, and Sleeper (Rotowire) are combined with a robust median when available.
+- CBS, FFToday, and Sleeper raw stat lines are rescored under the league's passing, rushing, receiving, first-down, and fumble rules.
 - ADP and ECR are not projection inputs.
-- Player-specific 2023-25 first-down rates are regressed toward position averages before CBS/FFToday are rescored; matched players: {analysis['fd_player_matches']}/{len(skill)}.
+- Player-specific 2023-25 first-down rates are regressed toward position averages before the raw stat sources are rescored; matched players: {analysis['fd_player_matches']}/{len(skill)}.
 - Mean absolute projection change among matched players: {mean_change:.1f} points.
-- Three-source coverage: {len(three)}/{len(skill)} skill players ({100*len(three)/len(skill):.1f}%).
+- Four-source coverage: {len(full)}/{len(skill)} skill players ({100*len(full)/len(skill):.1f}%).
+- Three-or-more-source coverage: {len(three)}/{len(skill)} skill players ({100*len(three)/len(skill):.1f}%).
 - Two-or-more-source coverage: {len(covered)}/{len(skill)} skill players ({100*len(covered)/len(skill):.1f}%).
 
 ## Coverage
 
-| Position | Three sources | At least two sources |
-| --- | ---: | ---: |
+| Position | Four sources | At least three | At least two |
+| --- | ---: | ---: | ---: |
 {coverage_rows}
 
 ## Largest overall projection-rank changes
@@ -359,8 +434,8 @@ Positive means the ensemble moves the player up.
 
 ## Largest source disagreements
 
-| Player | Pos | ESPN | CBS | FFToday | Median | Uncertainty |
-| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Player | Pos | ESPN | CBS | FFToday | Sleeper | Median | Uncertainty |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 {disagreement_rows}
 
 ## Uncertainty
@@ -373,7 +448,9 @@ The ceiling `sd` input is regenerated from the current ensemble projection on ev
 
 - ESPN is the current authenticated league-scored projection embedded by `refresh_draft_data.py`.
 - CBS and FFToday do not project first downs, so player-specific 2023–25 reception/carry/completion rates are regressed toward the position baseline; rookies and unmatched players use that baseline.
-- FFToday does not expose projected fumbles in its public table; its source score therefore omits that small component. CBS and ESPN retain their fumble assumptions.
+- Sleeper does publish `pass_fd` and `rush_fd`, but they are ignored on purpose: all four sources are rescored through the same league first-down rates so the values entering one median stay comparable.
+- Sleeper resells Rotowire's projection. It is independent of ESPN, CBS, and FFToday, but a Rotowire revision moves exactly one of the four inputs, not two.
+- FFToday does not expose projected fumbles in its public table; its source score therefore omits that small component. CBS, ESPN, and Sleeper retain their fumble assumptions.
 - K and D/ST use ESPN's league-scored season and Weeks 1–3 projections because equivalent raw multi-source scoring was not available under this league's distance and defense-tier rules. D/ST is ranked primarily for early streaming; kicker retains more season-long and consensus signal.
 """
 
@@ -386,9 +463,9 @@ def main() -> None:
     if args.write and not args.refresh:
         parser.error("--write requires --refresh so the live app cannot publish cached data with a fresh timestamp")
     text, players, start, end = current_players()
-    cbs, fftoday, metadata = source_data(args.refresh)
+    cbs, fftoday, sleeper, metadata = source_data(args.refresh)
     fd_rates = player_first_down_rates(args.refresh)
-    updated, analysis = build_ensemble(players, cbs, fftoday, metadata, fd_rates)
+    updated, analysis = build_ensemble(players, cbs, fftoday, sleeper, metadata, fd_rates)
     RAW.write_text(json.dumps(analysis, indent=2))
     report = render_report(analysis)
     REPORT.write_text(report)
@@ -403,13 +480,13 @@ def main() -> None:
             output, count=1,
         )
         output = re.sub(
-            r"const PROJECTION_META=\{sources:\['ESPN','CBS','FFToday'\],method:'median',updated:'[^']+'\};",
-            f"const PROJECTION_META={{sources:['ESPN','CBS','FFToday'],method:'median',updated:'{today}'}};",
+            r"const PROJECTION_META=\{sources:\[[^\]]*\],method:'median',updated:'[^']+'\};",
+            f"const PROJECTION_META={{sources:['ESPN','CBS','FFToday','Sleeper'],method:'median',updated:'{today}'}};",
             output, count=1,
         )
         output = re.sub(
-            r"// Projections: robust median of ESPN, CBS, and FFToday, refreshed \d{4}-\d{2}-\d{2}\.",
-            f"// Projections: robust median of ESPN, CBS, and FFToday, refreshed {today}.",
+            r"// Projections: robust median of [^,]+(?:, [^,]+)*, refreshed \d{4}-\d{2}-\d{2}\.",
+            f"// Projections: robust median of ESPN, CBS, FFToday, and Sleeper, refreshed {today}.",
             output, count=1,
         )
         HTML.write_text(output)

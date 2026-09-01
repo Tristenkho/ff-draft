@@ -3,7 +3,9 @@
 
 ESPN supplies the league-scored projection, room ADP/rank, current NFL team,
 and availability status. FantasyPros supplies half-PPR ECR, tiers, and a
-second bye-week check. CBS/FFToday are then applied by the ensemble updater.
+second bye-week check. Sleeper supplies an independent availability read that
+corroborates ESPN rather than overriding it. CBS/FFToday/Sleeper projections
+are then applied by the ensemble updater.
 """
 
 from __future__ import annotations
@@ -30,6 +32,23 @@ REPORT = ROOT / "out" / "draft_data_refresh_analysis.md"
 SPECIAL_REPORT = ROOT / "out" / "special_teams_streaming_analysis.md"
 FP_URL = "https://www.fantasypros.com/nfl/rankings/half-point-ppr-cheatsheets.php"
 FFC_URL = "https://fantasyfootballcalculator.com/api/v1/adp/half-ppr?teams=12&year=2026"
+SLEEPER_PLAYERS_URL = "https://api.sleeper.app/v1/players/nfl"
+
+# ESPN and Sleeper describe the same facts with different vocabularies, so
+# compare the availability class each implies. "IR" against "INJURY_RESERVE" is
+# agreement; only a real severity gap is worth a human's attention on draft day.
+# Anything that maps to "unknown" is withheld rather than counted either way.
+ESPN_AVAILABILITY_CLASS = {
+    "ACTIVE": "available", "QUESTIONABLE": "in doubt", "DOUBTFUL": "in doubt",
+    "OUT": "out", "SUSPENSION": "out", "INJURY_RESERVE": "out",
+    "COMMISSIONER_EXEMPT": "out", "NON_FOOTBALL_INJURY": "out", "PUP": "out",
+}
+SLEEPER_AVAILABILITY_CLASS = {
+    None: "available", "": "available", "Active": "available",
+    "Questionable": "in doubt", "Doubtful": "in doubt",
+    "Out": "out", "IR": "out", "PUP": "out", "NFI": "out", "Sus": "out",
+    "COV": "out", "DNR": "out", "NA": "unknown",
+}
 
 POSITION_ID = {1: "QB", 2: "RB", 3: "WR", 4: "TE", 5: "K", 16: "DST"}
 QUOTAS = {"QB": 30, "RB": 70, "WR": 90, "TE": 26}
@@ -185,6 +204,68 @@ def espn_schedule(refresh: bool) -> dict[int, dict[str, str]]:
     return result
 
 
+def sleeper_players(refresh: bool) -> dict[tuple[str, str], dict]:
+    """Sleeper's full player file, indexed by normalized name and position.
+
+    Sleeper asks callers to pull this ~14MB file at most once a day, so a copy
+    already retrieved today is reused even under --refresh.
+    """
+    path = CACHE / "sleeper_players.json"
+    pulled_today = (path.exists() and path.stat().st_size > 1_000_000
+                    and ensemble.cache_date(path) == dt.date.today().isoformat())
+    payload = json.loads(fetch(SLEEPER_PLAYERS_URL, path, refresh and not pulled_today))
+    if not isinstance(payload, dict) or len(payload) < 5000:
+        raise RuntimeError(f"Sleeper player file is incomplete ({len(payload)} entries)")
+    index: dict[tuple[str, str], dict] = {}
+    for row in payload.values():
+        name, position = row.get("full_name"), row.get("position")
+        if not name or position not in (*ensemble.POSITIONS, "K"):
+            continue
+        key = (ensemble.normalize(name), position)
+        # A name can collide between a rostered player and a free agent; the
+        # rostered one is the player this draft is about.
+        if key not in index or (row.get("team") and not index[key].get("team")):
+            index[key] = row
+    return index
+
+
+def add_sleeper_availability(players: list[dict], sleeper: dict[tuple[str, str], dict]) -> dict:
+    """Attach Sleeper's availability read as corroboration, never as an override.
+
+    ESPN remains the status of record and a dated authoritative override still
+    outranks both. Sleeper adds an injured body part, its own news recency, and
+    a second opinion whose disagreements are surfaced for judgment.
+    """
+    matched, conflicts = 0, []
+    for player in players:
+        if player["pos"] == "DST":
+            continue
+        row = sleeper.get((ensemble.normalize(player["name"]), player["pos"]))
+        if not row:
+            continue
+        matched += 1
+        injury = row.get("injury_status") or None
+        player["sleeper_status"] = injury or row.get("status") or "Active"
+        if row.get("injury_body_part"):
+            player["sleeper_body_part"] = row["injury_body_part"]
+        if row.get("news_updated"):
+            player["sleeper_news"] = dt.datetime.fromtimestamp(
+                int(row["news_updated"]) / 1000).date().isoformat()
+        espn_class = ESPN_AVAILABILITY_CLASS.get(player.get("status") or "ACTIVE", "unknown")
+        sleeper_class = SLEEPER_AVAILABILITY_CLASS.get(injury, "unknown")
+        agrees = espn_class == sleeper_class or "unknown" in (espn_class, sleeper_class)
+        player["sleeper_agrees"] = agrees
+        # A dated human-verified override is already known to contradict ESPN;
+        # re-reporting it as a source conflict would be noise.
+        if not agrees and not player.get("availability_source"):
+            conflicts.append({"name": player["name"], "pos": player["pos"], "team": player["team"],
+                              "espn": player.get("status") or "ACTIVE", "espn_class": espn_class,
+                              "sleeper": injury, "sleeper_class": sleeper_class,
+                              "body_part": row.get("injury_body_part")})
+    return {"matched": matched, "eligible": sum(p["pos"] != "DST" for p in players),
+            "conflicts": conflicts}
+
+
 def season_projection(player: dict) -> float:
     values = [stat.get("appliedTotal", 0) for stat in player.get("stats", [])
               if stat.get("seasonId") == 2026 and stat.get("scoringPeriodId") == 0
@@ -338,13 +419,21 @@ def add_special_ranks(players: list[dict]) -> None:
             player["special_rank"] = index
 
 
-def render_report(players: list[dict], before: list[dict], source_date: str, ecr_meta: dict) -> str:
+def render_report(players: list[dict], before: list[dict], source_date: str, ecr_meta: dict,
+                  availability: dict) -> str:
     counts = {pos: sum(p["pos"] == pos for p in players) for pos in (*ensemble.POSITIONS, "K", "DST")}
     statuses = defaultdict(int)
     for player in players:
         statuses[player["status"]] += 1
     zero = [p for p in players if p["pos"] in ensemble.POSITIONS and p["proj"] <= 0]
     lines = "\n".join(f"- {key}: {value}" for key, value in sorted(statuses.items()))
+    conflicts = availability["conflicts"]
+    availability_lines = "\n".join(
+        f"- {c['name']} ({c['pos']}, {c['team']}): ESPN {c['espn']} ({c['espn_class']}) vs "
+        f"Sleeper {c['sleeper'] or 'no designation'} ({c['sleeper_class']})"
+        + (f" — {c['body_part']}" if c["body_part"] else "")
+        for c in sorted(conflicts, key=lambda c: c["name"])
+    ) or "- No disagreements: ESPN and Sleeper agree on every matched player."
     return f"""# Draft data hardening analysis
 
 ## Outcome
@@ -357,10 +446,19 @@ def render_report(players: list[dict], before: list[dict], source_date: str, ecr
 - D/ST is a streaming board: 55% Week 1, 25% Week 2, 10% Week 3, 7.5% season projection, and 2.5% positional ECR.
 - K balances immediate and season-long value: 40% Week 1, 20% Week 2, 10% Week 3, 22.5% season projection, and 7.5% positional ECR.
 - {len(players) - BASELINE_POOL_SIZE} net players were added. Skill players without a current projection: {len(zero)}; each remains searchable and status-flagged.
+- Sleeper corroborated availability for {availability['matched']}/{availability['eligible']} non-D/ST players; {len(availability['conflicts'])} disagree with ESPN.
 
 ## Status coverage
 
 {lines}
+
+## Availability cross-check
+
+ESPN remains the status of record. Sleeper is a second independent read: where
+the two disagree, neither is applied automatically — the conflict is listed here
+so it can be resolved against the actual league transaction before the draft.
+
+{availability_lines}
 
 ## Zero-projection skill players
 
@@ -430,18 +528,25 @@ def main() -> None:
     schedule = espn_schedule(args.refresh)
     candidates = [player for row in rows if (player := candidate(row, fp, ffc, ffc_meta, old_by_id))]
     pool = choose_pool(candidates)
-    cbs, fftoday, metadata = ensemble.source_data(args.refresh)
+    sleeper_pool = sleeper_players(args.refresh)
+    cbs, fftoday, sleeper_proj, metadata = ensemble.source_data(args.refresh)
     metadata["sources"]["ESPN"] = {
         "date": ensemble.cache_date(CACHE / "espn_players.json"),
         "role": "live custom-league projection",
     }
+    metadata["sources"]["Sleeper availability"] = {
+        "date": ensemble.cache_date(CACHE / "sleeper_players.json"),
+        "role": "independent status cross-check, never an override",
+    }
     fd_rates = ensemble.player_first_down_rates(args.refresh)
-    players, analysis = ensemble.build_ensemble(pool, cbs, fftoday, metadata, fd_rates)
+    players, analysis = ensemble.build_ensemble(pool, cbs, fftoday, sleeper_proj, metadata, fd_rates)
+    availability = add_sleeper_availability(players, sleeper_pool)
+    analysis["availability_cross_check"] = availability
     add_weekly_projections(players, weekly_rows, schedule)
     add_special_ranks(players)
     players.sort(key=lambda p: (p["room_rank"], p["name"]))
     espn_source_date = ensemble.cache_date(CACHE / "espn_players.json")
-    report = render_report(players, before, espn_source_date, ecr_meta)
+    report = render_report(players, before, espn_source_date, ecr_meta, availability)
     REPORT.write_text(report)
     SPECIAL_REPORT.write_text(render_special_report(players, espn_source_date))
     RAW.write_text(json.dumps({"metadata": metadata, "players": players}, indent=2))
@@ -453,17 +558,17 @@ def main() -> None:
         output = re.sub(
             r'<b>2026 RANKINGS</b><span>.*?</span>',
             f'<b>2026 RANKINGS</b><span>{len(players)}-player pool, refreshed {dt.date.today():%b %-d}. '
-            'Projections: median of ESPN, CBS, and FFToday; timing: market-first blend, 80% current 12-team half-PPR market for RB/WR/TE and 50% for QB, ESPN room fills the rest (K/DST unchanged, rounds 13-14 only).</span>',
+            'Projections: median of ESPN, CBS, FFToday, and Sleeper; timing: market-first blend, 80% current 12-team half-PPR market for RB/WR/TE and 50% for QB, ESPN room fills the rest (K/DST unchanged, rounds 13-14 only).</span>',
             output, count=1,
         )
         output = re.sub(
-            r"const PROJECTION_META=\{sources:\['ESPN','CBS','FFToday'\],method:'median',updated:'[^']+'\};",
-            f"const PROJECTION_META={{sources:['ESPN','CBS','FFToday'],method:'median',updated:'{today}'}};",
+            r"const PROJECTION_META=\{sources:\[[^\]]*\],method:'median',updated:'[^']+'\};",
+            f"const PROJECTION_META={{sources:['ESPN','CBS','FFToday','Sleeper'],method:'median',updated:'{today}'}};",
             output, count=1,
         )
         output = re.sub(
-            r"// Projections: robust median of ESPN, CBS, and FFToday, refreshed \d{4}-\d{2}-\d{2}\.",
-            f"// Projections: robust median of ESPN, CBS, and FFToday, refreshed {today}.",
+            r"// Projections: robust median of [^,]+(?:, [^,]+)*, refreshed \d{4}-\d{2}-\d{2}\.",
+            f"// Projections: robust median of ESPN, CBS, FFToday, and Sleeper, refreshed {today}.",
             output, count=1,
         )
         output = re.sub(
@@ -478,6 +583,16 @@ def main() -> None:
             f"experts:{ecr_meta['experts']},updated1d:{ecr_meta['updated_1d']},"
             f"updated3d:{ecr_meta['updated_3d']},updated7d:{ecr_meta['updated_7d']}}};",
             output, count=1,
+        )
+        output = re.sub(
+            r"<b>Projection</b> is the median of [^.]+\.",
+            "<b>Projection</b> is the median of ESPN, CBS, FFToday, and Sleeper (Rotowire) when available.",
+            output, count=1,
+        )
+        output = re.sub(
+            r"CBS and FFToday raw stat lines are rescored locally",
+            "CBS, FFToday, and Sleeper raw stat lines are rescored locally",
+            output,
         )
         output = re.sub(
             r"player-specific 2023–(?:24|25) first-down rates regressed toward position averages;(?: rookies and unmatched players use the position rate\.)?",

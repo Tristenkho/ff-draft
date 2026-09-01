@@ -596,7 +596,23 @@ globalThis.TEST_RESULT={
   expertPanel:ECR_META,
   smartQueueTop:evalsA.slice(0,6).map(e=>({pick22:e.c22.name,pos:e.c22.pos,joint:+e.jointValue.toFixed(1),best27:e.best27?.name||null})),
   deterministicBuild:counts,
-  deterministicPicks:selected.map(p=>p.name)
+  deterministicPicks:selected.map(p=>p.name),
+  // Sleeper is corroboration only: coverage must be real, zero projections must
+  // never reach the median, and a disagreement must leave p.status untouched.
+  sourceCoverage:(()=>{
+    const nonDst=PLAYERS.filter(p=>p.pos!=='DST');
+    const skill=PLAYERS.filter(p=>['QB','RB','WR','TE'].includes(p.pos));
+    return {
+      nonDst:nonDst.length,
+      sleeperCovered:nonDst.filter(p=>p.sleeper_status).length,
+      skill:skill.length,
+      fourSource:skill.filter(p=>p.proj_n===4).length,
+      zeroSleeper:PLAYERS.filter(p=>p.proj_sources&&p.proj_sources.Sleeper<=0).length,
+      conflicts:PLAYERS.filter(p=>p.sleeper_agrees===false).map(p=>p.name),
+      espnStatusStillUsed:PLAYERS.filter(p=>p.sleeper_agrees===false)
+        .every(p=>modelDraftable(p)!==UNAVAILABLE_STATUSES.has(p.status)),
+    };
+  })()
 };
 `;
 
@@ -613,9 +629,22 @@ result.engineSha256=crypto.createHash('sha256').update(engine).digest('hex');
 result.smartQueuePerfMs=context.SMART_QUEUE_PERF_MS;
 assert(html.includes('Projection audit view (read only)')&&
   html.includes('title="Projected fantasy points for this league\'s scoring"')&&
-  html.includes('<b>Projection</b> is the median of ESPN, CBS, and FFToday')&&
+  html.includes('<b>Projection</b> is the median of ESPN, CBS, FFToday, and Sleeper')&&
   html.includes('not a calibrated confidence grade'),
   'projection audit naming is missing or misleading');
+// Sleeper is a corroborating availability read, not a second status of record.
+// These guard the boundary: the model must keep using ESPN's status even when
+// Sleeper disagrees, and the disagreement must still be visible.
+assert(html.includes("ESPN / SLEEPER STATUS DISAGREEMENTS (unresolved — ESPN is what the model used)")&&
+  html.includes('Confirm against the actual transaction before drafting.'),
+  'ESPN/Sleeper status disagreement reporting is missing');
+const src=result.sourceCoverage;
+assert(src.sleeperCovered/src.nonDst>0.95,
+  `Sleeper availability coverage too low (${src.sleeperCovered}/${src.nonDst})`);
+assert(src.fourSource/src.skill>0.85,
+  `four-source projection coverage too low (${src.fourSource}/${src.skill})`);
+assert(src.zeroSleeper===0,'a zero Sleeper projection reached the median');
+assert(src.espnStatusStillUsed,'Sleeper disagreement altered the status the model uses');
 assert(html.includes('AUTHORITATIVE AVAILABILITY OVERRIDES')&&
   html.includes('Removed from projections, opponent forecasts, survival and recommendations'),
   'Copy state does not expose authoritative availability overrides');

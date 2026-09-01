@@ -2,22 +2,23 @@
 
 ## Outcome
 
-- ESPN, CBS, and FFToday are combined with a robust median when available.
-- CBS and FFToday raw stat lines are rescored under the league's passing, rushing, receiving, first-down, and fumble rules.
+- ESPN, CBS, FFToday, and Sleeper (Rotowire) are combined with a robust median when available.
+- CBS, FFToday, and Sleeper raw stat lines are rescored under the league's passing, rushing, receiving, first-down, and fumble rules.
 - ADP and ECR are not projection inputs.
-- Player-specific 2023-25 first-down rates are regressed toward position averages before CBS/FFToday are rescored; matched players: 195/218.
-- Mean absolute projection change among matched players: 6.2 points.
-- Three-source coverage: 202/218 skill players (92.7%).
-- Two-or-more-source coverage: 212/218 skill players (97.2%).
+- Player-specific 2023-25 first-down rates are regressed toward position averages before the raw stat sources are rescored; matched players: 195/218.
+- Mean absolute projection change among matched players: 9.2 points.
+- Four-source coverage: 202/218 skill players (92.7%).
+- Three-or-more-source coverage: 212/218 skill players (97.2%).
+- Two-or-more-source coverage: 217/218 skill players (99.5%).
 
 ## Coverage
 
-| Position | Three sources | At least two sources |
-| --- | ---: | ---: |
-| QB | 30/30 | 30/30 |
-| RB | 69/72 | 71/72 |
-| WR | 78/90 | 86/90 |
-| TE | 25/26 | 25/26 |
+| Position | Four sources | At least three | At least two |
+| --- | ---: | ---: | ---: |
+| QB | 30/30 | 30/30 | 30/30 |
+| RB | 69/72 | 71/72 | 72/72 |
+| WR | 78/90 | 86/90 | 89/90 |
+| TE | 25/26 | 25/26 | 26/26 |
 
 ## Largest overall projection-rank changes
 
@@ -25,51 +26,51 @@ Positive means the ensemble moves the player up.
 
 | Player | Pos | ESPN/custom | Ensemble | Old rank | New rank | Change |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| MarShawn Lloyd | RB | 137.4 | 168.3 | 145 | 108 | +37 |
-| Tyrone Tracy Jr. | RB | 39.4 | 101.2 | 210 | 177 | +33 |
-| Matthew Golden | WR | 176.1 | 148.1 | 99 | 132 | -33 |
-| Chris Godwin Jr. | WR | 144.0 | 163.3 | 135 | 111 | +24 |
-| Blake Corum | RB | 165.7 | 141.5 | 115 | 138 | -23 |
-| Chris Rodriguez Jr. | RB | 76.1 | 102.3 | 198 | 175 | +23 |
-| Jacoby Brissett | QB | 218.4 | 246.6 | 67 | 46 | +21 |
-| Josh Jacobs | RB | 168.1 | 153.1 | 110 | 130 | -20 |
-| Adonai Mitchell | WR | 121.1 | 100.6 | 159 | 179 | -20 |
-| Zach Charbonnet | RB | 136.2 | 111.3 | 146 | 164 | -18 |
-| Keaton Mitchell | RB | 93.4 | 79.0 | 181 | 198 | -17 |
-| Jordyn Tyson | WR | 93.0 | 109.8 | 183 | 166 | +17 |
-| Dalton Schultz | TE | 117.5 | 133.3 | 161 | 144 | +17 |
-| Malik Willis | QB | 264.1 | 295.0 | 43 | 27 | +16 |
-| Jacory Croskey-Merritt | RB | 166.1 | 153.3 | 113 | 129 | -16 |
-| Aaron Jones Sr. | RB | 173.3 | 157.4 | 105 | 121 | -16 |
-| Dylan Sampson | RB | 82.8 | 103.3 | 188 | 172 | +16 |
-| Mike Evans | WR | 171.1 | 189.7 | 106 | 90 | +16 |
-| Gunnar Helm | TE | 111.6 | 96.5 | 166 | 182 | -16 |
-| Kyle Monangai | RB | 179.3 | 161.6 | 98 | 113 | -15 |
+| Tyrone Tracy Jr. | RB | 39.4 | 101.5 | 210 | 171 | +39 |
+| Chris Rodriguez Jr. | RB | 76.1 | 116.5 | 198 | 161 | +37 |
+| Josh Jacobs | RB | 168.1 | 137.7 | 110 | 143 | -33 |
+| MarShawn Lloyd | RB | 137.4 | 159.4 | 145 | 113 | +32 |
+| Matthew Golden | WR | 176.1 | 153.3 | 99 | 126 | -27 |
+| Aaron Jones Sr. | RB | 173.3 | 150.6 | 105 | 130 | -25 |
+| Chris Godwin Jr. | WR | 144.0 | 162.2 | 135 | 110 | +25 |
+| Blake Corum | RB | 165.7 | 141.5 | 115 | 139 | -24 |
+| Tyjae Spears | RB | 146.0 | 120.4 | 132 | 155 | -23 |
+| Mike Evans | WR | 171.1 | 192.5 | 106 | 85 | +21 |
+| Jaylin Noel | WR | 121.0 | 93.5 | 160 | 181 | -21 |
+| Breece Hall | RB | 276.1 | 231.8 | 36 | 56 | -20 |
+| AJ Barner | TE | 103.5 | 120.3 | 175 | 156 | +19 |
+| Jacory Croskey-Merritt | RB | 166.1 | 150.4 | 113 | 131 | -18 |
+| Kenyon Sadiq | TE | 131.7 | 106.5 | 149 | 167 | -18 |
+| Oronde Gadsden | TE | 69.9 | 92.0 | 201 | 183 | +18 |
+| Kyle Monangai | RB | 179.3 | 159.1 | 98 | 115 | -17 |
+| Zach Charbonnet | RB | 136.2 | 110.2 | 146 | 163 | -17 |
+| Tank Dell | WR | 0.0 | 75.8 | 217 | 200 | +17 |
+| Omar Cooper Jr. | WR | 81.0 | 95.8 | 194 | 177 | +17 |
 
 ## Largest source disagreements
 
-| Player | Pos | ESPN | CBS | FFToday | Median | Uncertainty |
-| --- | --- | ---: | ---: | ---: | ---: | ---: |
-| Kaelon Black | RB | 62.3 | 121.2 | 38.4 | 62.3 | 38.4 |
-| Mike Washington Jr. | RB | 69.4 | 136.9 | 64.6 | 69.4 | 37.6 |
-| Ja'Kobi Lane | WR | 103.9 | 142.3 | 79.4 | 103.9 | 34.0 |
-| Tyrone Tracy Jr. | RB | 39.4 | 101.8 | 101.2 | 101.2 | 39.3 |
-| George Pickens | WR | 224.9 | 276.4 | 214.2 | 224.9 | 54.9 |
-| George Kittle | TE | 175.9 | 200.4 | 141.4 | 175.9 | 47.0 |
-| Rashee Rice | WR | 240.8 | 280.8 | 222.8 | 240.8 | 56.5 |
-| Breece Hall | RB | 276.1 | 220.5 | 243.0 | 243.0 | 67.2 |
-| Chris Rodriguez Jr. | RB | 76.1 | 130.7 | 102.3 | 102.3 | 34.7 |
-| Denzel Boston | WR | 130.5 | 149.7 | 96.5 | 130.5 | 35.3 |
-| Jacoby Brissett | QB | 218.4 | 271.0 | 246.7 | 246.6 | 44.1 |
-| Jeremiyah Love | RB | 273.1 | 221.1 | 254.8 | 254.8 | 69.7 |
-| Isaiah Likely | TE | 140.4 | 182.2 | 132.1 | 140.4 | 38.9 |
-| Jauan Jennings | WR | 103.8 | 144.3 | 94.5 | 103.8 | 30.8 |
-| Malik Willis | QB | 264.1 | 313.6 | 295.0 | 295.0 | 50.3 |
-| Jonah Coleman | RB | 73.2 | 25.5 | 57.5 | 57.5 | 24.9 |
-| Jonathan Taylor | RB | 322.2 | 339.9 | 292.6 | 322.2 | 86.0 |
-| Dallas Goedert | TE | 160.3 | 190.0 | 142.9 | 160.3 | 41.6 |
-| Kayshon Boutte | WR | 128.6 | 126.9 | 82.0 | 126.9 | 34.5 |
-| De'Von Achane | RB | 292.2 | 308.5 | 262.0 | 292.2 | 78.4 |
+| Player | Pos | ESPN | CBS | FFToday | Sleeper | Median | Uncertainty |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Jacoby Brissett | QB | 218.4 | 271.0 | 246.7 | 167.6 | 232.5 | 52.9 |
+| Kaelon Black | RB | 62.3 | 121.2 | 38.4 | 43.0 | 52.7 | 35.7 |
+| Josh Jacobs | RB | 168.1 | 153.1 | 122.4 | 85.5 | 137.7 | 47.8 |
+| Calvin Ridley | WR | 128.9 | 151.9 | 106.6 | 72.4 | 117.8 | 38.5 |
+| Mike Washington Jr. | RB | 69.4 | 136.9 | 64.6 | 98.3 | 83.9 | 36.1 |
+| Rashee Rice | WR | 240.8 | 280.8 | 222.8 | 208.9 | 231.8 | 56.1 |
+| Tyrone Tracy Jr. | RB | 39.4 | 101.8 | 101.2 | 111.1 | 101.5 | 38.9 |
+| Xavier Hutchinson | WR | 84.3 | 104.8 | 72.2 | 33.6 | 78.2 | 30.8 |
+| Isiah Pacheco | RB | 104.6 | 124.8 | 89.1 | 53.9 | 96.8 | 36.1 |
+| Daniel Jones | QB | 290.2 | 300.3 | 277.0 | 230.9 | 283.6 | 51.6 |
+| Zach Charbonnet | RB | 136.2 | 109.1 | 111.3 | 67.3 | 110.2 | 37.9 |
+| Braelon Allen | RB | 77.9 | 120.3 | 75.2 | 52.2 | 76.5 | 31.6 |
+| Aaron Rodgers | QB | 239.5 | 220.6 | 249.7 | 182.6 | 230.0 | 44.1 |
+| Dallas Goedert | TE | 160.3 | 190.0 | 142.9 | 123.6 | 151.6 | 42.5 |
+| Breece Hall | RB | 276.1 | 220.5 | 243.0 | 209.9 | 231.8 | 65.4 |
+| Jeremiyah Love | RB | 273.1 | 221.1 | 254.8 | 207.4 | 237.9 | 67.2 |
+| Jonathan Taylor | RB | 322.2 | 339.9 | 292.6 | 275.7 | 307.4 | 83.7 |
+| Ja'Kobi Lane | WR | 103.9 | 142.3 | 79.4 | 97.9 | 100.9 | 31.4 |
+| Chris Rodriguez Jr. | RB | 76.1 | 130.7 | 102.3 | 138.7 | 116.5 | 39.1 |
+| George Pickens | WR | 224.9 | 276.4 | 214.2 | 230.9 | 227.9 | 53.8 |
 
 ## Uncertainty
 
@@ -81,5 +82,7 @@ The ceiling `sd` input is regenerated from the current ensemble projection on ev
 
 - ESPN is the current authenticated league-scored projection embedded by `refresh_draft_data.py`.
 - CBS and FFToday do not project first downs, so player-specific 2023–25 reception/carry/completion rates are regressed toward the position baseline; rookies and unmatched players use that baseline.
-- FFToday does not expose projected fumbles in its public table; its source score therefore omits that small component. CBS and ESPN retain their fumble assumptions.
+- Sleeper does publish `pass_fd` and `rush_fd`, but they are ignored on purpose: all four sources are rescored through the same league first-down rates so the values entering one median stay comparable.
+- Sleeper resells Rotowire's projection. It is independent of ESPN, CBS, and FFToday, but a Rotowire revision moves exactly one of the four inputs, not two.
+- FFToday does not expose projected fumbles in its public table; its source score therefore omits that small component. CBS, ESPN, and Sleeper retain their fumble assumptions.
 - K and D/ST use ESPN's league-scored season and Weeks 1–3 projections because equivalent raw multi-source scoring was not available under this league's distance and defense-tier rules. D/ST is ranked primarily for early streaming; kicker retains more season-long and consensus signal.

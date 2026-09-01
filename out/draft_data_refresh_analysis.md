@@ -5,11 +5,12 @@
 - Player pool expanded from 205 to 282 players.
 - Position coverage: QB 30, RB 72, WR 90, TE 26, K 32, DST 32.
 - ESPN custom projections, ESPN room ADP/rank, current teams, and status were retrieved 2026-09-01.
-- FantasyPros half-PPR ECR was updated 2026-09-01 from 103 experts: 46 updated within one day, 81 within three days, and all 103 within seven days.
+- FantasyPros half-PPR ECR was updated 2026-09-01 from 103 experts: 47 updated within one day, 81 within three days, and all 103 within seven days.
 - All 32 NFL bye weeks are populated from the official schedule.
 - D/ST is a streaming board: 55% Week 1, 25% Week 2, 10% Week 3, 7.5% season projection, and 2.5% positional ECR.
 - K balances immediate and season-long value: 40% Week 1, 20% Week 2, 10% Week 3, 22.5% season projection, and 7.5% positional ECR.
 - 77 net players were added. Skill players without a current projection: 1; each remains searchable and status-flagged.
+- Sleeper corroborated availability for 250/250 non-D/ST players; 0 disagree with ESPN.
 
 ## Status coverage
 
@@ -18,6 +19,14 @@
 - INJURY_RESERVE: 3
 - OUT: 1
 - QUESTIONABLE: 44
+
+## Availability cross-check
+
+ESPN remains the status of record. Sleeper is a second independent read: where
+the two disagree, neither is applied automatically — the conflict is listed here
+so it can be resolved against the actual league transaction before the draft.
+
+- No disagreements: ESPN and Sleeper agree on every matched player.
 
 ## Zero-projection skill players
 
