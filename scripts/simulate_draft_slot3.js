@@ -79,7 +79,11 @@ function simulate(n,randomized){
       for(const p of PLAYERS) if(!pre.has(p.id)) { add(unavailable[r-1],p.name); if(!firstAt.has(p.id)) firstAt.set(p.id,r); }
       picks.push(selected.id); mine.push(selected);
       add(rounds[r-1],selected.name); add(posByRound[r-1],selected.pos);
-      myAdp.push({round:r,name:selected.name,delta:(myPicks()[r-1]-selected.adp)});
+      // surv is the recommended player's own probability of lasting to my next
+      // pick. Pairing it with the reach distinguishes correct aggression
+      // (reaching on someone who would not survive) from waste.
+      myAdp.push({round:r,name:selected.name,pos:selected.pos,delta:(myPicks()[r-1]-selected.adp),
+        surv:rec.surv,gain:rec.gain,tier:rec.vonaTier});
       if([4,8,14].includes(r)) add(builds[r],keyRoster(mine));
       autoOppUntilMine();
     }

@@ -70,13 +70,31 @@ does not inherit the historical harness's proxy problem.
   negative. Unexplained. Find out why before trusting the mean.
 - 300 drafts only. Re-run at 2000 and check the round-level means are stable.
 
-**Reaching is not automatically bad.** It is only a loss if the player would have
-survived. The board already computes per-player `surv`. **The decisive test
-nobody has run:** join each pick's reach to that player's `surv` at the moment he
-was taken. Reaching on a 20%-survival player is correct; reaching on a
-90%-survival player is waste. Instrument `simulate_draft_slot3.js` to record
-`rec.surv` alongside `myAdp`, then report mean reach bucketed by survival decile.
-**If high-survival reaches are rare, claim 2.1 is not actionable and §3.3 dies.**
+**Reaching is not automatically bad** — it is only a loss if the player would have
+survived. That audit is now DONE (`myAdp` records `surv`/`gain`/`tier`; 500
+drafts, 6,000 skill picks). **The correlation runs backwards:**
+
+| player's surv to my next pick | n | mean reach | % reaching >5 picks |
+|---|---|---|---|
+| 0.00–0.10 | 2029 | −4.2 | 48% |
+| 0.10–0.25 | 789 | −8.4 | 31% |
+| 0.25–0.50 | 1849 | −0.9 | 47% |
+| 0.50–0.75 | 1229 | **−11.8** | 77% |
+| 0.75–0.90 | 89 | **−30.3** | 100% |
+| 0.90–1.00 | 15 | **−28.6** | 100% |
+
+A rational selector reaches *most* on players who will not survive and *least* on
+those who will. This does the opposite. **17.5% of all skill picks are wasteful
+reaches** (>5 picks early on a >50%-survival player) — round 10 is 88% of picks,
+round 12 66%, round 9 37%. Repeat offenders: MarShawn Lloyd (280x, −24.1 reach at
+0.65 surv), Rachaad White (238x), Denzel Boston (170x), Jordan Mason (138x).
+
+**Remaining caveat, and the next thing to test:** this shows the engine reaches on
+players *it believes* will survive. If `surv` is itself overestimated the waste is
+smaller than it looks. `surv` derives from `timingMetric`, which is 80% market
+ADP, and market ADP is stale on news. Calibrate it: compare predicted `surv`
+against observed availability using `random.unavailable[]` from the same run
+before sizing the fix.
 
 ### 2.2 Root cause: VONA gain is positional
 
@@ -163,7 +181,9 @@ conclusion in the repo is about a proxy.
 **Justified by:** §2.3's second bullet. This is the review's central objection.
 
 ### 3.3 Add per-player survival to `gain`
-Only if §2.1's survival-join test shows high-survival reaches are common.
+**The gating test in §2.1 has now been run and it passes** — high-survival reaches
+are not merely common, they are where reaching is *worst*. Condition this instead
+on the `surv` calibration check in §2.1.
 **Criterion to ship:** a pre-registered arm, declared *before* running, that beats
 baseline at the season level on the corrected gate, using the real engine (3.2).
 Predeclare the arm list in a commit, then run. Do not add an arm and its
