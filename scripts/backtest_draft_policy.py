@@ -729,6 +729,23 @@ def render(result: dict) -> str:
 """
 
 
+# Two-sided 95% t critical values by degrees of freedom, for the season-level
+# interval. Room-level intervals treat thousands of simulated rooms as
+# independent and are therefore far too narrow to describe an effect whose
+# real independent unit is the NFL season.
+T_CRIT_95 = {1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571, 6: 2.447,
+             7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228}
+
+
+def season_level_interval(deltas: list[float]) -> dict:
+    n = len(deltas)
+    mean = statistics.mean(deltas)
+    if n < 2:
+        return {"delta": mean, "lo": float("nan"), "hi": float("nan"), "n": n}
+    error = T_CRIT_95.get(n - 1, 1.96) * statistics.stdev(deltas) / math.sqrt(n)
+    return {"delta": mean, "lo": mean - error, "hi": mean + error, "n": n}
+
+
 def verify_finalist(args: argparse.Namespace) -> None:
     if not OUT_JSON.exists():
         raise RuntimeError("Run the full historical backtest before finalist verification")
@@ -758,11 +775,16 @@ def verify_finalist(args: argparse.Namespace) -> None:
         "method": {"drafts_per_season": args.verification_drafts, "seed_offset": args.seed_offset, "seasons": list(SEASONS)},
         "opponent": asdict(config), "baseline": strip_raw(baseline), "challenger": strip_raw(challenger),
         "overall": {key: paired_interval(challenger, baseline, key) for key in ("champion", "playoff", "points")},
+        "season_level": {key: season_level_interval([row[f"{key}_delta"]["delta"] for row in by_season])
+                         for key in ("champion", "playoff", "points")},
         "by_season": by_season,
     }
     positive = sum(row["champion_delta"]["delta"] > 0 for row in by_season)
     overall = result["overall"]["champion"]
-    stable = overall["lo"] > 0 and positive >= 5
+    season = result["season_level"]["champion"]
+    # The gate now requires the season-level interval to clear zero as well.
+    # Room-level significance alone only says the simulator is self-consistent.
+    stable = overall["lo"] > 0 and season["lo"] > 0 and positive >= 5
     rows = "\n".join(
         f"| {row['season']} | {percent(row['baseline_champion'])} | {percent(row['challenger_champion'])} | "
         f"{percent(row['champion_delta']['delta'])} | {percent(row['playoff_delta']['delta'])} | {row['points_delta']['delta']:+.1f} |"
@@ -775,14 +797,19 @@ def verify_finalist(args: argparse.Namespace) -> None:
 {f'**Verified: {challenger_policy.label}.**' if stable else '**Not verified strongly enough to change the live policy.**'}
 
 - {args.verification_drafts:,} fresh-seed paired draft rooms per season; {args.verification_drafts * len(SEASONS):,} rooms per policy.
-- Overall championship delta: {percent(overall['delta'])} (95% CI {percent(overall['lo'])} to {percent(overall['hi'])}).
+- Championship delta: {percent(overall['delta'])}.
+- **Season-level 95% CI {percent(season['lo'])} to {percent(season['hi'])}** ({season['n']} seasons). This is the interval to quote.
+- Room-level 95% CI {percent(overall['lo'])} to {percent(overall['hi'])} — Monte Carlo precision only. It treats every simulated room-season as independent and is far too narrow to describe the effect.
+- Playoff delta: {percent(result['season_level']['playoff']['delta'])}. Regular-season points delta: {result['season_level']['points']['delta']:+.1f}.
 - Positive championship delta in {positive}/{len(SEASONS)} seasons.
 
 | Season | Baseline champion | Challenger champion | Champion delta | Playoff delta | Points delta |
 | ---: | ---: | ---: | ---: | ---: | ---: |
 {rows}
 
-This is a verification of an originally prespecified policy, not a new parameter search. NFL seasons remain the true independent units; room-level confidence intervals describe draft-room uncertainty only.
+**Provenance:** this template cannot tell whether the challenger was prespecified or added after the outcomes were seen. If the arm was introduced in the same change as its verification, this is a post-selection result and the interval above is optimistic — record that in the commit message. Fresh seeds reduce Monte Carlo noise; they do not create fresh historical evidence.
+
+Only {len(SEASONS)} NFL seasons supply independent outcome variation, and the same 12-team simulator, opponent model, and free replacement-level fill-ins are shared by both arms. A championship-rate gap much larger than the regular-season points gap should be treated as a warning that the metric is dominated by single-week playoff variance, not as evidence of a better roster.
 """
     result["stable"] = stable
     result["challenger_policy"] = asdict(challenger_policy)
