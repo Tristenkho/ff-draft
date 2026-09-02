@@ -5,7 +5,7 @@
 - ESPN, CBS, FFToday, and Sleeper (Rotowire) are combined with a robust median when available.
 - CBS, FFToday, and Sleeper raw stat lines are rescored under the league's passing, rushing, receiving, first-down, and fumble rules.
 - ADP and ECR are not projection inputs.
-- Player-specific 2023-25 first-down rates are regressed toward position averages before the raw stat sources are rescored; matched players: 195/218.
+- Player-specific 2023-25 first-down rates are regressed toward position averages before the raw stat sources are rescored; matched players: 194/218.
 - Mean absolute projection change among matched players: 9.2 points.
 - Four-source coverage: 202/218 skill players (92.7%).
 - Three-or-more-source coverage: 212/218 skill players (97.2%).
@@ -26,26 +26,26 @@ Positive means the ensemble moves the player up.
 
 | Player | Pos | ESPN/custom | Ensemble | Old rank | New rank | Change |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| Tyrone Tracy Jr. | RB | 39.4 | 101.5 | 210 | 171 | +39 |
-| Chris Rodriguez Jr. | RB | 76.1 | 116.5 | 198 | 161 | +37 |
+| Tyrone Tracy Jr. | RB | 39.4 | 101.5 | 209 | 171 | +38 |
+| Chris Rodriguez Jr. | RB | 76.5 | 116.5 | 196 | 161 | +35 |
 | Josh Jacobs | RB | 168.1 | 137.7 | 110 | 143 | -33 |
 | MarShawn Lloyd | RB | 137.4 | 159.4 | 145 | 113 | +32 |
-| Matthew Golden | WR | 176.1 | 153.3 | 99 | 126 | -27 |
+| Matthew Golden | WR | 176.1 | 153.3 | 100 | 126 | -26 |
 | Aaron Jones Sr. | RB | 173.3 | 150.6 | 105 | 130 | -25 |
 | Chris Godwin Jr. | WR | 144.0 | 162.2 | 135 | 110 | +25 |
 | Blake Corum | RB | 165.7 | 141.5 | 115 | 139 | -24 |
 | Tyjae Spears | RB | 146.0 | 120.4 | 132 | 155 | -23 |
 | Mike Evans | WR | 171.1 | 192.5 | 106 | 85 | +21 |
-| Jaylin Noel | WR | 121.0 | 93.5 | 160 | 181 | -21 |
-| Breece Hall | RB | 276.1 | 231.8 | 36 | 56 | -20 |
-| AJ Barner | TE | 103.5 | 120.3 | 175 | 156 | +19 |
+| Jaylin Noel | WR | 121.0 | 93.5 | 160 | 180 | -20 |
+| Breece Hall | RB | 276.1 | 231.8 | 36 | 55 | -19 |
+| Tank Dell | WR | 0.0 | 75.8 | 218 | 199 | +19 |
 | Jacory Croskey-Merritt | RB | 166.1 | 150.4 | 113 | 131 | -18 |
+| AJ Barner | TE | 103.5 | 120.3 | 174 | 156 | +18 |
 | Kenyon Sadiq | TE | 131.7 | 106.5 | 149 | 167 | -18 |
-| Oronde Gadsden | TE | 69.9 | 92.0 | 201 | 183 | +18 |
+| Oronde Gadsden | TE | 69.9 | 92.0 | 200 | 182 | +18 |
 | Kyle Monangai | RB | 179.3 | 159.1 | 98 | 115 | -17 |
 | Zach Charbonnet | RB | 136.2 | 110.2 | 146 | 163 | -17 |
-| Tank Dell | WR | 0.0 | 75.8 | 217 | 200 | +17 |
-| Omar Cooper Jr. | WR | 81.0 | 95.8 | 194 | 177 | +17 |
+| Malik Willis | QB | 264.1 | 290.5 | 43 | 27 | +16 |
 
 ## Largest source disagreements
 
@@ -59,7 +59,7 @@ Positive means the ensemble moves the player up.
 | Rashee Rice | WR | 240.8 | 280.8 | 222.8 | 208.9 | 231.8 | 56.1 |
 | Tyrone Tracy Jr. | RB | 39.4 | 101.8 | 101.2 | 111.1 | 101.5 | 38.9 |
 | Xavier Hutchinson | WR | 84.3 | 104.8 | 72.2 | 33.6 | 78.2 | 30.8 |
-| Isiah Pacheco | RB | 104.6 | 124.8 | 89.1 | 53.9 | 96.8 | 36.1 |
+| Isiah Pacheco | RB | 73.6 | 124.8 | 89.1 | 53.9 | 81.3 | 33.5 |
 | Daniel Jones | QB | 290.2 | 300.3 | 277.0 | 230.9 | 283.6 | 51.6 |
 | Zach Charbonnet | RB | 136.2 | 109.1 | 111.3 | 67.3 | 110.2 | 37.9 |
 | Braelon Allen | RB | 77.9 | 120.3 | 75.2 | 52.2 | 76.5 | 31.6 |
@@ -69,7 +69,7 @@ Positive means the ensemble moves the player up.
 | Jeremiyah Love | RB | 273.1 | 221.1 | 254.8 | 207.4 | 237.9 | 67.2 |
 | Jonathan Taylor | RB | 322.2 | 339.9 | 292.6 | 275.7 | 307.4 | 83.7 |
 | Ja'Kobi Lane | WR | 103.9 | 142.3 | 79.4 | 97.9 | 100.9 | 31.4 |
-| Chris Rodriguez Jr. | RB | 76.1 | 130.7 | 102.3 | 138.7 | 116.5 | 39.1 |
+| Chris Rodriguez Jr. | RB | 76.5 | 130.7 | 102.3 | 138.7 | 116.5 | 39.0 |
 | George Pickens | WR | 224.9 | 276.4 | 214.2 | 230.9 | 227.9 | 53.8 |
 
 ## Uncertainty
