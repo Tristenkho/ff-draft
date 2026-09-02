@@ -82,7 +82,29 @@ better global rank correlation does not imply better marginal value at each
 price, or better playoff-week scoring. An earlier version asserted "the defect is
 in selection, not ranking." That overstated what the table shows.
 
-### Mechanism: VONA reaches
+### The live engine reaches too — measured, not inferred
+
+The review correctly noted the backtest reimplements the board. But
+`scripts/simulate_draft_slot3.js` executes the shipped engine byte-for-byte and
+records `myAdp.delta` (my pick number minus the player's ESPN room ADP). Run
+`node scripts/simulate_draft_slot3.js 300 <out.json>`; 300 drafts give:
+
+| Round | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| mean | -1.7 | +1.0 | -4.0 | -2.1 | -4.3 | +7.1 | **-13.4** | -6.8 | **-17.0** | -10.8 | -7.2 | -11.5 |
+
+**R1-12 mean -5.9 picks, median -6.1** — larger than the historical proxy's -3.4.
+Rounds 13-14 are +20/+19 (K/DST hardcoded late, expected). So the reach pattern
+is a property of the shipped board, not an artifact of the historical harness.
+
+Root cause is structural and visible in the code: `gain = value -
+expectedNext[pos]` is **positional**. It asks "will someone at this position be
+available later," never "will *this player* be available later." The board
+computes a per-player `surv` and displays it, but `surv` never enters the
+selected player's own gain. The engine therefore cannot decline to reach on a
+specific player it could have had later.
+
+### Mechanism: VONA reaches (historical proxy)
 
 | | mean reach | median | actual pts/rostered player |
 |---|---|---|---|
