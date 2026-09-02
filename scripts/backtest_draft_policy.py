@@ -55,6 +55,11 @@ class Policy:
     # "proxy" reproduces the live board's position-rate proxy; "dispersion"
     # uses draft-market disagreement; "blend" averages volatility and dispersion.
     sd_mode: str = "volatility"
+    # How the pick is chosen from the eligible set. "vona" is the live board's
+    # wait-band gain logic; "consensus" takes the best available by contemporaneous
+    # market rank, the historical stand-in for "just draft off ECR". Roster
+    # eligibility is identical either way, so this isolates the ranker.
+    select: str = "vona"
 
 
 BASELINE = Policy("baseline", "Current tuned build")
@@ -73,6 +78,7 @@ POLICIES = (
     replace(BASELINE, id="sd_dispersion", label="ADP-dispersion sd", sd_mode="dispersion"),
     replace(BASELINE, id="sd_blend", label="Volatility+dispersion sd", sd_mode="blend"),
     replace(BASELINE, id="sd_proxy_ceiling_60", label="Live proxy sd, ceiling 0.60", sd_mode="proxy", ceiling=.60),
+    replace(BASELINE, id="consensus", label="Consensus rank, model roster rules", select="consensus"),
     replace(BASELINE, id="no_luxury", label="No QB2/TE2", luxury_start=13, te2_edge=99, qb2_edge=99),
     replace(BASELINE, id="easy_te2", label="Any superior late TE2", te2_edge=0),
 )
@@ -420,6 +426,8 @@ def choose_user(available: list[dict], roster: list[dict], overall_pick: int, ro
     eligible = [r for r in rows if r["ok"]]
     if not eligible:
         raise RuntimeError(f"No eligible user pick in round {round_no}")
+    if policy.select == "consensus":
+        return min(eligible, key=lambda r: (r["p"]["adp"], -r["gain"]))["p"]
     eligible.sort(key=lambda r: (-r["gain"], r["rank"]))
     top_gain = eligible[0]["gain"]
     tier = [r for r in eligible if top_gain - r["gain"] < 7.5]
