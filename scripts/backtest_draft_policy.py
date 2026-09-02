@@ -50,6 +50,11 @@ class Policy:
     luxury_start: int = 9
     te2_edge: float = 5.0
     qb2_edge: float = 5.0
+    # Which per-player uncertainty the ceiling premium multiplies. "volatility"
+    # is prior-season weekly variance (what this harness has always used);
+    # "proxy" reproduces the live board's position-rate proxy; "dispersion"
+    # uses draft-market disagreement; "blend" averages volatility and dispersion.
+    sd_mode: str = "volatility"
 
 
 BASELINE = Policy("baseline", "Current tuned build")
@@ -64,6 +69,10 @@ POLICIES = (
     replace(BASELINE, id="starters_9", label="Finish starters by R9", starter_deadline=9, luxury_start=10),
     replace(BASELINE, id="core_9", label="Nine total RB/WR", core_total=9),
     replace(BASELINE, id="loose_balance", label="Allow 7/3 RB-WR", min_core_each=3),
+    replace(BASELINE, id="sd_proxy", label="Live position-rate sd (ships today)", sd_mode="proxy"),
+    replace(BASELINE, id="sd_dispersion", label="ADP-dispersion sd", sd_mode="dispersion"),
+    replace(BASELINE, id="sd_blend", label="Volatility+dispersion sd", sd_mode="blend"),
+    replace(BASELINE, id="sd_proxy_ceiling_60", label="Live proxy sd, ceiling 0.60", sd_mode="proxy", ceiling=.60),
     replace(BASELINE, id="no_luxury", label="No QB2/TE2", luxury_start=13, te2_edge=99, qb2_edge=99),
     replace(BASELINE, id="easy_te2", label="Any superior late TE2", te2_edge=0),
 )
@@ -176,6 +185,12 @@ def load_adp(paths: dict[int, tuple[Path, ...]]) -> dict[int, list[dict]]:
     return result
 
 
+# Mirrors ensemble.CEILING_RATE in the live pipeline, so "proxy" reproduces
+# exactly what out/draft_terminal.html ships today.
+CEILING_RATE = {"QB": .14, "RB": .26, "WR": .23, "TE": .25}
+SD_FIELD = {"volatility": "sd", "proxy": "sd_proxy", "dispersion": "sd_disp", "blend": "sd_blend"}
+
+
 def season_points(totals: dict, season: int, key: str, pos: str) -> float:
     return sum(totals.get((season, key, pos), {}).values())
 
@@ -209,8 +224,32 @@ def make_pools(adp: dict[int, list[dict]], totals: dict) -> dict[int, list[dict]
             weekly_sd = statistics.pstdev(history_weeks) if len(history_weeks) > 1 else projection / 17 * .55
             annual_sd = max(projection * .10, weekly_sd * math.sqrt(17) * .65)
             pool.append({**raw, "proj": projection, "sd": annual_sd, "actual": season_points(totals, season, raw["key"], pos)})
+        add_alternate_uncertainty(pool)
         pools[season] = pool
     return pools
+
+
+def add_alternate_uncertainty(pool: list[dict]) -> None:
+    """Attach the uncertainty variants the sd_mode policies select between.
+
+    "dispersion" converts ADP disagreement (in picks) into points using the
+    local slope of projection against draft position within each position
+    group, so a player the market cannot place is treated as more uncertain.
+    """
+    slope = {}
+    for pos in POSITIONS:
+        group = sorted((p for p in pool if p["pos"] == pos), key=lambda p: p["adp"])
+        if len(group) > 2:
+            span_adp = group[-1]["adp"] - group[0]["adp"]
+            span_proj = group[0]["proj"] - group[-1]["proj"]
+            slope[pos] = abs(span_proj / span_adp) if span_adp else 0.0
+        else:
+            slope[pos] = 0.0
+    for player in pool:
+        pos = player["pos"]
+        player["sd_proxy"] = player["proj"] * CEILING_RATE[pos]
+        player["sd_disp"] = max(player["proj"] * .10, player["adp_sd"] * slope[pos])
+        player["sd_blend"] = .5 * player["sd"] + .5 * player["sd_disp"]
 
 
 def make_weekly_forecasts(pools: dict[int, list[dict]], weekly: dict) -> dict:
@@ -228,8 +267,8 @@ def make_weekly_forecasts(pools: dict[int, list[dict]], weekly: dict) -> dict:
     return forecasts
 
 
-def replacement(pool: list[dict], ceiling: float) -> dict[str, float]:
-    value = lambda p: p["proj"] + ceiling * p["sd"]
+def replacement(pool: list[dict], ceiling: float, sd_key: str = "sd") -> dict[str, float]:
+    value = lambda p: p["proj"] + ceiling * p[sd_key]
     groups = {pos: sorted((p for p in pool if p["pos"] == pos), key=value, reverse=True) for pos in POSITIONS}
     need = {"QB": 12, "RB": 24, "WR": 24, "TE": 12}
     for _ in range(12):
@@ -239,9 +278,9 @@ def replacement(pool: list[dict], ceiling: float) -> dict[str, float]:
     return {pos: value(groups[pos][min(need[pos], len(groups[pos]) - 1)]) if groups[pos] else 0 for pos in POSITIONS}
 
 
-def model_meta(pool: list[dict], ceiling: float) -> tuple[dict[str, int], dict[str, float]]:
-    rep = replacement(pool, ceiling)
-    values = {p["id"]: p["proj"] + ceiling * p["sd"] for p in pool}
+def model_meta(pool: list[dict], ceiling: float, sd_key: str = "sd") -> tuple[dict[str, int], dict[str, float]]:
+    rep = replacement(pool, ceiling, sd_key)
+    values = {p["id"]: p["proj"] + ceiling * p[sd_key] for p in pool}
     core = sorted(pool, key=lambda p: values[p["id"]] - rep[p["pos"]], reverse=True)
     core_rank = {p["id"]: i + 1 for i, p in enumerate(core)}
     model = sorted(pool, key=lambda p: .8 * core_rank[p["id"]] + .2 * p["adp"])
@@ -342,8 +381,9 @@ def phi(value: float) -> float:
 
 
 def choose_user(available: list[dict], roster: list[dict], overall_pick: int, round_no: int, policy: Policy) -> dict:
-    model_rank, values = model_meta(available, policy.ceiling)
-    rep = replacement(available, policy.ceiling)
+    sd_key = SD_FIELD[policy.sd_mode]
+    model_rank, values = model_meta(available, policy.ceiling, sd_key)
+    rep = replacement(available, policy.ceiling, sd_key)
     next_pick = (round_no * 12 + (10 if (round_no + 1) % 2 == 0 else 3)) if round_no < 12 else None
     ranked = {p["id"]: overall_pick + i for i, p in enumerate(sorted(available, key=lambda x: x["adp"]))}
 
@@ -395,7 +435,7 @@ class Opponent:
 
 def draft_room(pool: list[dict], policy: Policy, opponent: Opponent, seed: int, user_team: bool = True) -> list[list[dict]]:
     rng = random.Random(seed)
-    model_rank, _ = model_meta(pool, policy.ceiling)
+    model_rank, _ = model_meta(pool, policy.ceiling, SD_FIELD[policy.sd_mode])
     available = {p["id"]: p for p in pool}
     rosters = [[] for _ in range(12)]
     for overall in range(1, 145):

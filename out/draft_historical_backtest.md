@@ -23,11 +23,15 @@ Holdout candidate: **Two RB/WR through R4**. It improved the sealed holdout, but
 | No ceiling premium | 5.00% | 78.75% | 1547.8 |
 | Finish starters by R7 | 5.00% | 77.50% | 1547.1 |
 | Ceiling weight 0.20 | 4.75% | 78.00% | 1549.3 |
+| Volatility+dispersion sd | 4.75% | 78.00% | 1550.9 |
+| ADP-dispersion sd | 4.75% | 77.25% | 1545.7 |
 | Allow 7/3 RB-WR | 4.75% | 76.25% | 1548.1 |
 | Current tuned build | 4.75% | 76.00% | 1547.8 |
 | Nine total RB/WR | 4.75% | 76.00% | 1547.8 |
 | Any superior late TE2 | 4.75% | 74.00% | 1541.8 |
 | Finish starters by R9 | 4.50% | 76.25% | 1551.3 |
+| Live position-rate sd (ships today) | 3.25% | 79.00% | 1551.0 |
+| Live proxy sd, ceiling 0.60 | 3.00% | 77.75% | 1550.2 |
 
 ## Opponent selection validation (2023–2024)
 
