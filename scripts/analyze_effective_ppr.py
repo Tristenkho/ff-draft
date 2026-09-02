@@ -3,7 +3,7 @@
 
 `REC 0.5` makes the league look like half-PPR, but `REFD 0.5` pushes the real
 value of a reception to ~0.80 for WR, ~0.77 for TE, ~0.66 for RB. This rescores
-the cached CBS/FFToday stat lines two ways -- with the league's first-down
+the cached CBS/FFToday/Sleeper stat lines two ways -- with the league's first-down
 bonuses and without -- to measure the gap, and re-ranks the flex pool to show
 which players the half-PPR market (FFC ADP, FantasyPros ECR) misprices.
 
@@ -59,18 +59,18 @@ def load_pool() -> dict:
 
 
 def build_rows(refresh: bool) -> list[dict]:
-    cbs, fftoday, _ = ens.source_data(refresh)
+    cbs, fftoday, sleeper, _ = ens.source_data(refresh)
     fd_rates = ens.player_first_down_rates(refresh)
     pool = load_pool()
 
     rows = []
     for pos in ens.POSITIONS:
-        for key in set(cbs[pos]) | set(fftoday[pos]):
+        for key in set(cbs[pos]) | set(fftoday[pos]) | set(sleeper[pos]):
             player = pool.get((key, pos))
             if not player:
                 continue
             rates = fd_rates.get((key, pos), {})
-            lines = [src[pos][key] for src in (cbs, fftoday) if key in src[pos]]
+            lines = [src[pos][key] for src in (cbs, fftoday, sleeper) if key in src[pos]]
             rec_rate = rates.get("rec_rate", ens.REC_FD.get(pos, 0.0))
             rows.append({
                 "name": player["name"], "pos": pos,

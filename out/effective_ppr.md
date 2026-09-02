@@ -21,13 +21,13 @@ Using the empirical rates already computed in `out/first_down_rates.json`
 | RB  | 0.325        | **0.663**               | +33%            |
 
 Verified against the actual 2026 player pool rather than the position averages —
-rescoring all 212 CBS/FFToday stat lines player-by-player with each player's own
-`fd_rec_rate`:
+rescoring all 217 CBS/FFToday/Sleeper stat lines player-by-player with each
+player's own `fd_rec_rate`:
 
 ```
-WR: mean 0.804  median 0.799  range 0.73-0.87  (n=87)
-TE: mean 0.767  median 0.767  range 0.72-0.81  (n=25)
-RB: mean 0.664  median 0.664  range 0.63-0.71  (n=44)
+WR: mean 0.803  median 0.798  range 0.73-0.87  (n=89)
+TE: mean 0.766  median 0.766  range 0.72-0.81  (n=26)
+RB: mean 0.663  median 0.663  range 0.63-0.71  (n=44)
 ```
 
 So the league sits about four-fifths of the way from half-PPR to full-PPR for
@@ -37,10 +37,10 @@ First downs are not a rounding error. Across the pool they contribute:
 
 | Pos | First-down points | Share of total projection |
 |-----|-------------------|---------------------------|
-| QB  | +24.2             | 8.0%                      |
-| RB  | +15.5             | 8.9%                      |
-| WR  | +18.9             | 11.6%                     |
-| TE  | +17.2             | 11.1%                     |
+| QB  | +23.8             | 8.0%                      |
+| RB  | +14.9             | 9.0%                      |
+| WR  | +18.6             | 11.8%                     |
+| TE  | +17.3             | 11.5%                     |
 
 RB first-down points come from two streams (0.25/rush FD at 0.224 per carry, plus
 0.5/rec FD), which is why the RB share stays respectable even though RB receptions
@@ -49,11 +49,11 @@ first down and are large in absolute terms but the smallest share.
 
 ## The model already handles this — do not adjust for it twice
 
-All three projection sources are league-scored before they are blended:
+All four projection sources are league-scored before they are blended:
 
 - **ESPN** — `scripts/refresh_draft_data.py:170` reads `appliedTotal`, which is
   ESPN's projection under this league's configured scoring settings.
-- **CBS and FFToday** — raw stat lines rescored locally by
+- **CBS, FFToday and Sleeper** — raw stat lines rescored locally by
   `custom_score()` in `scripts/update_projection_ensemble.py:195`, which applies
   `REFD`, `RFD`, and `PFD` using each player's own first-down rates where
   nflverse has a match and position defaults otherwise.
@@ -80,22 +80,25 @@ half-PPR gives the average drift:
 
 | Pos | Mean rank movement |
 |-----|--------------------|
-| WR  | **+1.2** spots     |
-| TE  | **+0.8** spots     |
-| RB  | **-2.1** spots     |
+| WR  | **+1.3** spots     |
+| TE  | **+1.3** spots     |
+| RB  | **-2.6** spots     |
 
 Largest individual movers:
 
 | Player | Pos | half-PPR → league | ADP | Notes |
 |--------|-----|-------------------|-----|-------|
-| Jaylen Waddle | WR | #58 → #52 (+6) | 60.2 | 73 rec @ 0.83/rec |
-| Trey McBride | TE | #34 → #29 (+5) | 20.0 | 110 rec, TE volume king |
-| Josh Downs | WR | #101 → #96 (+5) | 122.9 | 68 rec @ 0.78 |
-| A.J. Brown | WR | #28 → #24 (+4) | 27.2 | 88 rec @ 0.83 |
-| Rashee Rice | WR | #20 → #16 (+4) | 22.3 | 100 rec @ 0.79 |
-| Jacory Croskey-Merritt | RB | #93 → #101 (-8) | 136.5 | 10 rec, pure runner |
-| Tony Pollard | RB | #53 → #59 (-6) | 101.8 | 33 rec @ 0.64 |
-| Jeremiyah Love | RB | #21 → #26 (-5) | 19.2 | 50 rec but low conversion |
+| KC Concepcion | WR | #108 → #102 (+6) | 146.8 | 58 rec @ 0.80/rec |
+| Romeo Doubs | WR | #95 → #89 (+6) | 147.7 | 58 rec @ 0.84 |
+| Stefon Diggs | WR | #97 → #92 (+5) | 102.9 | 64 rec @ 0.79 |
+| Michael Wilson | WR | #85 → #80 (+5) | 102.5 | 66 rec @ 0.82 |
+| Rashee Rice | WR | #34 → #30 (+4) | 29.1 | 93 rec @ 0.79 |
+| Trey McBride | TE | #32 → #28 (+4) | 22.6 | 104 rec, TE volume king |
+| Brock Bowers | TE | #31 → #27 (+4) | 24.0 | 102 rec @ 0.77 |
+| Rachaad White | RB | #84 → #94 (-10) | 125.6 | 34 rec @ 0.66 |
+| Jonathon Brooks | RB | #87 → #95 (-8) | 105.3 | 32 rec @ 0.67 |
+| Kyle Monangai | RB | #79 → #87 (-8) | 124.0 | 23 rec @ 0.67 |
+| Bhayshul Tuten | RB | #35 → #42 (-7) | 61.9 | 32 rec @ 0.66 |
 
 ## Honest magnitude
 
@@ -120,7 +123,7 @@ Treat it as a tiebreaker and a framing correction, not a strategy:
 
 ## Reproducing
 
-Numbers here come from rescoring the cached CBS/FFToday stat lines two ways
+Numbers here come from rescoring the cached CBS/FFToday/Sleeper stat lines two ways
 (with and without first-down bonuses) and re-ranking. Requires
 `.cache/projection-ensemble-2026/` to be populated:
 
