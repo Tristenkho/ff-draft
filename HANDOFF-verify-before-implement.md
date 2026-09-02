@@ -13,7 +13,8 @@ errors in it; that review was correct and its corrections are already applied.
 Assume more errors remain.
 
 Do not modify `out/draft_terminal.html` in this session unless §3's criteria are
-met. The working tree is clean at `76edc0b`.
+met. The working tree is clean at `84b373f`. The live board has not been
+modified in any of this work — only harnesses, reports and these briefs.
 
 **Live engine fingerprint** (sha256 of the engine block, for drift detection):
 `f7c73b865910c467bd17d2433754aa2d58cd0b1fe14bc3523bcfeafeeb9715ad`
