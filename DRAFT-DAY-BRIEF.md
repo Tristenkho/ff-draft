@@ -3,10 +3,11 @@
 Paste this **once** at the start of the draft-day session, before the first pick.
 Then per pick, paste only the Copy state export. Do not paste this file again.
 
-`CLAUDE.md` and the memory notes already load automatically and carry most of
-this — treat this file as the belt-and-braces version, and as the thing to hand
-to any session that is not this project's Claude Code (a phone, a second window,
-a colleague).
+**Codex reads this repo's `AGENTS.md`, which is a committed symlink to
+`CLAUDE.md`,** so the two board corrections below load automatically there as
+well. What Codex does *not* see is Claude Code's memory notes, which is why this
+file exists — paste it whichever tool you are using. Also hand it to any session
+with no repo access at all (a phone, a second window, claude.ai).
 
 ---
 
@@ -76,6 +77,14 @@ In rounds 1–5 the board is fine; follow it.
   152 but expert range 37–332. Market ADP 42.4 is stale and predates the news.
 - **On any breaking news, trust ECR and ESPN room ADP over market ADP.** Timing
   and survival are 80% market ADP, and FFC lags news badly.
+
+## At the table, apply — do not re-derive
+
+The two corrections above were each measured and are cited to files in this repo
+(`scripts/validate_survival_2025.py`, `scripts/simulate_draft_slot3.js`,
+`HANDOFF-verify-before-implement.md`). **Do not re-verify them during the draft.**
+The clock is 90 seconds; audit them before Sunday or after, never between picks.
+If you think one is wrong, say so in one sentence and still give me the top 3.
 
 ## Before the first pick
 
