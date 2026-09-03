@@ -63,6 +63,11 @@ function simulate(n,randomized){
   const posByRound=Array.from({length:14},()=>new Map()); const builds={4:new Map(),8:new Map(),14:new Map()};
   const combos=new Map(), oppBuilds=new Map(), unavailable=Array.from({length:14},()=>new Map()), firstAt=new Map(), pickedAt=new Map();
   const totals=[], myAdp=[], oppReach=[], signatures=new Set(); let exactRecommended=0;
+  // Calibration of the board's own surv estimate: at each of my picks record every
+  // eligible player's predicted survival to my NEXT pick, then check at that next
+  // pick whether they actually lasted. Players I draft are excluded -- I removed
+  // them myself, so their outcome is not an observation about the market.
+  const calib=new Map();  // decile -> {n, lasted, sumPred}
   const baseRep=replacement(skillPool()).rep;
   for(let d=0;d<n;d++){
     picks=initialPicks(); autoPickNos=[]; slot=3; lambda=.40; autoOppUntilMine();
@@ -85,7 +90,18 @@ function simulate(n,randomized){
       myAdp.push({round:r,name:selected.name,pos:selected.pos,delta:(myPicks()[r-1]-selected.adp),
         surv:rec.surv,gain:rec.gain,tier:rec.vonaTier});
       if([4,8,14].includes(r)) add(builds[r],keyRoster(mine));
+      const predicted=rows.filter(x=>x.eligible&&!x.isSpecial&&x.p.id!==selected.id)
+        .map(x=>({id:x.p.id,surv:x.surv}));
       autoOppUntilMine();
+      if(r<14){
+        const left=new Set(remaining().map(p=>p.id));
+        for(const q of predicted){
+          const b=Math.min(9,Math.floor(q.surv*10));
+          const cell=calib.get(b)||{n:0,lasted:0,sumPred:0};
+          cell.n++; cell.sumPred+=q.surv; if(left.has(q.id)) cell.lasted++;
+          calib.set(b,cell);
+        }
+      }
     }
     signatures.add(mine.map(p=>p.id).join(','));
     const leagueRosters=rostersFromDraft();
@@ -109,7 +125,9 @@ function simulate(n,randomized){
   const disappearing=names.map(x=>{const useful=x.unavailable.filter(z=>z.r<=10&&z.p>=.05&&z.p<=.95);return {...x,best:useful.sort((a,b)=>b.p-a.p)[0]};}).filter(x=>x.best).sort((a,b)=>b.best.p-a.best.p).slice(0,30);
   const reachAgg=new Map(); oppReach.forEach(x=>{const v=reachAgg.get(x.name)||{sum:0,n:0};v.sum+=x.delta;v.n++;reachAgg.set(x.name,v)});
   const systematicReaches=[...reachAgg].map(([name,v])=>({name,mean:v.sum/v.n,n:v.n,pos:PLAYERS.find(p=>p.name===name)?.pos,adp:PLAYERS.find(p=>p.name===name)?.adp})).filter(x=>x.pos&&POS.includes(x.pos)&&x.adp<900&&x.n>=n*.35&&x.mean<=-4).sort((a,b)=>a.mean-b.mean).slice(0,15);
-  return {n, rounds:rounds.map(m=>top(m,10)), posByRound:posByRound.map(m=>top(m,8)), builds:Object.fromEntries(Object.entries(builds).map(([r,m])=>[r,top(m,10)])), combos:top(combos,15), oppBuilds:top(oppBuilds,15), totals:{meanProj:mean('proj'),sdProj:sd('proj'),meanValue:mean('value'),sdValue:sd('value'),meanVor:mean('vor'),sdVor:sd('vor')}, unavailable:disappearing, systematicReaches, myAdp, uniqueSignatures:signatures.size, exactRecommended};
+  return {n, rounds:rounds.map(m=>top(m,10)), posByRound:posByRound.map(m=>top(m,8)), builds:Object.fromEntries(Object.entries(builds).map(([r,m])=>[r,top(m,10)])), combos:top(combos,15), oppBuilds:top(oppBuilds,15), totals:{meanProj:mean('proj'),sdProj:sd('proj'),meanValue:mean('value'),sdValue:sd('value'),meanVor:mean('vor'),sdVor:sd('vor')}, unavailable:disappearing, systematicReaches, myAdp, uniqueSignatures:signatures.size, exactRecommended,
+    calibration:[...calib.entries()].sort((a,b)=>a[0]-b[0]).map(([bucket,c])=>
+      ({bucket:bucket/10,n:c.n,predicted:c.sumPred/c.n,observed:c.lasted/c.n}))};
 }
 const samples=SIM_SAMPLES;
 globalThis.RESULT_RANDOM=simulate(samples,true);

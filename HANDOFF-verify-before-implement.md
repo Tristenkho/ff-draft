@@ -90,12 +90,32 @@ reaches** (>5 picks early on a >50%-survival player) — round 10 is 88% of pick
 round 12 66%, round 9 37%. Repeat offenders: MarShawn Lloyd (280x, −24.1 reach at
 0.65 surv), Rachaad White (238x), Denzel Boston (170x), Jordan Mason (138x).
 
-**Remaining caveat, and the next thing to test:** this shows the engine reaches on
-players *it believes* will survive. If `surv` is itself overestimated the waste is
-smaller than it looks. `surv` derives from `timingMetric`, which is 80% market
-ADP, and market ADP is stale on news. Calibrate it: compare predicted `surv`
-against observed availability using `random.unavailable[]` from the same run
-before sizing the fix.
+**The `surv` calibration check is now DONE too, and it strengthens the finding.**
+`random.calibration[]` records every eligible player I did *not* take, bucketed by
+predicted survival, checked at my next pick (500 drafts, 635,104 observations):
+
+| bucket | n | predicted | observed | error |
+|---|---|---|---|---|
+| 0.1–0.2 | 4,158 | 0.149 | 0.066 | −0.083 |
+| 0.2–0.3 | 7,111 | 0.248 | 0.172 | −0.076 |
+| 0.4–0.5 | 7,457 | 0.441 | 0.439 | −0.002 |
+| 0.5–0.6 | 13,765 | 0.543 | 0.627 | +0.084 |
+| 0.6–0.7 | 17,518 | 0.657 | **0.805** | **+0.149** |
+| 0.7–0.8 | 15,550 | 0.755 | **0.902** | **+0.148** |
+| 0.8–0.9 | 32,163 | 0.854 | 0.952 | +0.098 |
+
+Weighted mean |error| 0.022; overall predicted 0.910 vs observed 0.928.
+`surv` is **not inflated — it is UNDERCONFIDENT** in exactly the 0.5–0.9 range
+where the wasteful reaches live. Players the board thinks are 65% to last actually
+last 80% of the time. So the "reaching is really correct aggression" escape is
+refuted, and 17.5% understates the waste.
+
+**The one circularity to keep in mind:** this validates `surv` against the
+simulator's own opponent model, and both derive from `timingMetric`. It is not a
+pure tautology (a tautology would show ~0 error, not a systematic +0.15), but it
+is not external validation either. **The real external test is `out/league_draft_2025.json`** —
+the actual 2025 draft by these same twelve managers. Score predicted survival
+against what those managers really did before trusting `surv` on Sunday.
 
 ### 2.2 Root cause: VONA gain is positional
 
