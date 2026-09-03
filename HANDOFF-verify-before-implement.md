@@ -110,12 +110,39 @@ where the wasteful reaches live. Players the board thinks are 65% to last actual
 last 80% of the time. So the "reaching is really correct aggression" escape is
 refuted, and 17.5% understates the waste.
 
-**The one circularity to keep in mind:** this validates `surv` against the
-simulator's own opponent model, and both derive from `timingMetric`. It is not a
-pure tautology (a tautology would show ~0 error, not a systematic +0.15), but it
-is not external validation either. **The real external test is `out/league_draft_2025.json`** —
-the actual 2025 draft by these same twelve managers. Score predicted survival
-against what those managers really did before trusting `surv` on Sunday.
+**External validation against the real 2025 draft is now DONE.**
+`python3 scripts/validate_survival_2025.py` scores the same formula against what
+these twelve managers actually did on 2025-08-31 (11,721 observations, 12
+managers x 13 pick gaps). The underconfidence is **far larger against the real
+room than in simulation**:
+
+| bucket | n | predicted | observed | error |
+|---|---|---|---|---|
+| 0.1–0.2 | 251 | 0.150 | 0.494 | **+0.344** |
+| 0.2–0.3 | 246 | 0.250 | 0.602 | **+0.352** |
+| 0.3–0.4 | 276 | 0.351 | 0.685 | **+0.333** |
+| 0.4–0.5 | 226 | 0.439 | 0.748 | **+0.309** |
+| 0.5–0.6 | 406 | 0.539 | 0.788 | **+0.249** |
+| 0.6–0.7 | 405 | 0.651 | 0.872 | **+0.221** |
+| 0.9–1.0 | 7985 | 0.990 | 0.986 | −0.005 |
+
+Brier 0.0789 vs 0.1013 for the base rate — **skill score +0.221**, so the model
+has genuine ranking skill and is simply far too pessimistic in the mid-range.
+
+**Sensitivity, and it survives.** Only 130/168 picks are FFC-priced; the other 38
+(K, D/ST, sleepers) still consume slots, which compresses effective ADP and biases
+predictions low. Stretching the index by the observed priced-pick density (0.774)
+shrinks the overall bias from +0.064 to +0.024 and weighted error from 0.071 to
+0.055, but the mid-range gap remains large: predicted 0.35 → observed 0.61,
+0.55 → 0.74, 0.65 → 0.80.
+
+**Interpretation:** this room departs from ADP hard (`out/league_tendencies_2025.md`:
+K/DST 30–70 picks early, a 38-pick QB desert), and every off-ADP pick a manager
+spends is a skill player who lasts longer than a strict-ADP model predicts. So on
+Sunday, a player the board calls 30% to survive is closer to **60%** in this room.
+
+**Caveat:** one draft, and observations share players and picks, so they are not
+independent. Read it as calibration shape, not a significance test.
 
 ### 2.2 Root cause: VONA gain is positional
 
