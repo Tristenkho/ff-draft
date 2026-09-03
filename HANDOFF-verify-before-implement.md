@@ -141,8 +141,25 @@ K/DST 30–70 picks early, a 38-pick QB desert), and every off-ADP pick a manage
 spends is a skill player who lasts longer than a strict-ADP model predicts. So on
 Sunday, a player the board calls 30% to survive is closer to **60%** in this room.
 
-**Caveat:** one draft, and observations share players and picks, so they are not
-independent. Read it as calibration shape, not a significance test.
+**No 2024 draft exists to add a second season, so consistency was tested WITHIN
+the draft instead** — using the conservative density-corrected model throughout:
+
+- **Positive bias in 12/12 managers**, range +0.157 (kevin) to +0.311 (rayrice).
+  Manager-clustered bootstrap, 5,000 resamples: mean **+0.214, 95% CI
+  [+0.191, +0.240]**.
+- **It is localised, not uniform.** Rounds 1–5 are calibrated (−0.037 to +0.043).
+  The error appears at round 6 and stays: R6 **+0.402**, R7 **+0.387**,
+  R8 **+0.448**, R9 +0.224, R11 +0.185, R12 +0.223, R13 +0.326. (R10 is +0.056,
+  unexplained.)
+
+That location is the whole story: `out/league_tendencies_2025.md` records rounds
+7–9 running **53% special teams**. Every pick a manager spends off-ADP is a skill
+player surviving longer than strict-ADP timing predicts — and it is exactly where
+the reach audit found the waste (rounds 8–12). The two findings interlock.
+
+**Caveat:** one draft. Managers share a pool and pick against each other, so the
+clusters are not independent and the bootstrap interval is optimistic. Read it as
+calibration shape and location, not a significance test.
 
 ### 2.2 Root cause: VONA gain is positional
 
