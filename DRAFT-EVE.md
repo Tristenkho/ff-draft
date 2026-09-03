@@ -77,3 +77,9 @@ changed. Never reset model weights from one news cycle.
 
 During the draft, record every pick only in the HTML. At each of our picks, use
 Copy state for the external top-three judgment step.
+
+Paste `DRAFT-DAY-BRIEF.md` once at the start of the draft-day session, before the
+first pick. `CLAUDE.md` and the memory notes load on their own and carry the same
+two board corrections (survival underconfidence from round 6, and the measured
+reach), but the brief is the copy to hand to any session that is not this
+project's Claude Code.

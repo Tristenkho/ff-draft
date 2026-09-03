@@ -12,6 +12,18 @@ with reasoning before committing.
 - HTML holds state. Do NOT record picks anywhere else — two state stores diverge.
 - Claude Code is the judgement layer, not the bookkeeping layer.
 
+Two corrections to apply when reading the board (both measured 2026-09-02,
+see the memory notes and `scripts/validate_survival_2025.py`):
+- **`survives` is calibrated in rounds 1-5 and roughly half the truth from
+  round 6 on.** Validated against the real 2025 draft by these same twelve
+  managers: bias +0.39 to +0.45 in rounds 6-8, 12/12 managers positive. A
+  player shown at 40% in round 7 has historically lasted ~85%.
+- **The board reaches.** Byte-for-byte simulation of the live engine puts its
+  own recommendations ~5.9 picks ahead of ESPN room ADP over rounds 1-12,
+  worst in rounds 7-12 — the same window where survival is most underestimated.
+  Before taking a large reach, check `survives`, apply the correction above,
+  and prefer the consensus-best player if he would keep.
+
 ## Delivery automation
 - After completing and validating requested code or site changes, automatically
   stage only the files owned by that task, create a focused commit, and push it.
