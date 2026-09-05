@@ -79,7 +79,7 @@ AUTHORITATIVE_AVAILABILITY = {
     4047365: {
         "status": "COMMISSIONER_EXEMPT",
         "availability_note": "Commissioner's Exempt List — cannot practice or play; no return timetable",
-        "availability_updated": "2026-08-30",
+        "availability_updated": "2026-09-05",
         "availability_source": "NFL",
         "availability_url": "https://www.nfl.com/news/nfl-places-packers-rb-josh-jacobs-commissioner-exempt-list",
     },

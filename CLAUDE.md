@@ -24,6 +24,16 @@ see the memory notes and `scripts/validate_survival_2025.py`):
   Before taking a large reach, check `survives`, apply the correction above,
   and prefer the consensus-best player if he would keep.
 
+## Latest pre-draft audit (September 5)
+Read `DRAFT-DAY-BRIEF.md` and `out/draft_eve_audit_2026-09-05.md` before live
+judgment. They supersede the September 2 snapshot numbers above: the refreshed
+300-draft simulation averages 6.6 picks ahead of ESPN ADP. Historical survival
+underprediction is strongest in rounds 6–8; round 2 also had +13 percentage
+points of bias. Do not mechanically double all probabilities. Model rank has
+material QB premiums and WR/contingent-RB discounts versus ECR; the scoring
+adjustment alone does not justify large gaps. Copy state now includes consensus
+alternatives outside the top eight so those players receive explicit review.
+
 ## Delivery automation
 - After completing and validating requested code or site changes, automatically
   stage only the files owned by that task, create a focused commit, and push it.

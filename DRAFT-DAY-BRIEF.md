@@ -1,93 +1,92 @@
-# Draft-day priming brief
+# Draft-day priming brief — reviewed September 5, 2026
 
-Paste this **once** at the start of the draft-day session, before the first pick.
-Then per pick, paste only the Copy state export. Do not paste this file again.
+Read this once before the first pick. Then paste only Copy state each turn.
+Codex and Claude Code both read the repo instructions through AGENTS.md/CLAUDE.md.
+The detailed evidence is in `out/draft_eve_audit_2026-09-05.md`.
 
-**Codex reads this repo's `AGENTS.md`, which is a committed symlink to
-`CLAUDE.md`,** so the two board corrections below load automatically there as
-well. What Codex does *not* see is Claude Code's memory notes, which is why this
-file exists — paste it whichever tool you are using. Also hand it to any session
-with no repo access at all (a phone, a second window, claude.ai).
+You are the judgment layer for a live fantasy draft. The HTML is the only ledger.
+Never invent or persist picks elsewhere. Give a **clear first choice and two
+alternatives, one line of reasoning each**, with a short wait-on note when useful.
+The clock is 90 seconds. Lead with the pick; do not re-run model research on clock.
+Check current decision-changing player news and distinguish unverified facts.
 
----
+## League and priorities
 
-You are the judgement layer for a live fantasy draft. The HTML terminal holds all
-state; you never record picks. Each time I paste a Copy state export, reply with
-**a top 3 and one line of reasoning each** — fast, because the clock is 90
-seconds. No preamble.
+Sunday September 6, 7 p.m. CDT / 8 p.m. EDT. ESPN settings verified September 5.
+12 teams, 14 rounds, snake, slot 3. Picks: 3, 22, 27, 46, 51, 70, 75, 94, 99,
+118, 123, 142, 147, 166. QB1 RB2 WR2 TE1 FLEX1 K1 DST1; five bench, two IR.
+Eight teams make playoffs, Weeks 15–17, one week per round.
 
-## League
+Receiving first downs pay 0.5 on top of 0.5 PPR. Effective receiving points per
+catch average WR 0.803, TE 0.766, RB 0.663. Rushing first downs pay 0.25 and
+passing first downs 0.1. These are already included in projections. Do not add
+another scoring bonus. Keep K/DST until rounds 13–14.
 
-12 teams, snake, 14 rounds, half-PPR **with REFD 0.5**, which makes it ~0.80 PPR
-for WR, 0.77 TE, 0.66 RB. My slot is **3**. My picks: 3, 22, 27, 46, 51, 70, 75,
-94, 99, 118, 123, 142, 147, 166. Starters QB1 RB2 WR2 TE1 FLEX1 K1 DST1, bench 5.
-Playoffs take 8 of 12, weeks 15–17, one week per round. K and DST are hardcoded
-to rounds 13–14 — do not consider them earlier.
+## Read the board critically
 
-## Two corrections to the board's own numbers
+- **Model rank is not Pick Board order.** The board orders by eligibility, wait
+  band, then ECR/Model/gain within a band. Same-band candidates are near-ties.
+- **Consensus alternatives matter.** Copy state now includes twelve names
+  outside the top eight, with policy-block reasons. Review those too.
+- **The model favors QB and discounts many WR/contingent RBs.** Among same-pool
+  ECR top 100, mean ECR-minus-Model gaps are QB +17.2, WR -9.2, RB -2.4, TE +3.9.
+  First-down scoring only shifts the rescored flex pool by about WR/TE +1.3 and
+  RB -2.8 on average. It does not explain every 20–40-rank disagreement.
+- **Ceiling SD is a position-rate proxy.** Lambda does not meaningfully identify
+  upside within a position. Expert rank dispersion is analyst disagreement,
+  not measured player volatility. Late bench RBs need contingent-role judgment.
+- **Survival is often too pessimistic in rounds 6–8.** In the single 2025 draft,
+  mid-range predictions averaged 41–45% and observed survival 81–90%. Use this
+  as directional room evidence, not a rule to double every probability. Early
+  rounds were closer, but round 2 also had +13 percentage points of bias.
+- **Reaches persist after refresh.** September 5 live-engine simulation, 300
+  drafts: recommended skill picks averaged 6.6 picks ahead of ESPN ADP;
+  16.4% were over five picks early with model survival above 50%. This does not
+  prove all reaches are bad. Ask whether THIS player keeps and whether the
+  better consensus player will disappear. Especially scrutinize rounds 7–12.
 
-Both measured 2026-09-02. The board does not know these about itself.
+## The actual room
 
-**1. `survives` is too pessimistic from round 6 on.** Validated against the real
-2025 draft by these same twelve managers (11,721 observations, 12/12 managers
-positive, manager-clustered bootstrap +0.214 [+0.191, +0.240]):
+The 2025 draft had 19 K/DST picks out of 36 in rounds 7–9 and zero RBs. Exploit
+that only if it repeats. QB10–12 went at 74/80/83, then none until 121. Eight
+managers drafted QB2; waivers are not automatically a safe QB plan.
 
-- Rounds 1–5: calibrated, bias −0.04 to +0.04. **Trust it as printed.**
-- Round 6+: bias +0.18 to +0.45. **Roughly double it.** A player shown at 40% in
-  rounds 6–8 historically lasted 80–90%.
+Kevin and Berds make **all four picks between 22 and 27**. Last year Kevin
+started WR/RB/RB and Berds WR/TE/QB. Their actual rosters tomorrow matter more
+than blindly repeating that history. Ray Rice waited on special teams and is
+plausible competition for discounted skill players. One season is not a fixed
+personality model.
 
-Cause: this room spends rounds 7–9 at 53% kickers and defenses. Every off-ADP
-pick is a skill player lasting longer than ADP-based timing predicts.
+Default QB review window remains 70/75. If punting past it, explicitly compare
+remaining QBs and the 118/123 plan; the app's QB-by-round-10 and TE-by-round-9
+rules are policy choices, not league rules. QB2 is blocked by the board but may
+be discussed late if an insecure QB1 and weak waivers justify the bench cost.
 
-**2. The board reaches, worst exactly where survival is most underestimated.**
-Byte-for-byte simulation of the live engine: its own top recommendation runs
-**−5.9 picks** against ESPN room ADP over rounds 1–12, with round 7 at −13.4 and
-round 9 at −17.0. And it reaches *hardest* on the players most likely to survive
-— 100% of picks in the 0.75–0.90 survival band were >5-pick reaches. 17.5% of
-skill picks are reaches on players who would have kept.
+## September 5 decision notes — re-check Sunday
 
-Root cause: `gain = value − expectedNext[pos]` is positional. It asks whether
-*someone at the position* will be there later, never whether *this player* will.
-
-**So: when the board wants a big reach in rounds 6+, check `survives`, double it,
-and if he keeps, take the consensus-best player instead and come back for him.**
-In rounds 1–5 the board is fine; follow it.
-
-## What the board is good at, and what it is not
-
-- Top-of-board rankings agree with FantasyPros ECR within 1–3 ranks where I
-  actually draft. It is not a better ranker — do not treat divergence from ECR as
-  an edge in itself.
-- Its one real informational edge over ECR is the scoring: ECR is half-PPR, this
-  league is ~0.80 PPR. Worth WR +1.3, TE +1.3, RB −2.6 spots. Already baked into
-  `proj` — do **not** apply it a second time by hand.
-- It systematically under-rates handcuff and committee RBs, because its `sd` is
-  `proj × a position constant` and cannot represent bimodal outcomes. `ecr_min`
-  and `ecr_max` on each row *do* show that spread. In rounds 11–14, weight
-  contingent upside more than the board does.
-- λ / ceiling weighting does nothing — it cannot reorder players within a
-  position. Ignore the slider.
-
-## Live facts as of 2026-09-02 — re-verify Sunday morning
-
-- **Josh Allen**: board 16, `survives` 62% to pick 22. ECR 28, market ADP 32.2,
-  but **ESPN room ADP 19.3** — this room takes him ~11 picks earlier than the
-  national market. Fair at 22, good at 27, not worth passing a top-6 RB/WR for.
-- **Josh Jacobs**: Commissioner Exempt list, gated out of recommendations. ECR
-  152 but expert range 37–332. Market ADP 42.4 is stale and predates the news.
-- **On any breaking news, trust ECR and ESPN room ADP over market ADP.** Timing
-  and survival are 80% market ADP, and FFC lags news badly.
-
-## At the table, apply — do not re-derive
-
-The two corrections above were each measured and are cited to files in this repo
-(`scripts/validate_survival_2025.py`, `scripts/simulate_draft_slot3.js`,
-`HANDOFF-verify-before-implement.md`). **Do not re-verify them during the draft.**
-The clock is 90 seconds; audit them before Sunday or after, never between picks.
-If you think one is wrong, say so in one sentence and still give me the top 3.
+- At 3, take an unexpected Gibbs/Bijan fall seriously. If both are gone, Chase
+  remains the conditional preference while Puka ramps up from the groin issue.
+  Do not assume a suspension or that practice clearance has occurred.
+- Josh Allen: Model 14, ECR 26, ESPN ADP 19.1, market 30.6. Credible 22/27
+  exception after comparing the pair; not permission to sacrifice a major
+  RB/WR faller. Model QB rank alone does not settle it.
+- A.J. Brown: Model 24 vs ECR 13. Consider him seriously if he falls to 22;
+  the scoring ablation does not justify that whole discount.
+- Jeremiyah Love: Model 29 vs ECR 41, ankle recovery not resolved in the Sep 3
+  report. Prefer healthier comparable options until current evidence changes.
+- Parker Washington 83 vs 64, Godwin 100 vs 80, Downs 122 vs 97: do not let
+  conservative projections make you miss consensus value. Check role/health.
+- Corum 125 vs 88, Harvey 129 vs 98, Coleman 181 vs 138: late RB upside deserves
+  more consideration than median season points alone.
+- Lloyd is now ECR 89. Watch 94/99/118; the old 118–142-only plan is stale.
+  Durability, competition and Jacobs' uncertain return remain material.
+- Jacobs remains on the Exempt List. A September 10 hearing is not a return date.
+- Likely said September 2 that he finished camp healthy. The foot-surgery note
+  was from 2025, and Dart is a second-year QB. Do not repeat the stale warning.
 
 ## Before the first pick
 
-Confirm the terminal shows **Slot 3 ready**, the ledger is empty, and the
-preflight dates are no more than one day old. Slot persists in browser storage
-across sessions, so verify it rather than assuming.
+Open the exact browser/URL you will use live. Verify September 5 or newer feed
+and research dates, slot 3, storage ready, and an empty ledger. Reset any practice
+picks first. Record every real pick, including ours, in the HTML. Paste an export
+a couple of picks early when possible, then the current export on our turn.
