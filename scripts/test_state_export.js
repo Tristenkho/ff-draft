@@ -18,6 +18,9 @@ vm.runInContext(html.slice(start, end) + String.raw`
   const text=buildState();
   assert(text.includes('ECR → Model → gain'));
   assert(text.includes('MEASURED MODEL LIMITS'));
+  assert(text.includes('ESPN AUTOPICK CONTEXT'));
+  for(const r of computeBoard().slice(0,8)) assert(text.includes('ESPN default rank '+r.p.espn_rank));
+  assert.equal((text.match(/ESPN default rank [0-9]/g)||[]).length,20);
   const section=text.split('CONSENSUS ALTERNATIVES OUTSIDE TOP EIGHT')[1].split('UNAVAILABLE / LOW-COVERAGE')[0];
   const names=[...section.matchAll(/  · (.*?) \(/g)].map(m=>m[1]);
   assert.equal(names.length,12);

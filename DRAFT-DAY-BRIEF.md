@@ -90,3 +90,22 @@ Open the exact browser/URL you will use live. Verify September 5 or newer feed
 and research dates, slot 3, storage ready, and an empty ledger. Reset any practice
 picks first. Record every real pick, including ours, in the HTML. Paste an export
 a couple of picks early when possible, then the current export on our turn.
+
+## ESPN autopick — reviewed September 5
+
+The terminal's queue does not sync to ESPN. For timeout protection, put Chase
+first in the actual ESPN live queue once Gibbs/Bijan are gone. Saved ESPN
+rankings apply when a live manager times out with no pending queued player.
+Other managers' custom rankings/queues are unknown; never treat default rank
+as a guaranteed selection order. Copy state includes default rank separately
+from ADP for its eight candidates and twelve consensus alternatives.
+
+Conditional default-autopick discounts: Watson ECR 57 / ESPN rank 81, Parker
+Washington 64/87, Godwin 80/127, Downs 97/131. These support waiting only when
+actual opponents, their roster needs, and the number of intervening picks
+support it. An active manager can take any of them earlier. Allen illustrates
+why rank and ADP must be distinct: ECR 26 / ESPN rank 26 / ESPN ADP 19.1.
+
+ESPN sources:
+- https://support.espn.com/hc/en-us/articles/360046492471-Updating-Your-Draft-Rankings-and-Strategy
+- https://support.espn.com/hc/en-us/articles/360000140911-Online-Draft-Player-Queue

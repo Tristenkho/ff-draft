@@ -17343,6 +17343,7 @@ function thesisGuidance(mine,boardRows){
 }
 
 function planText(mine){
+  if(mine.length>=ROUNDS)return 'Your roster is complete. Keep this draft state or copy a backup.';
   const open=openStarterSlots(mine), core=['RB','WR'].reduce((n,k)=>n+mine.filter(p=>p.pos===k).length,0);
   if(curRound()<=4)return core<3
     ? `Build the core: aim to leave Round 4 with <b>three RB/WR</b>. Fill a glaring starter need before taking optional QB/TE.`
@@ -17557,7 +17558,7 @@ function render(){
   warn.innerHTML=autoPickNos.length
     ? `<b>RESET REQUIRED</b><span>This browser still contains ${autoPickNos.length} legacy simulated pick${autoPickNos.length===1?'':'s'} in the real ledger. Use Reset draft before recording live picks.</span>`
     :warn.dataset.refreshBanner;
-  $('#pickno').textContent=fmtPick(curPick());
+  $('#pickno').textContent=curPick()>TEAMS*ROUNDS?'Complete':fmtPick(curPick());
   $('.hcell.big').classList.toggle('otc',isOTC);
   const nm=nextMyPick();
   $('#nextpick').textContent=nm?fmtPick(nm):'—';
@@ -17594,7 +17595,7 @@ function render(){
   const kLine=`K <span>${mine.filter(p=>p.pos==='K').length}</span>/${CAPS.K}`;
   const dLine=`DST <span>${mine.filter(p=>p.pos==='DST').length}</span>/${CAPS.DST}`;
   const openLine=['QB','RB','WR','TE','FLEX','K','DST'].filter(k=>open[k]).map(k=>`${k} ${open[k]}`).join(' · ')||'starters set';
-  const kdNote=kdst?`<br><span style="color:var(--amber)">▶ Pick K + D/ST now</span>`:`<br>K + D/ST: <span>rds 13–14</span>`;
+  const kdNote=mine.length>=ROUNDS?'<br>Roster complete':kdst?`<br><span style="color:var(--amber)">▶ Pick K + D/ST now</span>`:`<br>K + D/ST: <span>rds 13–14</span>`;
   const byeNote=byeStacks.length
     ? `<br><span style="color:var(--amber)">${byeSummaryText(mine)} · stacked: ${byeStacks.map(([week,count])=>`W${week} ×${count}`).join(' · ')}</span>`
     : `<br>${byeSummaryText(mine)}`;
@@ -17645,7 +17646,7 @@ function render(){
   }
   $('#poolcount').textContent=view==='prep'?rows2.length+' ranked'+(decisionInputActive()?' · keys 1–8':' · read only'):remaining().length+' left';
   const sortLabel={gain:'Pick Board',model:'Model',proj:'Projection',ecr:'ECR',adp:'ADP'}[sortBy];
-  $('#boardtitle').textContent=q?'Matches':(kdst?'Special teams window':sortBy==='gain'?`Pick Board — wait band, then ${SAME_BAND_TIEBREAK==='consensus'?'ECR':'Model'}`:`Audit view — ${sortLabel} (read only)`);
+  $('#boardtitle').textContent=curPick()>TEAMS*ROUNDS?'Draft complete':q?'Matches':(kdst?'Special teams window':sortBy==='gain'?`Pick Board — wait band, then ${SAME_BAND_TIEBREAK==='consensus'?'ECR':'Model'}`:`Audit view — ${sortLabel} (read only)`);
   $('#q').placeholder=decisionInputActive()?'Type a name, press Enter to record the pick on the clock':'Audit view is read-only — switch to Pick Board to record';
   setPressed($('#mode'),'view',view);
   $('#filt').style.display='flex';
@@ -17884,7 +17885,7 @@ function resolveSearchDraft(query){
 function buildState(){
   const mine=myRoster(), nm=nextMyPick(), nxt=pickAfterNext();
   const L=[];
-  L.push(`DRAFT STATE — on the clock ${fmtPick(curPick())} (round ${curRound()} of ${ROUNDS})`);
+  L.push(curPick()>TEAMS*ROUNDS?'DRAFT STATE — draft complete':`DRAFT STATE — on the clock ${fmtPick(curPick())} (round ${curRound()} of ${ROUNDS})`);
   if(autoPickNos.length)L.push(`WARNING: ${autoPickNos.length} legacy simulated picks remain in this ledger. Reset the HTML before treating it as live draft state.`);
   L.push(`My slot ${slot}/${TEAMS} · ceiling weight lambda ${currentLambda().toFixed(2)} (live manual control; default 0.40) · ECR guardrail ${Math.round(ecrWeight*100)}%`);
   L.push(`My full pick schedule: ${myPicks().join(' · ')}`);
@@ -17894,6 +17895,7 @@ function buildState(){
   L.push(`Projection: ${PROJECTION_META.method} of ${PROJECTION_META.sources.join(', ')} where available, each rescored for league settings using regressed 2023-25 player first-down rates (position fallback for rookies/unmatched players); source disagreement is tracked separately from upside; ADP/ECR are not projection inputs.`);
   L.push(`Expert consensus: ${ECR_META.source}, updated ${ECR_META.updated}; ${ECR_META.experts} experts in the seven-day panel (${ECR_META.updated1d} updated within one day, ${ECR_META.updated3d} within three days). Player-level expert average, SD, and range are judgment context, not added ranking weight.`);
   L.push(`Pick Board order: eligibility → uncertainty-aware wait band (A, B, C …) → ${SAME_BAND_TIEBREAK==='consensus'?'ECR → Model → gain':'Model decision rank → exact wait cost'}. Wait cost is VONA: the ceiling-adjusted value lost by waiting until my next pick. Model core rank = custom projected points − ${(MODEL_REPLACEMENT_WEIGHT*100).toFixed(0)}% of that position's replacement projection; blend score = ${(1-ecrWeight).toFixed(2)} × core rank + ${ecrWeight.toFixed(2)} × half-PPR ECR re-ranked among QB/RB/WR/TE, then re-ranked. A 25+ rank Model/ECR gap uses the more conservative rank. Timing blends ESPN-only room rank/ADP (including recent movement) with ${MARKET_META.source}, market-weighted ${Math.round(MARKET_ADP_WEIGHT_BY_POS.RB*100)}% for RB/WR/TE and ${Math.round(MARKET_ADP_WEIGHT_BY_POS.QB*100)}% for QB so ESPN's stale room price can't dominate survival; market updated ${MARKET_META.updated} from ${MARKET_META.drafts} drafts. Survival uncertainty widens when ESPN and market disagree. ECR does not enter timing, survival, or wait cost.`);
+  L.push('ESPN AUTOPICK CONTEXT: ESPN default rank is separate from average draft position (ADP). In a live snake draft, an active player queue takes priority; otherwise saved draft rankings can govern timeout picks. Custom queues/rankings are unknown here. Use default rank only as conditional opponent evidence, together with actual roster needs; the terminal queue is not synced to ESPN.');
   L.push('Model boundary: supplied ceiling SD is a generic position-rate proxy, not player-specific measured upside. For near-ties, check current injury, discipline, role and quarterback news before choosing.');
   L.push('NEWS REVIEW 2026-09-05: Jeremiyah Love is recovering from an ankle injury and had not resumed practice in the Sep 3 report; do not use his Model 29 as a reason to ignore ECR 41. Isaiah Likely said he left camp healthy on Sep 2; the old foot-recovery note referred to 2025. Jacobs remains on the Exempt List; a Sep 10 hearing is not a return date. Re-check decision-changing news on draft day.');
   L.push('Build guardrails: QB1/TE1 only; three RB/WR by Round 4; after WR at 1.03 leave 22/27 with RB1; if the first three picks contain two WRs, repair RB1 by pick 51 and secure RB2 by pick 75; WR1 by Round 5; RB2/WR2/FLEX by Round 8; TE by Round 9; QB by Round 10; ten RB/WR with at least four each; K + D/ST in Rounds 13–14.');
@@ -17958,14 +17960,14 @@ function buildState(){
   L.push(`(survives = P(still on board at ${nxt?fmtPick(nxt):'next pick'}), using ESPN room timing blended with ${MARKET_META.source} (RB/WR/TE ${Math.round(MARKET_ADP_WEIGHT_BY_POS.RB*100)}% market, QB ${Math.round(MARKET_ADP_WEIGHT_BY_POS.QB*100)}% market, K/DST ${Math.round(MARKET_ADP_WEIGHT_BY_POS.K*100)}% market), re-ranked among draftable remaining players; spread widens when sources disagree)`);
   rows.forEach((r,i)=>L.push(
     `  ${String(i+1).padStart(2)}. ${r.p.name.padEnd(22)} ${r.p.pos.padEnd(3)} ${(r.p.team||'—').padEnd(4)}`+
-    ` pts ${r.p.proj.toFixed(0).padStart(3)} (${projectionSourcesText(r.p)}; ${r.p.proj_n||0}src ${(r.p.proj_reliability||'medium').toUpperCase()} ${r.p.proj_low?.toFixed(0)??'—'}–${r.p.proj_high?.toFixed(0)??'—'}) · wait band ${r.isSpecial?'—':waitBandLabel(r.vonaTier)} · wait cost ${(r.gain>0?'+':'')+r.gain.toFixed(1)} · model ${rankText(r.modelRank)} [core ${r.coreRank}, skill-ECR ${r.ecrRank}, ECR−Model ${r.ecrRank>500?'—':(r.ecrRank-r.modelRank>0?'+':'')+(r.ecrRank-r.modelRank)}, blend ${r.blendScore.toFixed(1)}${r.needsReview?', REVIEW '+r.decisionRank:''}] · ${ecrEvidenceText(r.p)} · ESPN ADP ${r.p.adp.toFixed(0)} (${adpTrend(r.p)>0?'+':''}${adpTrend(r.p).toFixed(1)}) / market ${r.p.market_adp?.toFixed(1)??'—'} ±${r.p.adp_sd?.toFixed(1)??'—'} (${r.p.adp_sd_source||'unknown'}, n=${r.p.market_adp_n||0}) / timing ${timingMetric(r.p).toFixed(0)} · status ${r.p.status||'ACTIVE'}${sleeperStatusText(r.p)} · latest ESPN update ${newsDate(r.p)} (timestamp only, no headline) · survives ${(r.surv*100).toFixed(0)}%`));
+    ` pts ${r.p.proj.toFixed(0).padStart(3)} (${projectionSourcesText(r.p)}; ${r.p.proj_n||0}src ${(r.p.proj_reliability||'medium').toUpperCase()} ${r.p.proj_low?.toFixed(0)??'—'}–${r.p.proj_high?.toFixed(0)??'—'}) · wait band ${r.isSpecial?'—':waitBandLabel(r.vonaTier)} · wait cost ${(r.gain>0?'+':'')+r.gain.toFixed(1)} · model ${rankText(r.modelRank)} [core ${r.coreRank}, skill-ECR ${r.ecrRank}, ECR−Model ${r.ecrRank>500?'—':(r.ecrRank-r.modelRank>0?'+':'')+(r.ecrRank-r.modelRank)}, blend ${r.blendScore.toFixed(1)}${r.needsReview?', REVIEW '+r.decisionRank:''}] · ${ecrEvidenceText(r.p)} · ESPN default rank ${r.p.espn_rank??'—'} · ESPN ADP ${r.p.adp.toFixed(0)} (${adpTrend(r.p)>0?'+':''}${adpTrend(r.p).toFixed(1)}) / market ${r.p.market_adp?.toFixed(1)??'—'} ±${r.p.adp_sd?.toFixed(1)??'—'} (${r.p.adp_sd_source||'unknown'}, n=${r.p.market_adp_n||0}) / timing ${timingMetric(r.p).toFixed(0)} · status ${r.p.status||'ACTIVE'}${sleeperStatusText(r.p)} · latest ESPN update ${newsDate(r.p)} (timestamp only, no headline) · survives ${(r.surv*100).toFixed(0)}%`));
   L.push('');
 
   const shown=new Set(rows.map(r=>r.p.id));
   const alternatives=allRows.filter(r=>!r.isSpecial&&!shown.has(r.p.id)&&modelDraftable(r.p)&&r.p.ecr<=500)
     .sort((a,b)=>a.p.ecr-b.p.ecr||a.p.name.localeCompare(b.p.name)).slice(0,12);
   L.push('CONSENSUS ALTERNATIVES OUTSIDE TOP EIGHT — review, not automatic recommendations');
-  alternatives.forEach(r=>L.push(`  · ${r.p.name} (${r.p.pos}): ECR ${r.p.ecr}, Model ${r.modelRank}, pts ${r.p.proj.toFixed(1)} (${projectionSourcesText(r.p)}); ESPN ADP ${r.p.adp.toFixed(1)}, market ${r.p.market_adp??'—'}; survives ${Math.round(r.surv*100)}%; status ${r.p.status||'ACTIVE'}${sleeperStatusText(r.p)}; ${r.eligible?'eligible':`POLICY BLOCK: ${r.blockedReason}`}`));
+  alternatives.forEach(r=>L.push(`  · ${r.p.name} (${r.p.pos}): ECR ${r.p.ecr}, Model ${r.modelRank}, pts ${r.p.proj.toFixed(1)} (${projectionSourcesText(r.p)}); ESPN default rank ${r.p.espn_rank??'—'}, ESPN ADP ${r.p.adp.toFixed(1)}, market ${r.p.market_adp??'—'}; survives ${Math.round(r.surv*100)}%; status ${r.p.status||'ACTIVE'}${sleeperStatusText(r.p)}; ${r.eligible?'eligible':`POLICY BLOCK: ${r.blockedReason}`}`));
   const excluded=remaining().filter(p=>POS.includes(p.pos)&&!modelDraftable(p)&&p.ecr<=166).sort((a,b)=>a.ecr-b.ecr);
   if(excluded.length)L.push('UNAVAILABLE / LOW-COVERAGE CONSENSUS NAMES — do not assume healthy: '+excluded.map(p=>`${p.name} (${p.pos}, ECR ${p.ecr}, ${p.status||'ACTIVE'}, ${p.proj_reliability||'unknown'} coverage)`).join(' · '));
   L.push('');
@@ -17979,7 +17981,7 @@ function buildState(){
   }
   L.push('');
   L.push(`${remaining().length} players left in the active draft pool.`);
-  L.push('Which of these should I take, and why? Give a top 3 with one line each.');
+  L.push(mine.length>=ROUNDS?'My roster is complete. Review the final roster if requested.':'Which of these should I take, and why? Give a top 3 with one line each.');
   return L.join('\n');
 }
 
