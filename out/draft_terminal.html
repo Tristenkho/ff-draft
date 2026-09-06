@@ -355,8 +355,21 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
   .help{padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
   .helphead{padding:11px 12px}
   .helpbody{padding:12px 14px 18px}
-  .nmline{position:relative}.nmline .nm{padding-right:42px}
-  .rowaction{position:absolute;right:0;top:-3px;min-width:40px;min-height:40px}
+  .nmline{position:relative;min-height:36px}.nmline .nm{padding-right:42px}
+  .rowaction{position:absolute;right:0;top:50%;transform:translateY(-50%);min-width:40px;min-height:36px}
+  /* The reasoning line carries the decision flags. Confined to the name grid
+     column it needed up to 699px of a 219px box, so the tail — exactly the
+     "conditional on news" / "thesis target" flags — was silently cut, with the
+     ellipsis itself hidden under the queue button. Promote .nmwrap's children
+     to grid items so the line spans the full row on its own second row. */
+  .nmwrap{display:contents}
+  .brow>.rk,.brow .nmline,.brow>.num,.brow>.wait{grid-row:1}
+  .brow .nmline{grid-column:2}
+  .brow .sub,.brow .why{grid-row:2;grid-column:2/-1;white-space:normal;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  /* Band letter already has its own column; the eligible-count breakdown is
+     bookkeeping available on the Room tab. Drop it to buy the flags room. */
+  .bandmeta{display:none}
   .record-toast{bottom:calc(145px + env(safe-area-inset-bottom))}
 }
 
@@ -482,6 +495,19 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
       <p><b>Queue</b> is manual and persisted — your explicit override layer, separate from any model advisory. Use + on a Pick Board row, reorder targets under Room / Queue, and use Pick there only while you are on the clock. Tag a queued entry <b>Target</b>, <b>Conditional</b>, or <b>Fade</b> for your own bookkeeping; tags persist, export, and survive Reset with the entry, but never influence Model rank, wait cost, or survival. A queued player who fails the recommendation guardrails, or a Fade tagged on a current Smart Queue candidate, is flagged in the queue row so the conflict is visible before you draft it. Opponent picks move queued targets to Recently sniped, tag included; Undo reactivates them. Backup JSON copies a machine-restorable snapshot, and Import validates it before replacing local state. Reset draft preserves the queue and its tags.</p>
       <p>Record every real pick here. Copy state on your turn and paste it to Codex or Claude for a current-news top three. K/DST stay out of wait-cost ranking and are prioritized in rounds 13–14.</p>
       <p>Press <b>Esc</b>, click outside this panel, or use the × above to close.</p>
+    </div>
+  </div>
+</div>
+<div class="help" id="export-dialog" role="dialog" aria-modal="true" aria-labelledby="exporttitle">
+  <div class="helpbox">
+    <div class="helphead">
+      <h2 id="exporttitle">Copy draft state manually</h2>
+      <button id="exportclose" type="button" aria-label="Close manual copy">&times;</button>
+    </div>
+    <div class="statebody">
+      <p id="exportlead">The browser blocked the automatic copy. The full text is selected below &mdash; use your device's Copy action, then paste it into Claude.</p>
+      <textarea id="exporttext" spellcheck="false" readonly aria-label="Draft state text to copy"></textarea>
+      <div class="stateactions"><button class="primary" id="exportselect" type="button">Select all</button></div>
     </div>
   </div>
 </div>
@@ -17689,7 +17715,7 @@ function render(){
     const starterNeed=!optionalEarlyOnesie(r.p)&&(open[r.p.pos]||(['RB','WR','TE'].includes(r.p.pos)&&open.FLEX));
     const byeRisk=byeRiskForPlayer(r.p,mine);
     const flags=[
-      tierStart?`<span class="tierflag">Band ${waitBandLabel(r.vonaTier)} · ${bandLabel(r.vonaTier)}</span>`:'',
+      tierStart?`<span class="tierflag">Band ${waitBandLabel(r.vonaTier)}<span class="bandmeta"> · ${bandLabel(r.vonaTier)}</span></span>`:'',
       starterNeed?'<span class="flag">starter need</span>':'',
       byeRisk?'<span class="flag">bye stack risk</span>':'',
       thesisPlayerFlag(r.p),
@@ -17736,7 +17762,18 @@ function render(){
     : '';
   $('#plan').innerHTML=focusBox+thesisGuidance(mine,boardRows)+`<div class="runbox"><div class="t">${planText(mine)}${opponentDemandText()}</div></div>`+turnPairPlanner(boardRows)+smartQueueBox(boardRows)+nextTurnTargets(boardRows);
   renderNotice();
-  const sourceAgeDays=date=>Math.max(0,Math.floor((Date.now()-new Date(date+'T00:00:00Z').getTime())/86400000));
+  // Age is counted in LOCAL calendar days. Parsing the source date at UTC
+  // midnight made data refreshed the day before an evening draft read as two
+  // days old the moment the clock passed 00:00Z (8pm EDT), turning the whole
+  // preflight amber mid-draft. Math.round absorbs DST shifts.
+  const sourceAgeDays=date=>{
+    const [y,m,d]=String(date).split('-').map(Number);
+    if(!y||!m||!d)return 0;
+    const then=new Date(y,m-1,d);
+    const now=new Date();
+    const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    return Math.max(0,Math.round((today-then)/86400000));
+  };
   const projectionAge=sourceAgeDays(PROJECTION_META.updated);
   const marketAge=sourceAgeDays(MARKET_META.updated);
   const ecrAge=sourceAgeDays(ECR_META.updated);
@@ -17802,7 +17839,7 @@ function render(){
 // ── actions ──────────────────────────────────────────────────────
 // The ledger is frozen while the guide is open. Inert already blocks pointer
 // and tab access, but every mutation re-checks so no path can slip past it.
-function draftLocked(){return $('#help').classList.contains('on')||$('#state-dialog').classList.contains('on');}
+function draftLocked(){return $('#help').classList.contains('on')||$('#state-dialog').classList.contains('on')||$('#export-dialog').classList.contains('on');}
 function thesisConfirmation(player,pickNo){
   if(slot===3&&pickNo===3&&player.name===DRAFT_THESIS.openingConditional)
     return `Draft thesis currently prefers ${DRAFT_THESIS.openingTarget}. ${player.name} is conditional ${DRAFT_THESIS.openingCondition}.`;
@@ -17978,6 +18015,7 @@ function buildState(){
 async function copyState(){
   const txt=buildState(), btn=$('#copy');
   const ok=await copyTextWithFallback(txt,'Copy the draft state below:');
+  if(!ok)openExportDialog(txt,'draft state',btn);
   btn.textContent=ok?'Copied':'Copy manually';
   btn.classList.toggle('ok',ok);
   setTimeout(()=>{
@@ -17987,9 +18025,33 @@ async function copyState(){
   if(matchMedia('(pointer:fine)').matches)$('#q').focus();
 }
 async function copyBackupState(){
-  const ok=await copyTextWithFallback(JSON.stringify(buildBackupState(),null,2),'Copy the backup JSON below:');
+  const json=JSON.stringify(buildBackupState(),null,2);
+  const ok=await copyTextWithFallback(json,'Copy the backup JSON below:');
   setNotice(ok?'ok':'warn',ok?'Backup JSON copied.':'Backup JSON ready to copy manually.');
   render();
+  if(!ok)openExportDialog(json,'backup JSON',null);
+}
+let exportReturnFocus=null;
+function openExportDialog(text,label,opener){
+  exportReturnFocus=opener||document.activeElement;
+  $('#app').setAttribute('inert','');
+  $('#app').setAttribute('aria-hidden','true');
+  $('#exportlead').textContent=`The browser blocked the automatic copy of the ${label}. The full text is selected below \u2014 use your device's Copy action, then paste it into Claude.`;
+  $('#exporttext').value=text;
+  $('#export-dialog').classList.add('on');
+  $('#exporttext').focus();
+  $('#exporttext').select();
+}
+function closeExportDialog(){
+  const dialog=$('#export-dialog');
+  if(!dialog.classList.contains('on'))return;
+  dialog.classList.remove('on');
+  $('#app').removeAttribute('inert');
+  $('#app').removeAttribute('aria-hidden');
+  const back=exportReturnFocus;
+  exportReturnFocus=null;
+  if(back&&typeof back.focus==='function'&&document.contains(back))back.focus();
+  else if(matchMedia('(pointer:fine)').matches)$('#q').focus();
 }
 let stateReturnFocus=null;
 function importBackupState(opener){
@@ -18092,6 +18154,16 @@ $('#q').addEventListener('keydown',e=>{
   }
 });
 document.addEventListener('keydown',e=>{
+  if($('#export-dialog').classList.contains('on')){
+    if(e.key==='Escape'){e.preventDefault();closeExportDialog();return;}
+    if(e.key==='Tab'){
+      const stops=[$('#exportclose'),$('#exporttext'),$('#exportselect')], at=stops.indexOf(document.activeElement);
+      e.preventDefault();
+      const next=e.shiftKey?(at<=0?stops.length-1:at-1):(at<0||at===stops.length-1?0:at+1);
+      stops[next].focus();
+    }
+    return;
+  }
   if($('#state-dialog').classList.contains('on')){
     if(e.key==='Escape'){e.preventDefault();closeStateDialog();return;}
     if(e.key==='Tab'){
@@ -18218,6 +18290,9 @@ $('#clearmock').addEventListener('click',()=>{mockPicks=[];mockRandom=false;mock
 $('#helpbtn').addEventListener('click',e=>openHelp(e.currentTarget));
 $('#helpclose').addEventListener('click',closeHelp);
 $('#help').addEventListener('click',e=>{if(e.target===$('#help'))closeHelp();});
+$('#exportclose').addEventListener('click',closeExportDialog);
+$('#export-dialog').addEventListener('click',e=>{if(e.target===$('#export-dialog'))closeExportDialog();});
+$('#exportselect').addEventListener('click',()=>{$('#exporttext').focus();$('#exporttext').select();});
 $('#stateclose').addEventListener('click',closeStateDialog);
 $('#state-dialog').addEventListener('click',e=>{if(e.target===$('#state-dialog'))closeStateDialog();});
 $('#statecopy').addEventListener('click',copyBackupFromDialog);
