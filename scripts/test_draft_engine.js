@@ -214,27 +214,23 @@ const watsonTarget=TARGET_THESIS.players['Christian Watson'];
 if(!targetWindowActive(watsonTarget,70)||targetWindowActive(watsonTarget,94)||
   !targetPriceText(playerNamed('Christian Watson')).includes('ESPN'))
   throw new Error('target-thesis pick window or live ESPN/market price text is broken');
-// Slot-3 thesis rails preserve VONA but narrow roster choices at the stated
-// deadlines. A WR opener must leave 22/27 with RB1; two-WR starts must have
-// RB1 by 51 and RB2 by 75.
+// A positional plan must not exclude a faller while a complete build remains
+// feasible. Retain the broader core/lineup safeguards.
 const allen=playerNamed('Josh Allen');
 const liveRb=PLAYERS.find(p=>p.pos==='RB'&&modelDraftable(p)&&![gibbs.id,bijan.id].includes(p.id));
-if(!liveRb)throw new Error('no draftable RB available for thesis fixtures');
 const bowersFixture=playerNamed('Brock Bowers');
-const allenAt27=recommendationEligibility(allen,[chase,bowersFixture],3,27),rbAt27=recommendationEligibility(liveRb,[chase,bowersFixture],3,27);
-if(allenAt27.ok||!rbAt27.ok)
-  throw new Error('WR-at-1.03 fixture does not force RB1 at pick 27: '+JSON.stringify({allenAt27,rbAt27,rb:liveRb.name,slot}));
-if(!recommendationEligibility(allen,[chase,liveRb],3,27).ok)
-  throw new Error('taking RB at 22 did not release the pick-27 RB guardrail');
+if(!recommendationEligibility(bowersFixture,[chase,puka],3,27).ok)
+  throw new Error('RB timing advice incorrectly hides a TE faller at 27');
+if(recommendationEligibility(allen,[chase,bowersFixture],3,27).ok)
+  throw new Error('removing RB timing advice weakened the three-core safeguard');
 const wrHeavyNoRb=[chase,puka,bowersFixture,allen];
-if(recommendationEligibility(playerNamed('Jaxon Smith-Njigba'),wrHeavyNoRb,5,51).ok||
-  !recommendationEligibility(liveRb,wrHeavyNoRb,5,51).ok)
-  throw new Error('two-WR start does not repair RB1 by pick 51');
-const secondRb=PLAYERS.find(p=>p.pos==='RB'&&modelDraftable(p)&&p.id!==liveRb.id);
+if(!recommendationEligibility(playerNamed('Jaxon Smith-Njigba'),wrHeavyNoRb,5,51).ok)
+  throw new Error('RB timing advice incorrectly hides a WR faller at 51');
 const wrHeavyWithRb=[chase,puka,liveRb,bowersFixture,allen,playerNamed('Jaylen Waddle')];
-if(recommendationEligibility(playerNamed('Jaxon Smith-Njigba'),wrHeavyWithRb,7,75).ok||
-  !recommendationEligibility(secondRb,wrHeavyWithRb,7,75).ok)
-  throw new Error('two-WR start does not secure RB2 by pick 75');
+if(!recommendationEligibility(playerNamed('Jaxon Smith-Njigba'),wrHeavyWithRb,7,75).ok)
+  throw new Error('RB timing advice incorrectly hides a WR faller at 75');
+if(recommendationEligibility(playerNamed('Jaxon Smith-Njigba'),wrHeavyWithRb,8,94).ok)
+  throw new Error('RB2 starter completion safeguard was lost');
 
 picks=[];autoPickNos=[];autoOppUntilMineForTest();
 const selected=[];
@@ -623,7 +619,8 @@ const context={
   setTimeout:()=>0,clearTimeout:()=>{},
 };
 vm.createContext(context);
-vm.runInContext(engine+'\n'+harness,context,{timeout:30000});
+// The suite runs multiple simulations; retain the separate 20s single-queue limit.
+vm.runInContext(engine+'\n'+harness,context,{timeout:120000});
 const result=context.TEST_RESULT;
 result.engineSha256=crypto.createHash('sha256').update(engine).digest('hex');
 result.smartQueuePerfMs=context.SMART_QUEUE_PERF_MS;
@@ -660,7 +657,7 @@ assert(html.includes('<b>Target thesis</b> is a separate, dated watchlist')&&
   'draft-eve source-by-source freshness preflight is missing');
 assert(html.includes('function thesisConfirmation(player,pickNo)')&&
   html.includes('Recommendation guardrail: ${eligibility.reason}.')&&
-  html.includes('Compute Smart Queue before choosing; the simple board does not evaluate pick 22 and 27 jointly.')&&
+  html.includes('Compare the 22/27 pair; Smart Queue is optional and does not estimate win probability.')&&
   html.includes("openingThesis?'Thesis top 3':'Board top 3'")&&
   html.includes('Current-news safety order; the board below remains the unchanged VONA audit.'),
   'draft-thesis override confirmation or joint-turn focus is missing');

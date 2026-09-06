@@ -68,7 +68,7 @@ be discussed late if an insecure QB1 and weak waivers justify the bench cost.
   remains the conditional preference while Puka ramps up from the groin issue.
   Do not assume a suspension or that practice clearance has occurred.
 - Josh Allen: Model 14, ECR 26, ESPN ADP 19.1, market 30.6. Credible 22/27
-  exception after comparing the pair; not permission to sacrifice a major
+  option after comparing the pair; not permission to sacrifice a major
   RB/WR faller. Model QB rank alone does not settle it.
 - A.J. Brown: Model 24 vs ECR 13. Consider him seriously if he falls to 22;
   the scoring ablation does not justify that whole discount.
@@ -109,3 +109,39 @@ why rank and ADP must be distinct: ECR 26 / ESPN rank 26 / ESPN ADP 19.1.
 ESPN sources:
 - https://support.espn.com/hc/en-us/articles/360046492471-Updating-Your-Draft-Rankings-and-Strategy
 - https://support.espn.com/hc/en-us/articles/360000140911-Online-Draft-Player-Queue
+
+
+## First-principles review — September 5
+
+The objective is usable lineup strength and a chance to win, not maximum VONA,
+season-long bench points, or getting players below ADP. Consensus is the starting
+comparison; departures need a concrete scoring, role, health, roster, or
+opportunity-cost reason. Do not count first-down scoring or correlated sleeper
+mentions as extra bonuses after they have already informed the inputs.
+
+For starters compare usable lineup production. For bench players compare a
+plausible path to starting value with the cost of a scarce bench slot. Position
+SD does not identify individual upside, and the playoff format does not prove
+that lambda 0.40 is optimal. Its value is unchanged pending meaningful evidence.
+
+Removed the requirement that Smart Queue approve an early QB. It runs only at
+22, screens six candidates, and uses the same uncertain inputs. It remains an
+optional pair scenario tool and no longer replaces the main top-three display.
+Compare QB-now plus later skill player against skill-player-now plus later QB.
+
+Removed the three slot-specific RB eligibility deadlines at 27/51/75. Keep
+those windows as reminders, but consider superior fallers when the roster can
+still be completed. Existing broader core/lineup safeguards, legal caps, and
+K/DST timing remain. One-QB/one-TE rules remain overrideable defaults; the claim
+that a useful backup necessarily belongs on waivers has been removed.
+
+These changes remove unsupported decision authority. They are not a measured
+increase in championship probability; historical proxy results do not validate
+that claim. The exported judgment instructions now state this decision order.
+
+Validation: exact-engine checks passed, including faller visibility at 27/51/75,
+preserved core/starter feasibility, and a legal full draft. State-export checks
+passed. The aggregate suite needed a longer timeout; its separate 20-second
+single-Smart-Queue limit remains and measured about eight seconds. The earlier
+6.6-pick reach diagnostic predates removal of the slot-specific RB exclusions;
+it is historical baseline evidence, not a new measurement of this revision.

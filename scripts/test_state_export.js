@@ -33,6 +33,6 @@ vm.runInContext(html.slice(start, end) + String.raw`
   // A second QB can be reviewed without being falsely presented as policy-eligible.
   picks.push(PLAYERS.find(p=>p.name==='Josh Allen').id);
   picks.push(...remaining().filter(p=>p.pos!=='QB').sort((a,b)=>a.ecr-b.ecr).slice(0,18).map(p=>p.id));
-  assert(buildState().includes('POLICY BLOCK: QB2 belongs on waivers'));
+  assert(buildState().includes('POLICY BLOCK: default one-QB build'));
 `, context, {timeout: 30000});
 console.log('State export checks passed');

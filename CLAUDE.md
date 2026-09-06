@@ -12,27 +12,26 @@ with reasoning before committing.
 - HTML holds state. Do NOT record picks anywhere else — two state stores diverge.
 - Claude Code is the judgement layer, not the bookkeeping layer.
 
-Two corrections to apply when reading the board (both measured 2026-09-02,
-see the memory notes and `scripts/validate_survival_2025.py`):
-- **`survives` is calibrated in rounds 1-5 and roughly half the truth from
-  round 6 on.** Validated against the real 2025 draft by these same twelve
-  managers: bias +0.39 to +0.45 in rounds 6-8, 12/12 managers positive. A
-  player shown at 40% in round 7 has historically lasted ~85%.
-- **The board reaches.** Byte-for-byte simulation of the live engine puts its
-  own recommendations ~5.9 picks ahead of ESPN room ADP over rounds 1-12,
-  worst in rounds 7-12 — the same window where survival is most underestimated.
-  Before taking a large reach, check `survives`, apply the correction above,
-  and prefer the consensus-best player if he would keep.
+## Decision discipline
+Read `DRAFT-DAY-BRIEF.md` before live judgment. The objective is the strongest
+usable roster and chance of winning, not the largest VONA score or ADP discount.
+Start with available consensus quality, then justify departures with scoring,
+role/health, roster fit, and the actual next-turn alternatives. Review bench
+players for a plausible path into the starting lineup, not just season totals.
 
-## Latest pre-draft audit (September 5)
-Read `DRAFT-DAY-BRIEF.md` and `out/draft_eve_audit_2026-09-05.md` before live
-judgment. They supersede the September 2 snapshot numbers above: the refreshed
-300-draft simulation averages 6.6 picks ahead of ESPN ADP. Historical survival
-underprediction is strongest in rounds 6–8; round 2 also had +13 percentage
-points of bias. Do not mechanically double all probabilities. Model rank has
-material QB premiums and WR/contingent-RB discounts versus ECR; the scoring
-adjustment alone does not justify large gaps. Copy state now includes consensus
-alternatives outside the top eight so those players receive explicit review.
+Survival is uncertain: one 2025 draft showed material underprediction in rounds
+6–8, and round 2 also had +13 percentage points of bias. Do not mechanically
+double probabilities. The September 5 baseline simulation, before removing slot-specific RB exclusions,
+averages picks 6.6
+spots ahead of ESPN ADP; that diagnoses timing, not winning or losing picks.
+Model rank favors QB and discounts many WR/contingent RBs relative to ECR.
+Scoring adjustments do not explain every gap. Inspect exported consensus
+alternatives and policy-blocked players before recommending a pick.
+
+Smart Queue is optional scenario evidence, never a prerequisite or independent
+validation. Roster deadlines and one-QB/one-TE construction are defaults, not
+league rules or proven optima. A deliberate override is allowed; preserve a
+legal complete lineup and account for the bench opportunity cost.
 
 ## Delivery automation
 - After completing and validating requested code or site changes, automatically
@@ -71,7 +70,8 @@ DST: see league settings (points-allowed and yards-allowed tiers)
 ## Design decisions (do not relitigate)
 - Rank by VONA: gain = value - E[best at position at my next pick]
 - Ceiling weighting: value = proj + lambda*sd, lambda live-adjustable, default 0.40
-  (justified by 8-of-12 playoffs + single-week rounds)
+  (a positional sensitivity setting, not measured player upside or a validated
+  championship optimum; playoff format alone does not establish this weight)
 - Survival: P = 1 - Phi((k - effective_adp)/adp_sd), where effective_adp is
   ADP re-ranked among REMAINING players, not absolute ADP
 - K and DST excluded from VONA entirely, hardcoded to rounds 13-14

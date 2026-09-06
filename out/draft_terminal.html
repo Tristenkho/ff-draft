@@ -473,8 +473,8 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
       <p><b>Ceiling weight</b> defaults to the validated 0.40 and remains live-adjustable. The current upside SD is a configured generic position-rate proxy carried separately from forecast disagreement; it is useful across positions but is not a measured player-specific ceiling. Resolve close same-position calls with current role, health, discipline and quarterback news in the copied-state judgment step.</p>
       <p><b>Availability</b> is market-first: RB/WR/TE blend 80% of Fantasy Football Calculator's current 12-team half-PPR market with 20% ESPN-only room rank/ADP, QB blends 50/50, and K/DST are unchanged since they never enter VONA. ESPN's room price for RB/WR runs later than the market; ESPN's room price for TE runs earlier than the market instead (about 15 picks among ranked TEs in the current sample). TE keeps the same 80% market weight as RB/WR for now — that is a provisional choice pending targeted validation, not a fit to this one snapshot. Observed market draft dispersion drives the survival curve when a player is matched, widened whenever ESPN and market disagree so a large source gap reads as genuine uncertainty instead of false precision; otherwise a conservative heuristic supplies the fallback. Unavailable and low-source-coverage players remain searchable for accurate bookkeeping but no longer occupy forecasted opponent picks or expected-next-player estimates. A dated authoritative league-status override can supersede lagging ESPN status; its source and exact reason are shown in Copy state, and it never invents a return date. Sleeper is read as a second independent availability source: it contributes the injured body part and its own news recency, and a disagreement with ESPN is flagged on the board and in Copy state rather than applied, since an automatic override would let whichever feed happened to update last decide who is draftable.</p>
       <p><b>ESPN update</b> plus a date under a name is only the timestamp of that player's most recent ESPN news item, shown when it landed within the last three days. It is a recency marker, not a headline and not a sentiment signal — read the actual news before acting on it.</p>
-      <p><b>Winning build</b> is QB1, TE1, ten RB/WR, K1 and D/ST1. It starts with three RB/WR through Round 4, secures WR1 by Round 5, fills RB2/WR2/FLEX by Round 8, TE by Round 9, QB by Round 10, and takes K/D/ST in Rounds 13–14. The current slot-3 thesis adds conditional rails: after a WR at 1.03, leave 22/27 with RB1; after a two-WR first three, secure RB1 by 51 and RB2 by 75. QB2 and TE2 are waiver positions in this shallow format.</p>
-      <p><b>Draft thesis</b> is a dated, visible judgment layer. It currently treats Ja'Marr Chase as the 1.03 safety anchor while Puka Nacua ramps up from his groin injury; verify his current practice and league status, uses the joint Smart Queue for 22/27, and treats 70/75 as the default QB window. Earlier QB is still shown because VONA is unchanged, but it is an exception that must rank first in the joint turn evaluation rather than a preset Josh Allen target.</p>
+      <p><b>Default build</b> is QB1, TE1, ten RB/WR, K1 and D/ST1. The board preserves three RB/WR through Round 4, WR1 by Round 5, RB2/WR2/FLEX by Round 8, TE by Round 9, QB by Round 10, and K/DST in Rounds 13–14. These are overrideable policies, not proven winning requirements. The slot-3 RB windows at 27/51/75 are advisory only. Evaluate a backup QB or TE against actual waiver depth and the opportunity cost of a bench spot.</p>
+      <p><b>Draft thesis</b> is dated advice. If Gibbs and Bijan are gone, Chase remains the 1.03 preference pending current news. At 22/27, compare realistic player pairs; Smart Queue is optional scenario evidence. The default QB review window is 70/75, but an earlier QB can be justified by comparing QB-now plus later RB/WR against RB/WR-now plus later QB. A simulation ranking is not a prerequisite or a championship forecast.</p>
       <p><b>Target thesis</b> is a separate, dated watchlist for our exact later picks. A player needs support from at least two independent source families. The terminal calculates the current ESPN-versus-market discount after every refresh, but the watchlist never changes projection, VONA, survival, Model rank, or eligibility. On the day before the draft, refresh the numeric feeds, re-check official availability and depth charts, then update the target review date and names only after the qualitative sources have been reviewed again.</p>
       <p><b>1.03 turn planner</b> is a read-only advisory: it separates current pick-22 targets from players likely to survive to pick 27, then offers independent pair ideas. Those pair ideas are not a joint simulation and never change the ledger or board ranking. Conditional fallers are labeled from low survival to pick 22.</p>
       <p><b>Smart Queue</b> is a model-generated, read-only advisory that appears once pick 22 is on the clock. Unlike the turn planner's pair ideas, it is a genuine conditional simulation: for each top pick-22 candidate it rolls forward opponent picks 23–26 with the same calibrated opponent model, then re-derives eligibility, roster state and the best pick-27 outcome against that specific resulting pool — not two independently ranked numbers added together. Candidates are ranked by VOR@22 + E[VOR@27], both value-over-replacement figures, which is a different quantity from the Pick Board's wait-cost/VONA gain (value vs. your next pick) — the two numbers are not directly comparable. It never changes the ledger, board ranking or your manual Queue; press Compute to run it (it does not run automatically on every render, and while it is running the button is disabled and shows Computing…).</p>
@@ -16381,16 +16381,15 @@ const STRATEGY={
   coreTotal:10, minCoreEach:4         // QB1 TE1 + ten RB/WR through round 12
 };
 // Current, explicit draft-day judgment. These rules never change projection,
-// replacement, timing, survival or VONA. The RB deadlines narrow eligibility;
+// replacement, timing, survival, VONA or eligibility. RB windows are advice;
 // the Chase/Puka and early-QB calls remain visible advisory overrides because
 // their inputs are current news and exact-room behavior, not stable forecasts.
 const DRAFT_THESIS={
   updated:'2026-09-05',
   openingTarget:"Ja'Marr Chase",openingConditional:'Puka Nacua',
   openingCondition:'while Puka is still ramping up from his groin injury; re-check practice and league status before pick 3, without assuming a suspension',
-  turnRbDeadline:27,wrHeavyRb1Deadline:51,wrHeavyRb2Deadline:75,
   qbDefaultWindow:70,
-  qbException:'take an earlier QB only if the joint Smart Queue ranks him first after the actual board is known',
+  qbException:'consider an earlier QB when the QB plus a realistic later RB/WR is better than the best RB/WR plus a realistic later QB; Smart Queue is optional scenario evidence',
   upsideRbWindows:'94/99 and 118/123'
 };
 // Dated qualitative evidence for exact-pick planning. This is deliberately
@@ -17162,23 +17161,12 @@ function recommendationEligibility(p,mine=myRoster(),round=recommendationRound()
   }
   if(['K','DST'].includes(p.pos))return {ok:false,reason:'K/DST wait until rounds 13–14'};
 
-  if(p.pos==='QB'&&have.QB>=1)return {ok:false,reason:'QB2 belongs on waivers'};
-  if(p.pos==='TE'&&have.TE>=1)return {ok:false,reason:'TE2 belongs on waivers'};
+  if(p.pos==='QB'&&have.QB>=1)return {ok:false,reason:'default one-QB build; review bench cost and actual waiver depth'};
+  if(p.pos==='TE'&&have.TE>=1)return {ok:false,reason:'default one-TE build; review bench cost and actual waiver depth'};
 
   const after={...have}; after[p.pos]++;
   const coreAfter=after.RB+after.WR;
 
-  // Slot-3 thesis: after a WR at 1.03, leave the 22/27 turn with an RB.
-  // If the user manually overrides that advice and starts WR-heavy, repair the
-  // build by 51 and secure RB2 by 75. These are eligibility rails only.
-  const openedWR=mine[0]?.pos==='WR';
-  const wrHeavyStart=mine.slice(0,3).filter(player=>player.pos==='WR').length>=2;
-  if(slot===3&&openedWR&&pickNo===DRAFT_THESIS.turnRbDeadline&&after.RB<1)
-    return {ok:false,reason:'thesis: leave the 22/27 turn with RB1'};
-  if(slot===3&&wrHeavyStart&&pickNo>=DRAFT_THESIS.wrHeavyRb1Deadline&&after.RB<1)
-    return {ok:false,reason:'thesis: repair WR-heavy start with RB1 by pick 51'};
-  if(slot===3&&wrHeavyStart&&pickNo>=DRAFT_THESIS.wrHeavyRb2Deadline&&after.RB<2)
-    return {ok:false,reason:'thesis: secure RB2 by pick 75'};
   // Honor the draft-day plan: three RB/WR by the end of round four.
   if(round<=STRATEGY.coreDeadline&&coreAfter+(STRATEGY.coreDeadline-round)<STRATEGY.coreEarly)
     return {ok:false,reason:'preserve three-RB/WR start'};
@@ -17318,7 +17306,7 @@ function why(r){
   const gate=r.needsReview?` · REVIEW gate uses conservative rank ${r.decisionRank}`:'';
   const tieLabel=SAME_BAND_TIEBREAK==='consensus'?`ECR ${rankText(r.ecrRank)} tiebreak`:`Model ${rankText(r.modelRank)} tiebreak`;
   const qbThesis=r.p.pos==='QB'&&nextMyPick()&&nextMyPick()<DRAFT_THESIS.qbDefaultWindow
-    ? ` · thesis: default QB window ${fmtPick(DRAFT_THESIS.qbDefaultWindow)}; earlier only if Smart Queue ranks QB first`:'';
+    ? ` · thesis: default QB window ${fmtPick(DRAFT_THESIS.qbDefaultWindow)}; compare the QB/skill-player pair before taking QB early`:'';
   if(r.vonaTier===1)return `${statusText(r.p)}${need?'starter need · ':''}wait band A · ${tieLabel}${gate}${audit}${qbThesis} · ${projectionText(r.p)}`;
   const diff=r.ecrRank>500?0:r.ecrRank-r.modelRank;
   const timing=r.surv<.45?'likely gone next turn':r.surv<.7?'at risk by next turn':'reasonable wait';
@@ -17335,7 +17323,7 @@ function thesisGuidance(mine,boardRows){
     : '';
   let current='Keep VONA as the board score; use this layer only for the stated news and build decisions.';
   if(slot===3&&pick<=3)current=`If Gibbs and Bijan are gone, <b>${DRAFT_THESIS.openingTarget}</b> is the safety anchor; <b>${DRAFT_THESIS.openingConditional}</b> stays conditional ${DRAFT_THESIS.openingCondition}.`;
-  else if(slot===3&&pick<=27)current=`Use the joint <b>Smart Queue</b> for 22/27. ${openedWR&&!have.RB?'Leave the turn with <b>RB1</b>. ':''}Default QB window is <b>${fmtPick(DRAFT_THESIS.qbDefaultWindow)}/${fmtPick(75)}</b>; ${DRAFT_THESIS.qbException}.`;
+  else if(slot===3&&pick<=27)current=`Compare realistic player pairs for <b>22/27</b>. ${openedWR&&!have.RB?'Leave the turn with <b>RB1</b>. ':''}Default QB window is <b>${fmtPick(DRAFT_THESIS.qbDefaultWindow)}/${fmtPick(75)}</b>; ${DRAFT_THESIS.qbException}.`;
   else if(slot===3&&[46,51].includes(pick))current=`${wrHeavy?'WR-heavy start: ':''}<b>RB acquisition window.</b> Secure RB1 by 51; prefer the live ECR/VONA tier over a predetermined name.`;
   else if(slot===3&&[70,75].includes(pick))current=`${have.RB<2?'<b>Secure RB2 on this turn.</b> ':'RB2 is secured. '}This is also the default QB decision window; compare the remaining QB tier with RB/WR value.`;
   else if(slot===3&&[94,99,118,123].includes(pick))current=`Use ${DRAFT_THESIS.upsideRbWindows} for contingent-upside RBs; do not spend these picks merely repairing a low-ceiling depth chart.`;
@@ -17736,18 +17724,15 @@ function render(){
     : 0;
   const queueOverlap=queue.filter(id=>boardMap.has(id)&&!picks.includes(id)).slice(0,4).map(id=>boardMap.get(id)).filter(Boolean);
   const jointTurn=slot===3&&curPick()===22;
-  const liveSmartQueue=jointTurn&&smartQueueCache&&smartQueueCache.key===smartQueueCacheKey()?smartQueueCache.evals:null;
   const openingThesis=slot===3&&curPick()===3&&['Jahmyr Gibbs','Bijan Robinson'].every(name=>picks.some(id=>byId.get(id)?.name===name));
   const openingTarget=openingThesis?boardRows.find(r=>r.p.name===DRAFT_THESIS.openingTarget):null;
   const openingConditional=openingThesis?boardRows.find(r=>r.p.name===DRAFT_THESIS.openingConditional):null;
-  const focusChoices=liveSmartQueue
-    ? liveSmartQueue.slice(0,3).map(e=>boardMap.get(e.c22.id)).filter(Boolean)
-    : openingThesis
+  const focusChoices=openingThesis
       ? [openingTarget,openingConditional,...topChoices].filter((r,i,list)=>r&&list.findIndex(x=>x?.p.id===r.p.id)===i).slice(0,3)
       : topChoices;
-  const focusLabel=liveSmartQueue?'Joint-turn top 3':openingThesis?'Thesis top 3':'Board top 3';
+  const focusLabel=openingThesis?'Thesis top 3':'Board top 3';
   const focusBox=isOTC&&topChoices.length
-    ? `<div class="runbox hot"><div class="eyebrow" style="margin-bottom:5px">On your pick</div><div class="t"><b>${focusLabel}:</b> ${focusChoices.map(r=>`${r.p.name} ${waitBandLabel(r.vonaTier)}`).join(' · ')}${openingThesis?'<br><small>Current-news safety order; the board below remains the unchanged VONA audit.</small>':''}${jointTurn&&!liveSmartQueue?'<br><b class="flag conflict-consensus">Compute Smart Queue before choosing; the simple board does not evaluate pick 22 and 27 jointly.</b>':''}${queueOverlap.length?`<br><b>Queue overlap:</b> ${queueOverlap.map(r=>`${r.p.name}${queueTags[r.p.id]?` <span class="flag qtag-${queueTags[r.p.id]}">${queueTags[r.p.id]}</span>`:''}`).join(' · ')}`:''}${topBandCount?`<br><b>Current band:</b> ${topBandCount} left`:''}<br><b>Starter needs:</b> ${openLine}</div></div>`
+    ? `<div class="runbox hot"><div class="eyebrow" style="margin-bottom:5px">On your pick</div><div class="t"><b>${focusLabel}:</b> ${focusChoices.map(r=>`${r.p.name} ${waitBandLabel(r.vonaTier)}`).join(' · ')}${openingThesis?'<br><small>Current-news safety order; the board below remains the unchanged VONA audit.</small>':''}${jointTurn?'<br><b class="flag conflict-consensus">Compare the 22/27 pair; Smart Queue is optional and does not estimate win probability.</b>':''}${queueOverlap.length?`<br><b>Queue overlap:</b> ${queueOverlap.map(r=>`${r.p.name}${queueTags[r.p.id]?` <span class="flag qtag-${queueTags[r.p.id]}">${queueTags[r.p.id]}</span>`:''}`).join(' · ')}`:''}${topBandCount?`<br><b>Current band:</b> ${topBandCount} left`:''}<br><b>Starter needs:</b> ${openLine}</div></div>`
     : '';
   $('#plan').innerHTML=focusBox+thesisGuidance(mine,boardRows)+`<div class="runbox"><div class="t">${planText(mine)}${opponentDemandText()}</div></div>`+turnPairPlanner(boardRows)+smartQueueBox(boardRows)+nextTurnTargets(boardRows);
   renderNotice();
@@ -17898,11 +17883,11 @@ function buildState(){
   L.push('ESPN AUTOPICK CONTEXT: ESPN default rank is separate from average draft position (ADP). In a live snake draft, an active player queue takes priority; otherwise saved draft rankings can govern timeout picks. Custom queues/rankings are unknown here. Use default rank only as conditional opponent evidence, together with actual roster needs; the terminal queue is not synced to ESPN.');
   L.push('Model boundary: supplied ceiling SD is a generic position-rate proxy, not player-specific measured upside. For near-ties, check current injury, discipline, role and quarterback news before choosing.');
   L.push('NEWS REVIEW 2026-09-05: Jeremiyah Love is recovering from an ankle injury and had not resumed practice in the Sep 3 report; do not use his Model 29 as a reason to ignore ECR 41. Isaiah Likely said he left camp healthy on Sep 2; the old foot-recovery note referred to 2025. Jacobs remains on the Exempt List; a Sep 10 hearing is not a return date. Re-check decision-changing news on draft day.');
-  L.push('Build guardrails: QB1/TE1 only; three RB/WR by Round 4; after WR at 1.03 leave 22/27 with RB1; if the first three picks contain two WRs, repair RB1 by pick 51 and secure RB2 by pick 75; WR1 by Round 5; RB2/WR2/FLEX by Round 8; TE by Round 9; QB by Round 10; ten RB/WR with at least four each; K + D/ST in Rounds 13–14.');
+  L.push('Build guardrails: QB1/TE1 only; three RB/WR by Round 4; WR1 by Round 5; RB2/WR2/FLEX by Round 8; TE by Round 9; QB by Round 10; ten RB/WR with at least four each; K + D/ST in Rounds 13–14.');
   L.push(`LIVE DRAFT THESIS — updated ${DRAFT_THESIS.updated}`);
   L.push(`  · 1.03 safety override: ${DRAFT_THESIS.openingTarget} over ${DRAFT_THESIS.openingConditional} ${DRAFT_THESIS.openingCondition}. This is a visible news judgment, not a hidden projection adjustment.`);
   L.push(`  · QB: default decision window ${fmtPick(DRAFT_THESIS.qbDefaultWindow)}/${fmtPick(75)}; ${DRAFT_THESIS.qbException}. Early QB remains visible on the board but is an explicit exception, not the plan.`);
-  L.push(`  · RB: leave 22/27 with RB1 after a WR opener; after a two-WR first three, RB1 by 51 and RB2 by 75; use ${DRAFT_THESIS.upsideRbWindows} for contingent upside.`);
+  L.push(`  · RB advisory, not eligibility: prefer RB1 on 22/27 after a WR opener; review RB depth at 51/75 without rejecting a superior faller; use ${DRAFT_THESIS.upsideRbWindows} for contingent upside.`);
   L.push(`INDEPENDENT-SOURCE TARGET WATCH — reviewed ${TARGET_THESIS.updated}; advisory only, never a ranking bonus`);
   Object.entries(TARGET_THESIS.players).forEach(([name,target])=>{
     const p=PLAYERS.find(player=>player.name===name);
@@ -17934,11 +17919,16 @@ function buildState(){
   L.push('');
   L.push('MEASURED MODEL LIMITS — reviewed 2026-09-05; judgment context, not probability overrides');
   L.push('  · One 2025 draft supports materially higher skill-player survival in rounds 6–8 (mid-range predictions about 41–45%, observed 81–90%). Do not mechanically double every probability or promise a player will last; check actual room behavior. Earlier rounds were closer, but round 2 had +13 percentage points of bias.');
-  L.push('  · The September 5 live-engine simulation (300 drafts) found recommendations about 6.6 picks ahead of ESPN ADP in rounds 1–12; 16.4% were over five picks early with model survival above 50%. This is a simulation diagnostic, not a championship forecast. A reach is not automatically a mistake: compare player quality and the chance THIS player lasts before choosing.');
+  L.push('  · The September 5 baseline simulation (300 drafts, before removing slot-specific RB exclusions) found recommendations about 6.6 picks ahead of ESPN ADP in rounds 1–12; 16.4% were over five picks early with model survival above 50%. This is a simulation diagnostic, not a championship forecast. A reach is not automatically a mistake: compare player quality and the chance THIS player lasts before choosing.');
   L.push('  · Model rank favors QB relative to ECR and discounts many contingent RBs. Its SD is a position-rate proxy, not measured player upside. First-down scoring is already included; it does not justify every large ECR gap.');
   L.push('  · Inspect the consensus alternatives below, including policy-blocked options. Do not treat the board’s top eight as the complete choice set.');
   L.push('JUDGMENT REQUEST');
-  L.push('  Treat this exported HTML state as the only draft ledger. Use the live board, roster needs, recent positional runs, wait bands, projection source coverage/spread, expert-consensus dispersion, room intelligence, and current player news to give a top 3 for this pick. Explicitly override the board when fresh health/discipline/role/QB information is not priced into projections. Do not invent, record or persist picks outside the HTML.');
+  L.push('  Objective: improve the final usable roster and its chance of winning, not maximize VONA, total bench points, ADP profit, or adherence to a predetermined build. This model does not estimate championship probability.');
+  L.push('  Start with the strongest available consensus players, including alternatives outside the top eight. Depart from ECR only for a concrete scoring, role, health, roster-fit, or opportunity-cost reason. Model rank, a sleeper mention, or a precise simulation number alone is not a reason. First-down scoring is already included; do not count it twice.');
+  L.push('  For starters, compare expected usable lineup production. For bench picks, compare a realistic path to starting value and the cost of occupying one of five bench slots; generic position-rate SD does not measure individual upside.');
+  L.push('  Compare take-now/wait pairs using the actual intervening managers and remaining alternatives. ADP and survival inform availability, not player quality. Do not reach just because a positional replacement looks weak, or assume a default ESPN rank reveals a custom queue.');
+  L.push('  Roster deadlines and one-QB/one-TE rules are default policies, not league rules or proven optima. Consider a justified override while preserving a legal, complete lineup. Smart Queue is optional scenario evidence, never permission to draft a player.');
+  L.push('  Lead with the best pick, two alternatives, and a brief who-can-wait note. State decision-changing uncertainty. Treat this HTML as the only ledger; do not invent, record or persist picks elsewhere.');
   L.push('');
 
   const {slots:rosterView,used}=rosterSlots(mine);
