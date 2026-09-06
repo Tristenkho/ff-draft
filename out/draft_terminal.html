@@ -297,16 +297,18 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
      delta below to protect the player name. */
   #boardcol[data-board-view="model"] .thead,#boardcol[data-board-view="model"] .brow,
   #boardcol[data-board-view="ecr"] .thead,#boardcol[data-board-view="ecr"] .brow{
-    grid-template-columns:20px minmax(0,1fr) 38px 34px 52px 46px}
+    grid-template-columns:20px minmax(0,1fr) 36px 32px 44px 42px}
   #boardcol[data-board-view="model"] .thead>:nth-child(4),#boardcol[data-board-view="model"] .brow>:nth-child(5),
   #boardcol[data-board-view="ecr"] .thead>:nth-child(4),#boardcol[data-board-view="ecr"] .brow>:nth-child(5){display:none}
   #boardcol[data-board-view="model"] .thead>:nth-child(5),#boardcol[data-board-view="model"] .thead>:nth-child(8),
   #boardcol[data-board-view="model"] .brow>:nth-child(6),#boardcol[data-board-view="model"] .brow>:nth-child(9),
   #boardcol[data-board-view="ecr"] .thead>:nth-child(6),#boardcol[data-board-view="ecr"] .thead>:nth-child(8),
   #boardcol[data-board-view="ecr"] .brow>:nth-child(7),#boardcol[data-board-view="ecr"] .brow>:nth-child(9){display:block}
-  #boardcol[data-board-view="adp"] .thead,#boardcol[data-board-view="adp"] .brow{grid-template-columns:20px minmax(0,1fr) 38px 44px 46px}
+  #boardcol[data-board-view="adp"] .thead,#boardcol[data-board-view="adp"] .brow{grid-template-columns:20px minmax(0,1fr) 36px 42px 42px}
   #boardcol[data-board-view="adp"] .thead>:nth-child(4),#boardcol[data-board-view="adp"] .brow>:nth-child(5){display:none}
   #boardcol[data-board-view="adp"] .thead>:nth-child(7),#boardcol[data-board-view="adp"] .brow>:nth-child(8){display:block}
+  /* Status and "starter need" are already on the .sub line directly above. */
+  .whydup{display:none}
   .nm{font-size:14px}.why{font-size:8.5px}.num{font-size:12px}
   .band{font-size:12px;min-width:21px;padding:1px 5px}.waitcost{font-size:10px}
   .slots{padding:8px}.slotrow{min-height:38px;font-size:14px}.needs{font-size:12px}
@@ -355,7 +357,9 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
   .help{padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
   .helphead{padding:11px 12px}
   .helpbody{padding:12px 14px 18px}
-  .nmline{position:relative;min-height:36px}.nmline .nm{padding-right:42px}
+  .nmline{position:relative}.nmline .nm{padding-right:42px}
+  #boardcol.pick-mode .nmline{min-height:36px}
+  #boardcol:not(.pick-mode) .nmline .nm{padding-right:0}
   .rowaction{position:absolute;right:0;top:50%;transform:translateY(-50%);min-width:40px;min-height:36px}
   /* The reasoning line carries the decision flags. Confined to the name grid
      column it needed up to 699px of a 219px box, so the tail — exactly the
@@ -365,7 +369,12 @@ footer{border-top:1px solid var(--rule);background:var(--panel);display:flex;ali
   .nmwrap{display:contents}
   .brow>.rk,.brow .nmline,.brow>.num,.brow>.wait{grid-row:1}
   .brow .nmline{grid-column:2}
-  .brow .sub,.brow .why{grid-row:2;grid-column:2/-1;white-space:normal;
+  .brow .sub{grid-row:2;grid-column:2/-1;white-space:normal;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  /* The audit views additionally render .why, the model's arithmetic. It needs
+     its own third row: sharing row 2 with .sub stacked both text blocks in one
+     grid cell, painting them over each other and making both unreadable. */
+  .brow .why{grid-row:3;grid-column:2/-1;white-space:normal;line-height:1.4;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   /* Band letter already has its own column; the eligible-count breakdown is
      bookkeeping available on the Room tab. Drop it to buy the flags room. */
@@ -17352,11 +17361,11 @@ function why(r){
   const tieLabel=SAME_BAND_TIEBREAK==='consensus'?`ECR ${rankText(r.ecrRank)} tiebreak`:`Model ${rankText(r.modelRank)} tiebreak`;
   const qbThesis=r.p.pos==='QB'&&nextMyPick()&&nextMyPick()<DRAFT_THESIS.qbDefaultWindow
     ? ` · thesis: default QB window ${fmtPick(DRAFT_THESIS.qbDefaultWindow)}; compare the QB/skill-player pair before taking QB early`:'';
-  if(r.vonaTier===1)return `${statusText(r.p)}${need?'starter need · ':''}wait band A · ${tieLabel}${gate}${audit}${qbThesis} · ${projectionText(r.p)}`;
+  if(r.vonaTier===1)return `<span class="whydup">${statusText(r.p)}${need?'starter need · ':''}</span>wait band A · ${tieLabel}${gate}${audit}${qbThesis} · ${projectionText(r.p)}`;
   const diff=r.ecrRank>500?0:r.ecrRank-r.modelRank;
   const timing=r.surv<.45?'likely gone next turn':r.surv<.7?'at risk by next turn':'reasonable wait';
   const valueFlag=Math.abs(diff)>=10?(diff>0?`model ${diff} ahead of ECR`:`ECR ${-diff} ahead of model`):timing;
-  return `${statusText(r.p)}${need?'starter need · ':''}${valueFlag}${gate}${audit}${qbThesis} · ${projectionText(r.p)}`;
+  return `<span class="whydup">${statusText(r.p)}${need?'starter need · ':''}</span>${valueFlag}${gate}${audit}${qbThesis} · ${projectionText(r.p)}`;
 }
 
 function thesisGuidance(mine,boardRows){
