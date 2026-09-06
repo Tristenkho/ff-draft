@@ -1,6 +1,10 @@
 # Draft-day priming brief — reviewed September 5, 2026
 
 Read this once before the first pick. Then paste only Copy state each turn.
+Copy state now carries the room order, who picks between our turns, the 90-second
+clock, and the effective per-catch scoring on its own, so a session started fresh
+mid-draft is still usable from the export alone. This brief adds the reasoning
+behind those facts and the September 5 decision notes.
 Codex and Claude Code both read the repo instructions through AGENTS.md/CLAUDE.md.
 The detailed evidence is in `out/draft_eve_audit_2026-09-05.md`.
 

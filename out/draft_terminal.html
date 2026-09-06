@@ -16807,6 +16807,24 @@ function mockMetricLabel(){
   if(mockMode==='adp')return 'ESPN ROOM';
   return mockMode.toUpperCase();
 }
+// Draft order by slot, from the league settings. The export previously told the
+// judgment layer to "use the actual intervening managers" while never naming
+// one, so a cold session (a phone chat started mid-draft, with no brief pasted)
+// had no way to know who picks between our turns.
+const ROOM=['berds','kevin','tristen','castelani','kyle','houston hotdogs',
+  'deshaun','worthy','matthew','capullo','ray rice','sweet'];
+const managerAt=slotNo=>ROOM[slotNo-1]||`slot ${slotNo}`;
+// Managers picking in (from, to) exclusive, in order, with how many picks each
+// holds — this is what decides a take-now/wait pair.
+function interveningManagers(from,to){
+  if(from==null||to==null||to<=from+1)return [];
+  const counts=new Map();
+  for(let n=from+1;n<to;n++){
+    const who=managerAt(teamAtPick(n));
+    counts.set(who,(counts.get(who)||0)+1);
+  }
+  return [...counts.entries()].map(([who,n])=>n>1?`${who} x${n}`:who);
+}
 const teamAtPick=n=>{
   const round=Math.ceil(n/TEAMS), inRound=(n-1)%TEAMS+1;
   return round%2?inRound:TEAMS-inRound+1;
@@ -17912,8 +17930,23 @@ function buildState(){
   if(autoPickNos.length)L.push(`WARNING: ${autoPickNos.length} legacy simulated picks remain in this ledger. Reset the HTML before treating it as live draft state.`);
   L.push(`My slot ${slot}/${TEAMS} · ceiling weight lambda ${currentLambda().toFixed(2)} (live manual control; default 0.40) · ECR guardrail ${Math.round(ecrWeight*100)}%`);
   L.push(`My full pick schedule: ${myPicks().join(' · ')}`);
+  L.push(`Draft: Sunday September 6, 2026, 8:00 p.m. EDT / 7:00 p.m. CDT. 90 seconds per pick.`);
+  L.push(`Room order by slot: ${ROOM.map((who,i)=>`${i+1} ${who}${i+1===slot?' (me)':''}`).join(' · ')}`);
+  if(nm){
+    const before=interveningManagers(curPick()-1,nm);
+    L.push(before.length
+      ? `Picking before my ${fmtPick(nm)} (${nm-curPick()} pick${nm-curPick()===1?'':'s'}): ${before.join(' · ')}.`
+      : `I am on the clock now at ${fmtPick(nm)}.`);
+  }
+  if(nm&&nxt){
+    const between=interveningManagers(nm,nxt);
+    L.push(between.length
+      ? `Between my ${fmtPick(nm)} and ${fmtPick(nxt)} only these managers pick (${nxt-nm-1} pick${nxt-nm-1===1?'':'s'}): ${between.join(' · ')}. Judge who can wait against these specific managers and their rosters below, not against generic ADP.`
+      : `My ${fmtPick(nm)} and ${fmtPick(nxt)} are back-to-back with no intervening pick.`);
+  }
   L.push('League: 12-team, 14-round snake redraft; QB1 RB2 WR2 TE1 FLEX1 K1 D/ST1, bench 5, IR 2; caps QB4 RB8 WR8 TE3 K3 D/ST3.');
   L.push('Scoring: 0.5 PPR; 0.1/yard rushing and receiving; pass 0.04/yard, 4/TD, -2/INT; first downs pass 0.1, rush 0.25, reception 0.5; rush/receiving TD 6; fumble -2; return/recovery TD 6. K uses distance tiers (3/3.5/4/5) with -1 misses; D/ST uses league points- and yards-allowed tiers.');
+  L.push('Effective receiving points per catch, first downs included: WR 0.803, TE 0.766, RB 0.663. Already inside the projections — do not add a further bonus for them.');
   L.push('Format: 8 of 12 make the playoffs; single-week rounds in Weeks 15–17. Waivers reset weekly to inverse standings, no FAAB, one-day period.');
   L.push(`Projection: ${PROJECTION_META.method} of ${PROJECTION_META.sources.join(', ')} where available, each rescored for league settings using regressed 2023-25 player first-down rates (position fallback for rookies/unmatched players); source disagreement is tracked separately from upside; ADP/ECR are not projection inputs.`);
   L.push(`Expert consensus: ${ECR_META.source}, updated ${ECR_META.updated}; ${ECR_META.experts} experts in the seven-day panel (${ECR_META.updated1d} updated within one day, ${ECR_META.updated3d} within three days). Player-level expert average, SD, and range are judgment context, not added ranking weight.`);
@@ -17952,6 +17985,7 @@ function buildState(){
   L.push('  · 11 of 12 managers used a Round 7–9 pick on K or D/ST; 19 of 36 picks in those rounds were special teams, with zero RBs selected. Do not join that run: picks 75, 94 and 99 may expose unusual RB/WR value.');
   L.push('  · QB10/QB11/QB12 went at picks 74/80/83, followed by no QB until picks 121/122/124. At picks 70/75, decide between the last acceptable top-12 QB and a deliberate punt toward picks 118/123; avoid the QB4–9 overpay band at picks 39–60.');
   L.push('  · Eight managers carried QB2, leaving waivers near QB22. A QB2 from Round 11 can be considered after core starters and RB/WR depth, but the terminal still blocks it pending backtest validation.');
+  L.push('  · ray rice waited on special teams in 2025 and is therefore plausible competition for the discounted skill players we are waiting on. One season is not a fixed personality model; check the actual rosters above.');
   L.push('  · WR was priced near market. Kicker remained effectively free; D/ST had a small scarcity cost. Never recommend K or D/ST before pick 147.');
   L.push('  · These tendencies inform draft-day judgment but are not yet encoded in survival. Proposed QB2 and opponent K/DST changes remain unvalidated and unapplied.');
   L.push('');
@@ -17966,6 +18000,7 @@ function buildState(){
   L.push('  For starters, compare expected usable lineup production. For bench picks, compare a realistic path to starting value and the cost of occupying one of five bench slots; generic position-rate SD does not measure individual upside.');
   L.push('  Compare take-now/wait pairs using the actual intervening managers and remaining alternatives. ADP and survival inform availability, not player quality. Do not reach just because a positional replacement looks weak, or assume a default ESPN rank reveals a custom queue.');
   L.push('  Roster deadlines and one-QB/one-TE rules are default policies, not league rules or proven optima. Consider a justified override while preserving a legal, complete lineup. Smart Queue is optional scenario evidence, never permission to draft a player.');
+  L.push('  The pick clock is 90 seconds and this is being read on a phone. Answer short: the pick first, then two alternatives at one line each, then the who-can-wait note. Do not re-run model research on the clock, and do not restate this brief back.');
   L.push('  Lead with the best pick, two alternatives, and a brief who-can-wait note. State decision-changing uncertainty. Treat this HTML as the only ledger; do not invent, record or persist picks elsewhere.');
   L.push('');
 
