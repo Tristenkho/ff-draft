@@ -16502,7 +16502,7 @@ function pickedAtMap(list){
 }
 
 // restore from localStorage
-(function(){try{
+function restoreFromStorage(){try{
   const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
   if(Array.isArray(s.picks))picks=sanitizeIdList(s.picks).slice(0,TEAMS*ROUNDS);
   if(Array.isArray(s.autoPickNos))autoPickNos=s.autoPickNos.filter(n=>Number.isInteger(n)&&n>=1&&n<=picks.length);
@@ -16514,7 +16514,8 @@ function pickedAtMap(list){
   if(s.modelVersion>=5&&Array.isArray(s.queue))queue=sanitizeIdList(s.queue).filter(id=>!pickedIds.has(id));
   if(s.modelVersion>=5&&Array.isArray(s.queueArchive))queueArchive=sanitizeQueueArchive(s.queueArchive,pickedIds).filter(entry=>!queue.includes(entry.id));
   if(s.modelVersion>=6&&s.queueTags)queueTags=sanitizeQueueTags(s.queueTags,queue);
-}catch(e){}}());
+}catch(e){}}
+restoreFromStorage();
 function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify({picks,autoPickNos,queue,queueArchive,queueTags,slot,lambda,ecrWeight,snakeView,modelVersion:STORAGE_VERSION}));}
 
 const $=s=>document.querySelector(s);
@@ -18290,6 +18291,22 @@ $('#clearmock').addEventListener('click',()=>{mockPicks=[];mockRandom=false;mock
 $('#helpbtn').addEventListener('click',e=>openHelp(e.currentTarget));
 $('#helpclose').addEventListener('click',closeHelp);
 $('#help').addEventListener('click',e=>{if(e.target===$('#help'))closeHelp();});
+// Two tabs on the same origin share one ledger, and state was previously read
+// only at boot. A tab left open in the background therefore kept stale picks in
+// memory and silently overwrote newer ones the next time anything called save()
+// — rehearsal reproduced this losing three real picks. On a phone this is easy
+// to hit and invisible: reopening the bookmark can land in a second tab.
+// localStorage is the single source of truth, so adopt whatever another tab
+// wrote and re-render. save() does not fire this event in its own tab, so there
+// is no write loop.
+window.addEventListener('storage',e=>{
+  if(e.key!==STORAGE_KEY||e.newValue==null)return;
+  const before=picks.length;
+  restoreFromStorage();
+  const delta=picks.length-before;
+  if(delta!==0)setNotice('warn',`Another tab changed the draft — now ${picks.length} pick${picks.length===1?'':'s'} recorded. This tab has caught up.`);
+  render();
+});
 $('#exportclose').addEventListener('click',closeExportDialog);
 $('#export-dialog').addEventListener('click',e=>{if(e.target===$('#export-dialog'))closeExportDialog();});
 $('#exportselect').addEventListener('click',()=>{$('#exporttext').focus();$('#exporttext').select();});
