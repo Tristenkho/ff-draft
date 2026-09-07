@@ -79,3 +79,13 @@ A supported improvement in each team's usable roster options relative to keeping
 
 **Market-derived estimate**:
 A forecast inferred from priced sports outcomes under explicit statistical and settlement assumptions. A posted betting threshold alone is not expected fantasy production.
+
+**Research briefing**:
+A synthesis of current reporting and analyst opinions about roster opportunities and weekly lineup decisions, tailored to the user's league and team. It distinguishes sourced claims from verified facts and recommended actions.
+
+
+**Recommended lineup**:
+A proposed legal set of starting assignments for a particular week, based on current evidence and remaining player locks. It does not change the submitted lineup.
+
+**Matchup forecast**:
+An estimate of a fantasy matchup's outcome under explicit lineup and availability assumptions. Projected points and win probability are different quantities; neither is a verified result.

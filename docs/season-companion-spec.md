@@ -1,6 +1,6 @@
 # Fantasy Season Companion — product and implementation specification
 
-Status: proposed implementation scope. Written September 7, 2026.
+Status: consolidated from the accepted interview recommendations; awaiting final shared-understanding confirmation before implementation. Updated September 7, 2026.
 Owner: Tristen. League: ESPN 1238596447; season 2026; team 5.
 This document specifies the product; no monitoring jobs, trades, claims or lineup changes are enabled by it.
 
@@ -8,7 +8,15 @@ This document specifies the product; no monitoring jobs, trades, claims or lineu
 
 Open the app and immediately understand: who I face, who each team owns, what changed, which decisions matter, what the evidence says, and when I must act. Agents must be able to retrieve and evaluate the exact same information without reverse-engineering the screen.
 
-Primary job: improve usable weekly lineups and season roster options under this league's actual rules. Draft recap is a secondary historical view. Recommendations may conclude “hold”; activity is not a success metric.
+Primary job: replace the user's time researching videos and articles about risers/fallers, waivers, start/sit matchups and D/ST streaming with a researched, actionable briefing tailored to this league. Research all relevant alternatives but lead with at most five decisions; routine starters get short status checks. Give a preferred action, strongest counterargument and flip conditions. “Hold” is valid.
+
+Accepted delivery constraints:
+- One private app for this league across seasons, with Draft and Season modules sharing player identities, rules and evidence. Other managers do not get access to private analysis.
+- No incremental spending: existing Codex/Claude subscriptions and the user's computer only. No paid API, credits, hosting or data subscription. Honor existing usage limits; do not silently incur overages.
+- Research starts in Codex/Claude; save structured evidence and a readable briefing into the app. An in-app agent invocation is not required. Subscription access is not assumed to include programmatic API access.
+- Agent primarily discovers reputable written and video sources; Flock Fantasy is not a mandatory or authoritative source. Prefer official/attributed reporting for facts and independent forecasts for close decisions; accessible transcripts must actually be read before claiming a video was reviewed.
+- Proactive pre-waiver, pregame and material-change research is desired, including computer-off operation if genuinely feasible for free. On-demand research is an accepted fallback. No existing off-device execution capability is assumed.
+- First deliverable is a real weekly research briefing before UI polish. ESPN actions remain manual.
 
 Success criteria:
 - Within one screen, identify the next relevant decision and its deadline.
@@ -48,7 +56,13 @@ Ordered by urgency, not a wall of statistics:
 5. Relevant news feed for both matchup rosters. Distinguish direct news from teammate news that changes a player's opportunity.
 6. Upcoming decision timeline, grouped by day and actual game windows.
 
-Opponent lineup is “currently submitted,” not a prediction of what Kevin will start. Can compare against an estimated strongest opponent lineup, clearly labeled as a scenario. A favorable opponent projection is not a reason to assume a benched star stays benched.
+Show the opponent's actual submitted lineup, but use an estimated strongest legal opponent lineup for the main pregame outlook, explicitly labeled; provide a submitted-lineup scenario toggle. Neither scenario predicts the manager's actual choice. Respect locked slots in both cases.
+
+Home presents my recommended lineup beside the opponent scenario, projected scores, favored team and source agreement. A small edge is a slight lean; source disagreement is visible. Numerical win probabilities require a defensible model of variability and correlation and must be labeled experimental until calibrated; do not derive them from point differences alone.
+
+On refresh during the week, separate actual points, projections for players yet to start, and in-progress players. Do not add full-game projections to points already scored. Without an in-game remaining-production model, show in-progress players' actual points and mark the overall forecast incomplete; do not call actual points plus only unstarted projections an unbiased final score. This is a refresh-based outlook, not a promised live scoreboard. Show legal decisions still available.
+
+Default to strongest expected production. Consider matchup-dependent variance only when the situation materially warrants it and supported player outcome ranges justify it.
 
 Illustrative layout, with live values supplied at runtime:
 
@@ -87,7 +101,9 @@ Decision history: recommendation, source snapshot, time, user choice, observed E
 
 ### Draft
 
-Preserve the draft terminal intact as an archive. Recap shows all 168 picks, round/team filters, each drafted roster and the original pre-draft evaluation inputs. Separate “quality at the time” from “season outcome so far.” Never rewrite a draft grade using later injuries or results without labeling the retrospective perspective. Draft ownership must never overwrite live ownership.
+The Draft tab is a locked actual recap after ESPN confirms completion and picks are reconciled. The existing standalone terminal is retained only as a migration fallback; its editable local ledger is not the frozen archive. Recap shows all 168 picks, round/team filters, each drafted roster and the original pre-draft evaluation inputs when captured. Reconstruct drafted rosters from picks and durable player IDs/names, not current roster membership. Missing historical evidence is marked unavailable rather than reconstructed with present-day data. Separate “quality at the time” from “season outcome so far.” Never rewrite a draft grade using later injuries or results without labeling the retrospective perspective. Draft ownership must never overwrite live ownership. Corrections create explicit versions rather than silent overwrites. Preserve original draft assessments; later retrospective assessments carry dates and a different horizon.
+
+A season selector retains prior years. New seasons re-fetch league membership, rules, draft order and player data. Carry forward user preferences, not stale player judgments or unvalidated policy constants. Before the draft show preparation/practice; during the draft show live assistance; after completion lock the actual recap; after the season show review. Do not redesign the live draft algorithm during the initial weekly-research delivery.
 
 ### Shared player drawer and comparison view
 
@@ -117,7 +133,7 @@ Use “facts checked” and “forecast agreement” as separate indicators. No 
 1. Retrieve authoritative current roster, settings, schedule and locked slots.
 2. Compare complete legal lineups including all bench alternatives; preserve already locked assignments.
 3. Score statistical forecasts under league rules. Do not add first-down bonuses to totals already containing them.
-4. Compare ESPN with independently sourced weekly projections and weekly flex consensus. RB25 versus WR25 is not a cross-position ordering. ADP and season ECR are not weekly start/sit rankings.
+4. For close decisions seek at least two independent forecasting perspectives where available; disclose missing coverage and still offer a provisional choice unless critical facts are missing. Compare ESPN with independently sourced weekly projections and weekly flex consensus. RB25 versus WR25 is not a cross-position ordering. ADP and season ECR are not weekly start/sit rankings.
 5. Inspect disagreement in carries, routes/targets, yards, receptions, touchdowns and health assumptions. Prefer expected points as the baseline; do not import draft lambda or VONA.
 6. Identify new verified information not already included in the forecast. Avoid double injury discounts and adding another matchup bonus to matchup-adjusted projections.
 7. Preserve flexibility: place later-starting eligible players in FLEX where this does not change the selected lineup. Show the earliest lock among competing options as the decision deadline.
@@ -144,7 +160,7 @@ Backtest forecasts available at the actual decision time, not closing prices una
 
 ## 7. Waiver decisions and deadlines
 
-Rank feasible acquisition PLANS, not isolated player names. Evaluate add/drop, immediate and next-few-week lineup benefit, contingencies, bye needs, IR eligibility, waiver priority cost and alternatives if a claim fails. Do not value unused bench season totals as starting points.
+Rank feasible acquisition PLANS, not isolated player names. For D/ST compare the current week and the following two weeks; do not automatically reserve a second bench slot for a defense. Evaluate add/drop, immediate and next-few-week lineup benefit, contingencies, bye needs, IR eligibility, waiver priority cost and alternatives if a claim fails. Do not value unused bench season totals as starting points.
 
 Claims are ordered and may conflict. Store which drop each claim uses, which claims are mutually exclusive, and what to do after partial success. Evaluate final roster legality including pending trades, IR activation and positional limits. A claim becoming unavailable supersedes its advice.
 
@@ -156,6 +172,8 @@ Deadline model separates:
 - User's recommended action time, deliberately before the hard deadline.
 
 Never assume every claim runs Tuesday night. Determine actual league settings and player state; if ambiguous, label “Time unverified — check ESPN” and withhold exact countdowns. Store instants in UTC, display America/Chicago with timezone abbreviation and full date; handle daylight saving and international/Wednesday/Saturday games.
+
+Accepted briefing rhythm: post-games/pre-waivers, pregame lineup review, material changes and on demand. The following intervals and quiet hours are implementation proposals to validate during scheduling setup, not commitments to an always-on service or accepted notification settings.
 
 Proposed monitoring policy after implementation (configurable):
 - Build waiver review 24 hours before a VERIFIED processing window; if a claim has a shorter lifetime, review on discovery.
@@ -199,14 +217,14 @@ Only decision-changing events alert. Other news stays in the feed. Report “no 
 
 ## 10. Architecture and data ownership
 
-Build a separate season application in the same repository. Retain the draft single-file output and historical engine unchanged. The following backend and build choices are proposed exceptions scoped to the season app; draft constraints still apply to the archive.
+Build one year-round application in this repository, with separate Draft and Season modules and a shared data/evidence foundation. Preserve the standalone draft terminal and engine during migration. Draft-day single-file/local-ledger constraints remain scoped to the legacy/live-draft workflow; they do not constrain the shared season research store. Document that scope in agent instructions when implementation begins.
 
 Recommended first implementation:
 - Python service reusing ESPN request/authentication, ID mapping and scoring helpers after extracting reusable logic from draft refresh scripts.
 - SQLite for private snapshots, normalized records, decisions and job history; migrations and a single scheduled writer. Retain raw payloads privately with bounded retention.
 - Semantic HTML/CSS and small JavaScript modules served by the service, system fonts, responsive design. No framework needed for the initial four views; JSON view models prevent coupling presentation to ingestion.
-- Same-origin read API and an agent CLI over shared application services. Agent explanations attach to explicit evidence IDs and snapshot versions.
-- Local development first. Always-on private deployment is necessary for reliable unattended checks and phone access; choose hosting only after authenticated persistence, scheduling and access are verified. Existing public GitHub Pages remains the draft archive, never the authenticated season data host.
+- Same-origin read API and an agent CLI over shared application services. Research runs through existing subscription chat workflows and writes validated briefing artifacts; do not add a paid model API or assume subscriptions are callable by the web service. Agent explanations attach to explicit evidence IDs and snapshot versions.
+- Local execution first, with free private phone access evaluated separately. Computer-off research requires a verified free off-device execution mechanism; otherwise use on-demand/local scheduling and disclose downtime. Public GitHub Pages remains only a legacy draft fallback, never the private app or authenticated data host. Do not choose paid infrastructure to meet a non-mandatory unattended goal.
 - Server-side credentials only, excluded from Git, frontend bundles, logs, evidence exports and screenshots. Prefer local authenticated processing for analysis; any external model payload is minimized to relevant fantasy evidence and excludes credentials/private member identifiers.
 
 ESPN owns rosters, lineups, rules, offers and transactions. Sources own reported news and published forecasts. This app owns watchlists, analysis, decision records, notification preferences and historical snapshots. Proposed lineups and simulated trades never mutate the synced state.
@@ -253,6 +271,10 @@ Before presenting an actionable claim/offer/lineup recommendation, refresh mutab
 
 ## 13. Delivery slices and acceptance criteria
 
+### Slice 0 — real researched briefing (first delivery)
+
+Use the existing subscriptions to research a real week: recommended legal lineup, matchup score/favorite under explicit opponent assumptions, close start/sit comparisons, relevant news on both rosters, waiver add/drop plans, this-week/next-two-week D/ST choices, watchlist changes, verified deadlines and any supported trade opportunities/offers. Discover sources and record original timestamps, coverage and disagreements. Deliver a readable briefing plus structured evidence locally, without waiting for a polished UI, paid odds feed or scheduled worker. User feedback on usefulness shapes presentation. Acceptance: the user can act without having to repeat the research in videos/articles, and every decisive factual claim is traceable.
+
 ### Slice 1 — league truth, matchup and agent-readable shell
 
 Deliver This Week, League and Draft navigation; current opponent, all rosters, current lineups, kickoff times, source health, stable routes, private storage and JSON/CLI exports. Validate exact 12-team roster reconciliation, draft/current separation, league scoring and special-team tiers, local time conversion and unavailable integration states. No AI needed to make these views useful.
@@ -285,7 +307,7 @@ Measure source availability/freshness, unsupported decisive claims, missed deadl
 
 V1 does not place bets, execute ESPN actions, send manager messages, scrape credentials from browsers, invent missing reports, or require public exposure of league data. It does not promise instant trade notifications from periodic polling. It does not retrofit VONA/ADP survival into weekly decisions.
 
-Before production: verify source access/cost and redistribution terms; settle private always-on deployment and notification destination; verify waiver clock semantics and pending-offer lifecycle. These are implementation gates, not reasons to delay the read-only matchup/roster slice.
+Before enabling the corresponding features: verify free source access and terms; private device access and any free off-device execution; notification destination and cadence preferences; waiver clock semantics and pending-offer lifecycle. Never substitute a paid service without a new user decision. These are implementation gates, not reasons to delay the read-only matchup/roster slice.
 
 ## References
 

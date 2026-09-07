@@ -1,0 +1,3 @@
+# Subscription research with manual ESPN execution
+
+Research runs through the user's existing Codex/Claude subscriptions and computer, producing reusable briefings and structured evidence for the app; no additional paid APIs, data subscriptions, credits or hosting are authorized. This deliberately separates the app from model invocation because subscription access does not establish an API entitlement, and accepts on-demand research when free proactive execution is unavailable. ESPN actions remain manual initially, so recommendation generation and trade discovery never imply authority to execute or message managers.
