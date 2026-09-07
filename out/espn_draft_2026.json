@@ -1,0 +1,2568 @@
+{
+ "league": "Lava Hound League",
+ "season": 2026,
+ "league_id": 1238596447,
+ "teams": {
+  "1": "Capullo",
+  "2": "Kyle\u2019s Little Diddlers ",
+  "3": "You are not Worthy",
+  "4": "Gibby From iCarly",
+  "5": "Tristen's Talented Team",
+  "6": "Deshaun Watson Stans",
+  "7": "$weet $acks",
+  "8": "Matthew's Magnificent Team",
+  "9": "Ray Rice Boxing Co",
+  "10": "Houston Hotdogs",
+  "11": "Kevin's Killers ",
+  "12": "Castelani's Cool Team"
+ },
+ "drafted": true,
+ "picks": [
+  {
+   "overall": 1,
+   "round": 1,
+   "pick_in_round": 1,
+   "player_id": 4429795,
+   "name": "Jahmyr Gibbs",
+   "pos": "RB",
+   "team_id": 4,
+   "team": "Gibby From iCarly",
+   "keeper": false
+  },
+  {
+   "overall": 2,
+   "round": 1,
+   "pick_in_round": 2,
+   "player_id": 4430807,
+   "name": "Bijan Robinson",
+   "pos": "RB",
+   "team_id": 11,
+   "team": "Kevin's Killers ",
+   "keeper": false
+  },
+  {
+   "overall": 3,
+   "round": 1,
+   "pick_in_round": 3,
+   "player_id": 4362628,
+   "name": "Ja'Marr Chase",
+   "pos": "WR",
+   "team_id": 5,
+   "team": "Tristen's Talented Team",
+   "keeper": false
+  },
+  {
+   "overall": 4,
+   "round": 1,
+   "pick_in_round": 4,
+   "player_id": 4426515,
+   "name": "Puka Nacua",
+   "pos": "WR",
+   "team_id": 12,
+   "team": "Castelani's Cool Team",
+   "keeper": false
+  },
+  {
+   "overall": 5,
+   "round": 1,
+   "pick_in_round": 5,
+   "player_id": 4242335,
+   "name": "Jonathan Taylor",
+   "pos": "RB",
+   "team_id": 2,
+   "team": "Kyle\u2019s Little Diddlers ",
+   "keeper": false
+  },
+  {
+   "overall": 6,
+   "round": 1,
+   "pick_in_round": 6,
+   "player_id": 4430878,
+   "name": "Jaxon Smith-Njigba",
+   "pos": "WR",
+   "team_id": 10,
+   "team": "Houston Hotdogs",
+   "keeper": false
+  },
+  {
+   "overall": 7,
+   "round": 1,
+   "pick_in_round": 7,
+   "player_id": 3117251,
+   "name": "Christian McCaffrey",
+   "pos": "RB",
+   "team_id": 6,
+   "team": "Deshaun Watson Stans",
+   "keeper": false
+  },
+  {
+   "overall": 8,
+   "round": 1,
+   "pick_in_round": 8,
+   "player_id": 4374302,
+   "name": "Amon-Ra St. Brown",
+   "pos": "WR",
+   "team_id": 3,
+   "team": "You are not Worthy",
+   "keeper": false
+  },
+  {
+   "overall": 9,
+   "round": 1,
+   "pick_in_round": 9,
+   "player_id": 4379399,
+   "name": "James Cook III",
+   "pos": "RB",
+   "team_id": 8,
+   "team": "Matthew's Magnificent Team",
+   "keeper": false
+  },
+  {
+   "overall": 10,
+   "round": 1,
+   "pick_in_round": 10,
+   "player_id": 4241389,
+   "name": "CeeDee Lamb",
+   "pos": "WR",
+   "team_id": 1,
+   "team": "Capullo",
+   "keeper": false
+  },
+  {
+   "overall": 11,
+   "round": 1,
+   "pick_in_round": 11,
+   "player_id": 4685382,
+   "name": "Omarion Hampton",
+   "pos": "RB",
+   "team_id": 9,
+   "team": "Ray Rice Boxing Co",
+   "keeper": false
+  },
+  {
+   "overall": 12,
+   "round": 1,
+   "pick_in_round": 12,
+   "player_id": 4362238,
+   "name": "Chase Brown",
+   "pos": "RB",
+   "team_id": 7,
+   "team": "$weet $acks",
+   "keeper": false
+  },
+  {
+   "overall": 13,
+   "round": 2,
+   "pick_in_round": 1,
+   "player_id": 3929630,
+   "name": "Saquon Barkley",
+   "pos": "RB",
+   "team_id": 7,
+   "team": "$weet $acks",
+   "keeper": false
+  },
+  {
+   "overall": 14,
+   "round": 2,
+   "pick_in_round": 2,
+   "player_id": 4262921,
+   "name": "Justin Jefferson",
+   "pos": "WR",
+   "team_id": 9,
+   "team": "Ray Rice Boxing Co",
+   "keeper": false
+  },
+  {
+   "overall": 15,
+   "round": 2,
+   "pick_in_round": 3,
+   "player_id": 3043078,
+   "name": "Derrick Henry",
+   "pos": "RB",
+   "team_id": 1,
+   "team": "Capullo",
+   "keeper": false
+  },
+  {
+   "overall": 16,
+   "round": 2,
+   "pick_in_round": 4,
+   "player_id": 4429160,
+   "name": "De'Von Achane",
+   "pos": "RB",
+   "team_id": 8,
+   "team": "Matthew's Magnificent Team",
+   "keeper": false
+  },
+  {
+   "overall": 17,
+   "round": 2,
+   "pick_in_round": 5,
+   "player_id": 4890973,
+   "name": "Ashton Jeanty",
+   "pos": "RB",
+   "team_id": 3,
+   "team": "You are not Worthy",
+   "keeper": false
+  },
+  {
+   "overall": 18,
+   "round": 2,
+   "pick_in_round": 6,
+   "player_id": 4567048,
+   "name": "Kenneth Walker III",
+   "pos": "RB",
+   "team_id": 6,
+   "team": "Deshaun Watson Stans",
+   "keeper": false
+  },
+  {
+   "overall": 19,
+   "round": 2,
+   "pick_in_round": 7,
+   "player_id": 4870808,
+   "name": "Jeremiyah Love",
+   "pos": "RB",
+   "team_id": 10,
+   "team": "Houston Hotdogs",
+   "keeper": false
+  },
+  {
+   "overall": 20,
+   "round": 2,
+   "pick_in_round": 8,
+   "player_id": 4426502,
+   "name": "Drake London",
+   "pos": "WR",
+   "team_id": 2,
+   "team": "Kyle\u2019s Little Diddlers ",
+   "keeper": false
+  },
+  {
+   "overall": 21,
+   "round": 2,
+   "pick_in_round": 9,
+   "player_id": 4258173,
+   "name": "Nico Collins",
+   "pos": "WR",
+   "team_id": 12,
+   "team": "Castelani's Cool Team",
+   "keeper": false
+  },
+  {
+   "overall": 22,
+   "round": 2,
+   "pick_in_round": 10,
+   "player_id": 4047646,
+   "name": "A.J. Brown",
+   "pos": "WR",
+   "team_id": 5,
+   "team": "Tristen's Talented Team",
+   "keeper": false
+  },
+  {
+   "overall": 23,
+   "round": 2,
+   "pick_in_round": 11,
+   "player_id": 4426354,
+   "name": "George Pickens",
+   "pos": "WR",
+   "team_id": 11,
+   "team": "Kevin's Killers ",
+   "keeper": false
+  },
+  {
+   "overall": 24,
+   "round": 2,
+   "pick_in_round": 12,
+   "player_id": 4432665,
+   "name": "Brock Bowers",
+   "pos": "TE",
+   "team_id": 4,
+   "team": "Gibby From iCarly",
+   "keeper": false
+  },
+  {
+   "overall": 25,
+   "round": 3,
+   "pick_in_round": 1,
+   "player_id": 4595348,
+   "name": "Malik Nabers",
+   "pos": "WR",
+   "team_id": 4,
+   "team": "Gibby From iCarly",
+   "keeper": false
+  },
+  {
+   "overall": 26,
+   "round": 3,
+   "pick_in_round": 2,
+   "player_id": 4361579,
+   "name": "Javonte Williams",
+   "pos": "RB",
+   "team_id": 11,
+   "team": "Kevin's Killers ",
+   "keeper": false
+  },
+  {
+   "overall": 27,
+   "round": 3,
+   "pick_in_round": 3,
+   "player_id": 3918298,
+   "name": "Josh Allen",
+   "pos": "QB",
+   "team_id": 5,
+   "team": "Tristen's Talented Team",
+   "keeper": false
+  },
+  {
+   "overall": 28,
+   "round": 3,
+   "pick_in_round": 4,
+   "player_id": 4361307,
+   "name": "Trey McBride",
+   "pos": "TE",
+   "team_id": 12,
+   "team": "Castelani's Cool Team",
+   "keeper": false
+  },
+  {
+   "overall": 29,
+   "round": 3,
+   "pick_in_round": 5,
+   "player_id": 4361370,
+   "name": "Chris Olave",
+   "pos": "WR",
+   "team_id": 2,
+   "team": "Kyle\u2019s Little Diddlers ",
+   "keeper": false
+  },
+  {
+   "overall": 30,
+   "round": 3,
+   "pick_in_round": 6,
+   "player_id": 4428331,
+   "name": "Rashee Rice",
+   "pos": "WR",
+   "team_id": 10,
+   "team": "Houston Hotdogs",
+   "keeper": false
+  },
+  {
+   "overall": 31,
+   "round": 3,
+   "pick_in_round": 7,
+   "player_id": 4241478,
+   "name": "DeVonta Smith",
+   "pos": "WR",
+   "team_id": 6,
+   "team": "Deshaun Watson Stans",
+   "keeper": false
+  },
+  {
+   "overall": 32,
+   "round": 3,
+   "pick_in_round": 8,
+   "player_id": 4427366,
+   "name": "Breece Hall",
+   "pos": "RB",
+   "team_id": 3,
+   "team": "You are not Worthy",
+   "keeper": false
+  },
+  {
+   "overall": 33,
+   "round": 3,
+   "pick_in_round": 9,
+   "player_id": 4569618,
+   "name": "Garrett Wilson",
+   "pos": "WR",
+   "team_id": 8,
+   "team": "Matthew's Magnificent Team",
+   "keeper": false
+  },
+  {
+   "overall": 34,
+   "round": 3,
+   "pick_in_round": 10,
+   "player_id": 4239996,
+   "name": "Travis Etienne Jr.",
+   "pos": "RB",
+   "team_id": 1,
+   "team": "Capullo",
+   "keeper": false
+  },
+  {
+   "overall": 35,
+   "round": 3,
+   "pick_in_round": 11,
+   "player_id": 4685472,
+   "name": "Tetairoa McMillan",
+   "pos": "WR",
+   "team_id": 9,
+   "team": "Ray Rice Boxing Co",
+   "keeper": false
+  },
+  {
+   "overall": 36,
+   "round": 3,
+   "pick_in_round": 12,
+   "player_id": 4429615,
+   "name": "Zay Flowers",
+   "pos": "WR",
+   "team_id": 7,
+   "team": "$weet $acks",
+   "keeper": false
+  },
+  {
+   "overall": 37,
+   "round": 4,
+   "pick_in_round": 1,
+   "player_id": 3916387,
+   "name": "Lamar Jackson",
+   "pos": "QB",
+   "team_id": 7,
+   "team": "$weet $acks",
+   "keeper": false
+  },
+  {
+   "overall": 38,
+   "round": 4,
+   "pick_in_round": 2,
+   "player_id": 4723086,
+   "name": "Colston Loveland",
+   "pos": "TE",
+   "team_id": 9,
+   "team": "Ray Rice Boxing Co",
+   "keeper": false
+  },
+  {
+   "overall": 39,
+   "round": 4,
+   "pick_in_round": 3,
+   "player_id": 4239993,
+   "name": "Tee Higgins",
+   "pos": "WR",
+   "team_id": 1,
+   "team": "Capullo",
+   "keeper": false
+  },
+  {
+   "overall": 40,
+   "round": 4,
+   "pick_in_round": 4,
+   "player_id": 4567750,
+   "name": "Emeka Egbuka",
+   "pos": "WR",
+   "team_id": 8,
+   "team": "Matthew's Magnificent Team",
+   "keeper": false
+  },
+  {
+   "overall": 41,
+   "round": 4,
+   "pick_in_round": 5,
+   "player_id": 16800,
+   "name": "Davante Adams",
+   "pos": "WR",
+   "team_id": 3,
+   "team": "You are not Worthy",
+   "keeper": false
+  },
+  {
+   "overall": 42,
+   "round": 4,
+   "pick_in_round": 6,
+   "player_id": 4612826,
+   "name": "Ladd McConkey",
+   "pos": "WR",
+   "team_id": 6,
+   "team": "Deshaun Watson Stans",
+   "keeper": false
+  },
+  {
+   "overall": 43,
+   "round": 4,
+   "pick_in_round": 7,
+   "player_id": 4259545,
+   "name": "D'Andre Swift",
+   "pos": "RB",
+   "team_id": 10,
+   "team": "Houston Hotdogs",
+   "keeper": false
+  },
+  {
+   "overall": 44,
+   "round": 4,
+   "pick_in_round": 8,
+   "player_id": 4430737,
+   "name": "Kyren Williams",
+   "pos": "RB",
+   "team_id": 2,
+   "team": "Kyle\u2019s Little Diddlers ",
+   "keeper": false
+  },
+  {
+   "overall": 45,
+   "round": 4,
+   "pick_in_round": 9,
+   "player_id": 4035538,
+   "name": "David Montgomery",
+   "pos": "RB",
+   "team_id": 12,
+   "team": "Castelani's Cool Team",
+   "keeper": false
+  },
+  {
+   "overall": 46,
+   "round": 4,
+   "pick_in_round": 10,
+   "player_id": 4696981,
+   "name": "Cam Skattebo",
+   "pos": "RB",
+   "team_id": 5,
+   "team": "Tristen's Talented Team",
+   "keeper": false
+  },
+  {
+   "overall": 47,
+   "round": 4,
+   "pick_in_round": 11,
+   "player_id": 4372016,
+   "name": "Jaylen Waddle",
+   "pos": "WR",
+   "team_id": 11,
+   "team": "Kevin's Killers ",
+   "keeper": false
+  },
+  {
+   "overall": 48,
+   "round": 4,
+   "pick_in_round": 12,
+   "player_id": 4882093,
+   "name": "Bhayshul Tuten",
+   "pos": "RB",
+   "team_id": 4,
+   "team": "Gibby From iCarly",
+   "keeper": false
+  },
+  {
+   "overall": 49,
+   "round": 5,
+   "pick_in_round": 1,
+   "player_id": 3915416,
+   "name": "DJ Moore",
+   "pos": "WR",
+   "team_id": 4,
+   "team": "Gibby From iCarly",
+   "keeper": false
+  },
+  {
+   "overall": 50,
+   "round": 5,
+   "pick_in_round": 2,
+   "player_id": 4431452,
+   "name": "Drake Maye",
+   "pos": "QB",
+   "team_id": 11,
+   "team": "Kevin's Killers ",
+   "keeper": false
+  },
+  {
+   "overall": 51,
+   "round": 5,
+   "pick_in_round": 3,
+   "player_id": 4596448,
+   "name": "Bucky Irving",
+   "pos": "RB",
+   "team_id": 5,
+   "team": "Tristen's Talented Team",
+   "keeper": false
+  },
+  {
+   "overall": 52,
+   "round": 5,
+   "pick_in_round": 4,
+   "player_id": 4685512,
+   "name": "Jadarian Price",
+   "pos": "RB",
+   "team_id": 12,
+   "team": "Castelani's Cool Team",
+   "keeper": false
+  },
+  {
+   "overall": 53,
+   "round": 5,
+   "pick_in_round": 5,
+   "player_id": 4426348,
+   "name": "Jayden Daniels",
+   "pos": "QB",
+   "team_id": 2,
+   "team": "Kyle\u2019s Little Diddlers ",
+   "keeper": false
+  },
+  {
+   "overall": 54,
+   "round": 5,
+   "pick_in_round": 6,
+   "player_id": 4685702,
+   "name": "Quinshon Judkins",
+   "pos": "RB",
+   "team_id": 10,
+   "team": "Houston Hotdogs",
+   "keeper": false
+  },
+  {
+   "overall": 55,
+   "round": 5,
+   "pick_in_round": 7,
+   "player_id": 3121422,
+   "name": "Terry McLaurin",
+   "pos": "WR",
+   "team_id": 6,
+   "team": "Deshaun Watson Stans",
+   "keeper": false
+  },
+  {
+   "overall": 56,
+   "round": 5,
+   "pick_in_round": 8,
+   "player_id": 4426388,
+   "name": "Jameson Williams",
+   "pos": "WR",
+   "team_id": 3,
+   "team": "You are not Worthy",
+   "keeper": false
+  },
+  {
+   "overall": 57,
+   "round": 5,
+   "pick_in_round": 9,
+   "player_id": 4431459,
+   "name": "Tyler Warren",
+   "pos": "TE",
+   "team_id": 8,
+   "team": "Matthew's Magnificent Team",
+   "keeper": false
+  },
+  {
+   "overall": 58,
+   "round": 5,
+   "pick_in_round": 10,
+   "player_id": 4871023,
+   "name": "Carnell Tate",
+   "pos": "WR",
+   "team_id": 1,
+   "team": "Capullo",
+   "keeper": false
+  },
+  {
+   "overall": 59,
+   "round": 5,
+   "pick_in_round": 11,
+   "player_id": 4569173,
+   "name": "Rhamondre Stevenson",
+   "pos": "RB",
+   "team_id": 9,
+   "team": "Ray Rice Boxing Co",
+   "keeper": false
+  },
+  {
+   "overall": 60,
+   "round": 5,
+   "pick_in_round": 12,
+   "player_id": 4431299,
+   "name": "Rome Odunze",
+   "pos": "WR",
+   "team_id": 7,
+   "team": "$weet $acks",
+   "keeper": false
+  },
+  {
+   "overall": 61,
+   "round": 6,
+   "pick_in_round": 1,
+   "player_id": 4360248,
+   "name": "Kyle Pitts Sr.",
+   "pos": "TE",
+   "team_id": 7,
+   "team": "$weet $acks",
+   "keeper": false
+  },
+  {
+   "overall": 62,
+   "round": 6,
+   "pick_in_round": 2,
+   "player_id": 4040715,
+   "name": "Jalen Hurts",
+   "pos": "QB",
+   "team_id": 9,
+   "team": "Ray Rice Boxing Co",
+   "keeper": false
+  },
+  {
+   "overall": 63,
+   "round": 6,
+   "pick_in_round": 3,
+   "player_id": 5083076,
+   "name": "Harold Fannin Jr.",
+   "pos": "TE",
+   "team_id": 1,
+   "team": "Capullo",
+   "keeper": false
+  },
+  {
+   "overall": 64,
+   "round": 6,
+   "pick_in_round": 4,
+   "player_id": 3915511,
+   "name": "Joe Burrow",
+   "pos": "QB",
+   "team_id": 8,
+   "team": "Matthew's Magnificent Team",
+   "keeper": false
+  },
+  {
+   "overall": 65,
+   "round": 6,
+   "pick_in_round": 5,
+   "player_id": 4432710,
+   "name": "TreVeyon Henderson",
+   "pos": "RB",
+   "team_id": 3,
+   "team": "You are not Worthy",
+   "keeper": false
+  },
+  {
+   "overall": 66,
+   "round": 6,
+   "pick_in_round": 6,
+   "player_id": 3916148,
+   "name": "Tony Pollard",
+   "pos": "RB",
+   "team_id": 6,
+   "team": "Deshaun Watson Stans",
+   "keeper": false
+  },
+  {
+   "overall": 67,
+   "round": 6,
+   "pick_in_round": 7,
+   "player_id": 4038941,
+   "name": "Justin Herbert",
+   "pos": "QB",
+   "team_id": 10,
+   "team": "Houston Hotdogs",
+   "keeper": false
+  },
+  {
+   "overall": 68,
+   "round": 6,
+   "pick_in_round": 8,
+   "player_id": 3040151,
+   "name": "George Kittle",
+   "pos": "TE",
+   "team_id": 2,
+   "team": "Kyle\u2019s Little Diddlers ",
+   "keeper": false
+  },
+  {
+   "overall": 69,
+   "round": 6,
+   "pick_in_round": 9,
+   "player_id": 4431611,
+   "name": "Caleb Williams",
+   "pos": "QB",
+   "team_id": 12,
+   "team": "Castelani's Cool Team",
+   "keeper": false
+  },
+  {
+   "overall": 70,
+   "round": 6,
+   "pick_in_round": 10,
+   "player_id": 4685278,
+   "name": "Luther Burden III",
+   "pos": "WR",
+   "team_id": 5,
+   "team": "Tristen's Talented Team",
+   "keeper": false
+  },
+  {
+   "overall": 71,
+   "round": 6,
+   "pick_in_round": 11,
+   "player_id": 4248528,
+   "name": "Christian Watson",
+   "pos": "WR",
+   "team_id": 11,
+   "team": "Kevin's Killers ",
+   "keeper": false
+  },
+  {
+   "overall": 72,
+   "round": 6,
+   "pick_in_round": 12,
+   "player_id": 4432620,
+   "name": "Parker Washington",
+   "pos": "WR",
+   "team_id": 4,
+   "team": "Gibby From iCarly",
+   "keeper": false
+  },
+  {
+   "overall": 73,
+   "round": 7,
+   "pick_in_round": 1,
+   "player_id": 4047365,
+   "name": "Josh Jacobs",
+   "pos": "RB",
+   "team_id": 4,
+   "team": "Gibby From iCarly",
+   "keeper": false
+  },
+  {
+   "overall": 74,
+   "round": 7,
+   "pick_in_round": 2,
+   "player_id": 4430027,
+   "name": "Sam LaPorta",
+   "pos": "TE",
+   "team_id": 11,
+   "team": "Kevin's Killers ",
+   "keeper": false
+  },
+  {
+   "overall": 75,
+   "round": 7,
+   "pick_in_round": 3,
+   "player_id": 4569987,
+   "name": "Jaylen Warren",
+   "pos": "RB",
+   "team_id": 5,
+   "team": "Tristen's Talented Team",
+   "keeper": false
+  },
+  {
+   "overall": 76,
+   "round": 7,
+   "pick_in_round": 4,
+   "player_id": 3953687,
+   "name": "Brandon Aubrey",
+   "pos": "K",
+   "team_id": 12,
+   "team": "Castelani's Cool Team",
+   "keeper": false
+  },
+  {
+   "overall": 77,
+   "round": 7,
+   "pick_in_round": 5,
+   "player_id": 3128429,
+   "name": "Courtland Sutton",
+   "pos": "WR",
+   "team_id": 2,
+   "team": "Kyle\u2019s Little Diddlers ",
+   "keeper": false
+  },
+  {
+   "overall": 78,
+   "round": 7,
+   "pick_in_round": 6,
+   "player_id": 4242355,
+   "name": "Jake Ferguson",
+   "pos": "TE",
+   "team_id": 10,
+   "team": "Houston Hotdogs",
+   "keeper": false
+  },
+  {
+   "overall": 79,
+   "round": 7,
+   "pick_in_round": 7,
+   "player_id": 16737,
+   "name": "Mike Evans",
+   "pos": "WR",
+   "team_id": 6,
+   "team": "Deshaun Watson Stans",
+   "keeper": false
+  },
+  {
+   "overall": 80,
+   "round": 7,
+   "pick_in_round": 8,
+   "player_id": 4047650,
+   "name": "DK Metcalf",
+   "pos": "WR",
+   "team_id": 3,
+   "team": "You are not Worthy",
+   "keeper": false
+  },
+  {
+   "overall": 81,
+   "round": 7,
+   "pick_in_round": 9,
+   "player_id": 4432708,
+   "name": "Marvin Harrison Jr.",
+   "pos": "WR",
+   "team_id": 8,
+   "team": "Matthew's Magnificent Team",
+   "keeper": false
+  },
+  {
+   "overall": 82,
+   "round": 7,
+   "pick_in_round": 10,
+   "player_id": 2577417,
+   "name": "Dak Prescott",
+   "pos": "QB",
+   "team_id": 1,
+   "team": "Capullo",
+   "keeper": false
+  },
+  {
+   "overall": 83,
+   "round": 7,
+   "pick_in_round": 11,
+   "player_id": 4038815,
+   "name": "Rico Dowdle",
+   "pos": "RB",
+   "team_id": 9,
+   "team": "Ray Rice Boxing Co",
+   "keeper": false
+  },
+  {
+   "overall": 84,
+   "round": 7,
+   "pick_in_round": 12,
+   "player_id": 4241416,
+   "name": "Chuba Hubbard",
+   "pos": "RB",
+   "team_id": 7,
+   "team": "$weet $acks",
+   "keeper": false
+  },
+  {
+   "overall": 85,
+   "round": 8,
+   "pick_in_round": 1,
+   "player_id": 2971573,
+   "name": "Ka'imi Fairbairn",
+   "pos": "K",
+   "team_id": 7,
+   "team": "$weet $acks",
+   "keeper": false
+  },
+  {
+   "overall": 86,
+   "round": 8,
+   "pick_in_round": 2,
+   "player_id": 4035687,
+   "name": "Michael Pittman Jr.",
+   "pos": "WR",
+   "team_id": 9,
+   "team": "Ray Rice Boxing Co",
+   "keeper": false
+  },
+  {
+   "overall": 87,
+   "round": 8,
+   "pick_in_round": 3,
+   "player_id": 4429023,
+   "name": "MarShawn Lloyd",
+   "pos": "RB",
+   "team_id": 1,
+   "team": "Capullo",
+   "keeper": false
+  },
+  {
+   "overall": 88,
+   "round": 8,
+   "pick_in_round": 4,
+   "player_id": 4371733,
+   "name": "Kenny Gainwell",
+   "pos": "RB",
+   "team_id": 8,
+   "team": "Matthew's Magnificent Team",
+   "keeper": false
+  },
+  {
+   "overall": 89,
+   "round": 8,
+   "pick_in_round": 5,
+   "player_id": 4689114,
+   "name": "Jaxson Dart",
+   "pos": "QB",
+   "team_id": 3,
+   "team": "You are not Worthy",
+   "keeper": false
+  },
+  {
+   "overall": 90,
+   "round": 8,
+   "pick_in_round": 6,
+   "player_id": 4572680,
+   "name": "Tucker Kraft",
+   "pos": "TE",
+   "team_id": 6,
+   "team": "Deshaun Watson Stans",
+   "keeper": false
+  },
+  {
+   "overall": 91,
+   "round": 8,
+   "pick_in_round": 7,
+   "player_id": 4432773,
+   "name": "Brian Thomas Jr.",
+   "pos": "WR",
+   "team_id": 10,
+   "team": "Houston Hotdogs",
+   "keeper": false
+  },
+  {
+   "overall": 92,
+   "round": 8,
+   "pick_in_round": 8,
+   "player_id": -16034,
+   "name": "Texans D/ST",
+   "pos": "DST",
+   "team_id": 2,
+   "team": "Kyle\u2019s Little Diddlers ",
+   "keeper": false
+  },
+  {
+   "overall": 93,
+   "round": 8,
+   "pick_in_round": 9,
+   "player_id": 4360761,
+   "name": "Michael Wilson",
+   "pos": "WR",
+   "team_id": 12,
+   "team": "Castelani's Cool Team",
+   "keeper": false
+  },
+  {
+   "overall": 94,
+   "round": 8,
+   "pick_in_round": 10,
+   "player_id": 4241985,
+   "name": "J.K. Dobbins",
+   "pos": "RB",
+   "team_id": 5,
+   "team": "Tristen's Talented Team",
+   "keeper": false
+  },
+  {
+   "overall": 95,
+   "round": 8,
+   "pick_in_round": 11,
+   "player_id": 4360078,
+   "name": "Alec Pierce",
+   "pos": "WR",
+   "team_id": 11,
+   "team": "Kevin's Killers ",
+   "keeper": false
+  },
+  {
+   "overall": 96,
+   "round": 8,
+   "pick_in_round": 12,
+   "player_id": 4360569,
+   "name": "Jordan Mason",
+   "pos": "RB",
+   "team_id": 4,
+   "team": "Gibby From iCarly",
+   "keeper": false
+  },
+  {
+   "overall": 97,
+   "round": 9,
+   "pick_in_round": 1,
+   "player_id": 4870653,
+   "name": "KC Concepcion",
+   "pos": "WR",
+   "team_id": 4,
+   "team": "Gibby From iCarly",
+   "keeper": false
+  },
+  {
+   "overall": 98,
+   "round": 9,
+   "pick_in_round": 2,
+   "player_id": -16014,
+   "name": "Rams D/ST",
+   "pos": "DST",
+   "team_id": 11,
+   "team": "Kevin's Killers ",
+   "keeper": false
+  },
+  {
+   "overall": 99,
+   "round": 9,
+   "pick_in_round": 3,
+   "player_id": 15847,
+   "name": "Travis Kelce",
+   "pos": "TE",
+   "team_id": 5,
+   "team": "Tristen's Talented Team",
+   "keeper": false
+  },
+  {
+   "overall": 100,
+   "round": 9,
+   "pick_in_round": 4,
+   "player_id": -16026,
+   "name": "Seahawks D/ST",
+   "pos": "DST",
+   "team_id": 12,
+   "team": "Castelani's Cool Team",
+   "keeper": false
+  },
+  {
+   "overall": 101,
+   "round": 9,
+   "pick_in_round": 5,
+   "player_id": 4362081,
+   "name": "Cameron Dicker",
+   "pos": "K",
+   "team_id": 2,
+   "team": "Kyle\u2019s Little Diddlers ",
+   "keeper": false
+  },
+  {
+   "overall": 102,
+   "round": 9,
+   "pick_in_round": 6,
+   "player_id": 4569587,
+   "name": "Wan'Dale Robinson",
+   "pos": "WR",
+   "team_id": 10,
+   "team": "Houston Hotdogs",
+   "keeper": false
+  },
+  {
+   "overall": 103,
+   "round": 9,
+   "pick_in_round": 7,
+   "player_id": -16007,
+   "name": "Broncos D/ST",
+   "pos": "DST",
+   "team_id": 6,
+   "team": "Deshaun Watson Stans",
+   "keeper": false
+  },
+  {
+   "overall": 104,
+   "round": 9,
+   "pick_in_round": 8,
+   "player_id": 4608686,
+   "name": "Kyle Monangai",
+   "pos": "RB",
+   "team_id": 3,
+   "team": "You are not Worthy",
+   "keeper": false
+  },
+  {
+   "overall": 105,
+   "round": 9,
+   "pick_in_round": 9,
+   "player_id": 2473037,
+   "name": "Jason Myers",
+   "pos": "K",
+   "team_id": 8,
+   "team": "Matthew's Magnificent Team",
+   "keeper": false
+  },
+  {
+   "overall": 106,
+   "round": 9,
+   "pick_in_round": 10,
+   "player_id": -16033,
+   "name": "Ravens D/ST",
+   "pos": "DST",
+   "team_id": 1,
+   "team": "Capullo",
+   "keeper": false
+  },
+  {
+   "overall": 107,
+   "round": 9,
+   "pick_in_round": 11,
+   "player_id": -16023,
+   "name": "Steelers D/ST",
+   "pos": "DST",
+   "team_id": 9,
+   "team": "Ray Rice Boxing Co",
+   "keeper": false
+  },
+  {
+   "overall": 108,
+   "round": 9,
+   "pick_in_round": 12,
+   "player_id": -16030,
+   "name": "Jaguars D/ST",
+   "pos": "DST",
+   "team_id": 7,
+   "team": "$weet $acks",
+   "keeper": false
+  },
+  {
+   "overall": 109,
+   "round": 10,
+   "pick_in_round": 1,
+   "player_id": 3121023,
+   "name": "Dallas Goedert",
+   "pos": "TE",
+   "team_id": 7,
+   "team": "$weet $acks",
+   "keeper": false
+  },
+  {
+   "overall": 110,
+   "round": 10,
+   "pick_in_round": 2,
+   "player_id": 4574716,
+   "name": "Harrison Mevis",
+   "pos": "K",
+   "team_id": 9,
+   "team": "Ray Rice Boxing Co",
+   "keeper": false
+  },
+  {
+   "overall": 111,
+   "round": 10,
+   "pick_in_round": 3,
+   "player_id": 3116165,
+   "name": "Chris Godwin Jr.",
+   "pos": "WR",
+   "team_id": 1,
+   "team": "Capullo",
+   "keeper": false
+  },
+  {
+   "overall": 112,
+   "round": 10,
+   "pick_in_round": 4,
+   "player_id": 4701936,
+   "name": "Matthew Golden",
+   "pos": "WR",
+   "team_id": 8,
+   "team": "Matthew's Magnificent Team",
+   "keeper": false
+  },
+  {
+   "overall": 113,
+   "round": 10,
+   "pick_in_round": 5,
+   "player_id": 4678008,
+   "name": "Jonathon Brooks",
+   "pos": "RB",
+   "team_id": 3,
+   "team": "You are not Worthy",
+   "keeper": false
+  },
+  {
+   "overall": 114,
+   "round": 10,
+   "pick_in_round": 6,
+   "player_id": 12483,
+   "name": "Matthew Stafford",
+   "pos": "QB",
+   "team_id": 6,
+   "team": "Deshaun Watson Stans",
+   "keeper": false
+  },
+  {
+   "overall": 115,
+   "round": 10,
+   "pick_in_round": 7,
+   "player_id": 4429096,
+   "name": "Blake Corum",
+   "pos": "RB",
+   "team_id": 10,
+   "team": "Houston Hotdogs",
+   "keeper": false
+  },
+  {
+   "overall": 116,
+   "round": 10,
+   "pick_in_round": 8,
+   "player_id": 2976212,
+   "name": "Stefon Diggs",
+   "pos": "WR",
+   "team_id": 2,
+   "team": "Kyle\u2019s Little Diddlers ",
+   "keeper": false
+  },
+  {
+   "overall": 117,
+   "round": 10,
+   "pick_in_round": 9,
+   "player_id": 4568490,
+   "name": "RJ Harvey",
+   "pos": "RB",
+   "team_id": 12,
+   "team": "Castelani's Cool Team",
+   "keeper": false
+  },
+  {
+   "overall": 118,
+   "round": 10,
+   "pick_in_round": 10,
+   "player_id": 4362249,
+   "name": "Jayden Reed",
+   "pos": "WR",
+   "team_id": 5,
+   "team": "Tristen's Talented Team",
+   "keeper": false
+  },
+  {
+   "overall": 119,
+   "round": 10,
+   "pick_in_round": 11,
+   "player_id": 3916433,
+   "name": "Jakobi Meyers",
+   "pos": "WR",
+   "team_id": 11,
+   "team": "Kevin's Killers ",
+   "keeper": false
+  },
+  {
+   "overall": 120,
+   "round": 10,
+   "pick_in_round": 12,
+   "player_id": 4360310,
+   "name": "Trevor Lawrence",
+   "pos": "QB",
+   "team_id": 4,
+   "team": "Gibby From iCarly",
+   "keeper": false
+  },
+  {
+   "overall": 121,
+   "round": 11,
+   "pick_in_round": 1,
+   "player_id": 4429025,
+   "name": "Quentin Johnston",
+   "pos": "WR",
+   "team_id": 4,
+   "team": "Gibby From iCarly",
+   "keeper": false
+  },
+  {
+   "overall": 122,
+   "round": 11,
+   "pick_in_round": 2,
+   "player_id": 3042519,
+   "name": "Aaron Jones Sr.",
+   "pos": "RB",
+   "team_id": 11,
+   "team": "Kevin's Killers ",
+   "keeper": false
+  },
+  {
+   "overall": 123,
+   "round": 11,
+   "pick_in_round": 3,
+   "player_id": 4429205,
+   "name": "Jordan Addison",
+   "pos": "WR",
+   "team_id": 5,
+   "team": "Tristen's Talented Team",
+   "keeper": false
+  },
+  {
+   "overall": 124,
+   "round": 11,
+   "pick_in_round": 4,
+   "player_id": 3929645,
+   "name": "Juwan Johnson",
+   "pos": "TE",
+   "team_id": 12,
+   "team": "Castelani's Cool Team",
+   "keeper": false
+  },
+  {
+   "overall": 125,
+   "round": 11,
+   "pick_in_round": 5,
+   "player_id": 4685415,
+   "name": "Travis Hunter",
+   "pos": "WR",
+   "team_id": 2,
+   "team": "Kyle\u2019s Little Diddlers ",
+   "keeper": false
+  },
+  {
+   "overall": 126,
+   "round": 11,
+   "pick_in_round": 6,
+   "player_id": -16021,
+   "name": "Eagles D/ST",
+   "pos": "DST",
+   "team_id": 10,
+   "team": "Houston Hotdogs",
+   "keeper": false
+  },
+  {
+   "overall": 127,
+   "round": 11,
+   "pick_in_round": 7,
+   "player_id": 4688813,
+   "name": "Josh Downs",
+   "pos": "WR",
+   "team_id": 6,
+   "team": "Deshaun Watson Stans",
+   "keeper": false
+  },
+  {
+   "overall": 128,
+   "round": 11,
+   "pick_in_round": 8,
+   "player_id": 4361050,
+   "name": "Isaiah Likely",
+   "pos": "TE",
+   "team_id": 3,
+   "team": "You are not Worthy",
+   "keeper": false
+  },
+  {
+   "overall": 129,
+   "round": 11,
+   "pick_in_round": 9,
+   "player_id": -16017,
+   "name": "Patriots D/ST",
+   "pos": "DST",
+   "team_id": 8,
+   "team": "Matthew's Magnificent Team",
+   "keeper": false
+  },
+  {
+   "overall": 130,
+   "round": 11,
+   "pick_in_round": 10,
+   "player_id": 4710714,
+   "name": "De'Zhaun Stribling",
+   "pos": "WR",
+   "team_id": 1,
+   "team": "Capullo",
+   "keeper": false
+  },
+  {
+   "overall": 131,
+   "round": 11,
+   "pick_in_round": 11,
+   "player_id": 4361741,
+   "name": "Brock Purdy",
+   "pos": "QB",
+   "team_id": 9,
+   "team": "Ray Rice Boxing Co",
+   "keeper": false
+  },
+  {
+   "overall": 132,
+   "round": 11,
+   "pick_in_round": 12,
+   "player_id": 4361432,
+   "name": "Romeo Doubs",
+   "pos": "WR",
+   "team_id": 7,
+   "team": "$weet $acks",
+   "keeper": false
+  },
+  {
+   "overall": 133,
+   "round": 12,
+   "pick_in_round": 1,
+   "player_id": 4683062,
+   "name": "Xavier Worthy",
+   "pos": "WR",
+   "team_id": 7,
+   "team": "$weet $acks",
+   "keeper": false
+  },
+  {
+   "overall": 134,
+   "round": 12,
+   "pick_in_round": 2,
+   "player_id": 4697815,
+   "name": "Rachaad White",
+   "pos": "RB",
+   "team_id": 9,
+   "team": "Ray Rice Boxing Co",
+   "keeper": false
+  },
+  {
+   "overall": 135,
+   "round": 12,
+   "pick_in_round": 3,
+   "player_id": 4575131,
+   "name": "Jacory Croskey-Merritt",
+   "pos": "RB",
+   "team_id": 1,
+   "team": "Capullo",
+   "keeper": false
+  },
+  {
+   "overall": 136,
+   "round": 12,
+   "pick_in_round": 4,
+   "player_id": 4373678,
+   "name": "Khalil Shakir",
+   "pos": "WR",
+   "team_id": 8,
+   "team": "Matthew's Magnificent Team",
+   "keeper": false
+  },
+  {
+   "overall": 137,
+   "round": 12,
+   "pick_in_round": 5,
+   "player_id": 4870795,
+   "name": "Makai Lemon",
+   "pos": "WR",
+   "team_id": 3,
+   "team": "You are not Worthy",
+   "keeper": false
+  },
+  {
+   "overall": 138,
+   "round": 12,
+   "pick_in_round": 6,
+   "player_id": 4032473,
+   "name": "Rashid Shaheed",
+   "pos": "WR",
+   "team_id": 6,
+   "team": "Deshaun Watson Stans",
+   "keeper": false
+  },
+  {
+   "overall": 139,
+   "round": 12,
+   "pick_in_round": 7,
+   "player_id": 4429059,
+   "name": "Woody Marks",
+   "pos": "RB",
+   "team_id": 10,
+   "team": "Houston Hotdogs",
+   "keeper": false
+  },
+  {
+   "overall": 140,
+   "round": 12,
+   "pick_in_round": 8,
+   "player_id": 3139477,
+   "name": "Patrick Mahomes",
+   "pos": "QB",
+   "team_id": 2,
+   "team": "Kyle\u2019s Little Diddlers ",
+   "keeper": false
+  },
+  {
+   "overall": 141,
+   "round": 12,
+   "pick_in_round": 9,
+   "player_id": 3126486,
+   "name": "Deebo Samuel Sr.",
+   "pos": "WR",
+   "team_id": 12,
+   "team": "Castelani's Cool Team",
+   "keeper": false
+  },
+  {
+   "overall": 142,
+   "round": 12,
+   "pick_in_round": 10,
+   "player_id": 4362619,
+   "name": "Chris Rodriguez Jr.",
+   "pos": "RB",
+   "team_id": 5,
+   "team": "Tristen's Talented Team",
+   "keeper": false
+  },
+  {
+   "overall": 143,
+   "round": 12,
+   "pick_in_round": 11,
+   "player_id": 4695883,
+   "name": "Jalen Coker",
+   "pos": "WR",
+   "team_id": 11,
+   "team": "Kevin's Killers ",
+   "keeper": false
+  },
+  {
+   "overall": 144,
+   "round": 12,
+   "pick_in_round": 12,
+   "player_id": 4880281,
+   "name": "Jordyn Tyson",
+   "pos": "WR",
+   "team_id": 4,
+   "team": "Gibby From iCarly",
+   "keeper": false
+  },
+  {
+   "overall": 145,
+   "round": 13,
+   "pick_in_round": 1,
+   "player_id": -16009,
+   "name": "Packers D/ST",
+   "pos": "DST",
+   "team_id": 4,
+   "team": "Gibby From iCarly",
+   "keeper": false
+  },
+  {
+   "overall": 146,
+   "round": 13,
+   "pick_in_round": 2,
+   "player_id": 4686361,
+   "name": "Cam Little",
+   "pos": "K",
+   "team_id": 11,
+   "team": "Kevin's Killers ",
+   "keeper": false
+  },
+  {
+   "overall": 147,
+   "round": 13,
+   "pick_in_round": 3,
+   "player_id": -16024,
+   "name": "Chargers D/ST",
+   "pos": "DST",
+   "team_id": 5,
+   "team": "Tristen's Talented Team",
+   "keeper": false
+  },
+  {
+   "overall": 148,
+   "round": 13,
+   "pick_in_round": 4,
+   "player_id": 4426338,
+   "name": "Bo Nix",
+   "pos": "QB",
+   "team_id": 12,
+   "team": "Castelani's Cool Team",
+   "keeper": false
+  },
+  {
+   "overall": 149,
+   "round": 13,
+   "pick_in_round": 5,
+   "player_id": 3116365,
+   "name": "Mark Andrews",
+   "pos": "TE",
+   "team_id": 2,
+   "team": "Kyle\u2019s Little Diddlers ",
+   "keeper": false
+  },
+  {
+   "overall": 150,
+   "round": 13,
+   "pick_in_round": 6,
+   "player_id": 4430834,
+   "name": "Jalen McMillan",
+   "pos": "WR",
+   "team_id": 10,
+   "team": "Houston Hotdogs",
+   "keeper": false
+  },
+  {
+   "overall": 151,
+   "round": 13,
+   "pick_in_round": 7,
+   "player_id": 4385690,
+   "name": "Dalton Kincaid",
+   "pos": "TE",
+   "team_id": 6,
+   "team": "Deshaun Watson Stans",
+   "keeper": false
+  },
+  {
+   "overall": 152,
+   "round": 13,
+   "pick_in_round": 8,
+   "player_id": 4034949,
+   "name": "Eddy Pineiro",
+   "pos": "K",
+   "team_id": 3,
+   "team": "You are not Worthy",
+   "keeper": false
+  },
+  {
+   "overall": 153,
+   "round": 13,
+   "pick_in_round": 9,
+   "player_id": 4428557,
+   "name": "Tyjae Spears",
+   "pos": "RB",
+   "team_id": 8,
+   "team": "Matthew's Magnificent Team",
+   "keeper": false
+  },
+  {
+   "overall": 154,
+   "round": 13,
+   "pick_in_round": 10,
+   "player_id": 4366031,
+   "name": "Tank Dell",
+   "pos": "WR",
+   "team_id": 1,
+   "team": "Capullo",
+   "keeper": false
+  },
+  {
+   "overall": 155,
+   "round": 13,
+   "pick_in_round": 11,
+   "player_id": 3917315,
+   "name": "Kyler Murray",
+   "pos": "QB",
+   "team_id": 9,
+   "team": "Ray Rice Boxing Co",
+   "keeper": false
+  },
+  {
+   "overall": 156,
+   "round": 13,
+   "pick_in_round": 12,
+   "player_id": 4702555,
+   "name": "Jonah Coleman",
+   "pos": "RB",
+   "team_id": 7,
+   "team": "$weet $acks",
+   "keeper": false
+  },
+  {
+   "overall": 157,
+   "round": 14,
+   "pick_in_round": 1,
+   "player_id": 3052587,
+   "name": "Baker Mayfield",
+   "pos": "QB",
+   "team_id": 7,
+   "team": "$weet $acks",
+   "keeper": false
+  },
+  {
+   "overall": 158,
+   "round": 14,
+   "pick_in_round": 2,
+   "player_id": 4360689,
+   "name": "Tyler Shough",
+   "pos": "QB",
+   "team_id": 9,
+   "team": "Ray Rice Boxing Co",
+   "keeper": false
+  },
+  {
+   "overall": 159,
+   "round": 14,
+   "pick_in_round": 3,
+   "player_id": 4689936,
+   "name": "Jake Bates",
+   "pos": "K",
+   "team_id": 1,
+   "team": "Capullo",
+   "keeper": false
+  },
+  {
+   "overall": 160,
+   "round": 14,
+   "pick_in_round": 4,
+   "player_id": 4036378,
+   "name": "Jordan Love",
+   "pos": "QB",
+   "team_id": 8,
+   "team": "Matthew's Magnificent Team",
+   "keeper": false
+  },
+  {
+   "overall": 161,
+   "round": 14,
+   "pick_in_round": 5,
+   "player_id": -16005,
+   "name": "Browns D/ST",
+   "pos": "DST",
+   "team_id": 3,
+   "team": "You are not Worthy",
+   "keeper": false
+  },
+  {
+   "overall": 162,
+   "round": 14,
+   "pick_in_round": 6,
+   "player_id": 3055899,
+   "name": "Harrison Butker",
+   "pos": "K",
+   "team_id": 6,
+   "team": "Deshaun Watson Stans",
+   "keeper": false
+  },
+  {
+   "overall": 163,
+   "round": 14,
+   "pick_in_round": 7,
+   "player_id": 17372,
+   "name": "Chris Boswell",
+   "pos": "K",
+   "team_id": 10,
+   "team": "Houston Hotdogs",
+   "keeper": false
+  },
+  {
+   "overall": 164,
+   "round": 14,
+   "pick_in_round": 8,
+   "player_id": 3046779,
+   "name": "Jared Goff",
+   "pos": "QB",
+   "team_id": 2,
+   "team": "Kyle\u2019s Little Diddlers ",
+   "keeper": false
+  },
+  {
+   "overall": 165,
+   "round": 14,
+   "pick_in_round": 9,
+   "player_id": 4373626,
+   "name": "Tyler Allgeier",
+   "pos": "RB",
+   "team_id": 12,
+   "team": "Castelani's Cool Team",
+   "keeper": false
+  },
+  {
+   "overall": 166,
+   "round": 14,
+   "pick_in_round": 10,
+   "player_id": 4697745,
+   "name": "Tyler Loop",
+   "pos": "K",
+   "team_id": 5,
+   "team": "Tristen's Talented Team",
+   "keeper": false
+  },
+  {
+   "overall": 167,
+   "round": 14,
+   "pick_in_round": 11,
+   "player_id": 4832800,
+   "name": "Denzel Boston",
+   "pos": "WR",
+   "team_id": 11,
+   "team": "Kevin's Killers ",
+   "keeper": false
+  },
+  {
+   "overall": 168,
+   "round": 14,
+   "pick_in_round": 12,
+   "player_id": 4869461,
+   "name": "Trey Smack",
+   "pos": "K",
+   "team_id": 4,
+   "team": "Gibby From iCarly",
+   "keeper": false
+  }
+ ],
+ "rosters": {
+  "Capullo": [
+   {
+    "name": "CeeDee Lamb",
+    "pos": "WR"
+   },
+   {
+    "name": "Derrick Henry",
+    "pos": "RB"
+   },
+   {
+    "name": "Travis Etienne Jr.",
+    "pos": "RB"
+   },
+   {
+    "name": "Tee Higgins",
+    "pos": "WR"
+   },
+   {
+    "name": "Carnell Tate",
+    "pos": "WR"
+   },
+   {
+    "name": "Harold Fannin Jr.",
+    "pos": "TE"
+   },
+   {
+    "name": "Dak Prescott",
+    "pos": "QB"
+   },
+   {
+    "name": "MarShawn Lloyd",
+    "pos": "RB"
+   },
+   {
+    "name": "Ravens D/ST",
+    "pos": "DST"
+   },
+   {
+    "name": "Chris Godwin Jr.",
+    "pos": "WR"
+   },
+   {
+    "name": "De'Zhaun Stribling",
+    "pos": "WR"
+   },
+   {
+    "name": "Jacory Croskey-Merritt",
+    "pos": "RB"
+   },
+   {
+    "name": "Tank Dell",
+    "pos": "WR"
+   },
+   {
+    "name": "Jake Bates",
+    "pos": "K"
+   }
+  ],
+  "Kyle\u2019s Little Diddlers ": [
+   {
+    "name": "Jonathan Taylor",
+    "pos": "RB"
+   },
+   {
+    "name": "Drake London",
+    "pos": "WR"
+   },
+   {
+    "name": "Chris Olave",
+    "pos": "WR"
+   },
+   {
+    "name": "Kyren Williams",
+    "pos": "RB"
+   },
+   {
+    "name": "Jayden Daniels",
+    "pos": "QB"
+   },
+   {
+    "name": "George Kittle",
+    "pos": "TE"
+   },
+   {
+    "name": "Courtland Sutton",
+    "pos": "WR"
+   },
+   {
+    "name": "Texans D/ST",
+    "pos": "DST"
+   },
+   {
+    "name": "Cameron Dicker",
+    "pos": "K"
+   },
+   {
+    "name": "Stefon Diggs",
+    "pos": "WR"
+   },
+   {
+    "name": "Travis Hunter",
+    "pos": "WR"
+   },
+   {
+    "name": "Patrick Mahomes",
+    "pos": "QB"
+   },
+   {
+    "name": "Mark Andrews",
+    "pos": "TE"
+   },
+   {
+    "name": "Jared Goff",
+    "pos": "QB"
+   }
+  ],
+  "You are not Worthy": [
+   {
+    "name": "Amon-Ra St. Brown",
+    "pos": "WR"
+   },
+   {
+    "name": "Ashton Jeanty",
+    "pos": "RB"
+   },
+   {
+    "name": "Breece Hall",
+    "pos": "RB"
+   },
+   {
+    "name": "Davante Adams",
+    "pos": "WR"
+   },
+   {
+    "name": "Jameson Williams",
+    "pos": "WR"
+   },
+   {
+    "name": "TreVeyon Henderson",
+    "pos": "RB"
+   },
+   {
+    "name": "DK Metcalf",
+    "pos": "WR"
+   },
+   {
+    "name": "Jaxson Dart",
+    "pos": "QB"
+   },
+   {
+    "name": "Kyle Monangai",
+    "pos": "RB"
+   },
+   {
+    "name": "Jonathon Brooks",
+    "pos": "RB"
+   },
+   {
+    "name": "Isaiah Likely",
+    "pos": "TE"
+   },
+   {
+    "name": "Makai Lemon",
+    "pos": "WR"
+   },
+   {
+    "name": "Eddy Pineiro",
+    "pos": "K"
+   },
+   {
+    "name": "Browns D/ST",
+    "pos": "DST"
+   }
+  ],
+  "Gibby From iCarly": [
+   {
+    "name": "Jahmyr Gibbs",
+    "pos": "RB"
+   },
+   {
+    "name": "Brock Bowers",
+    "pos": "TE"
+   },
+   {
+    "name": "Malik Nabers",
+    "pos": "WR"
+   },
+   {
+    "name": "Bhayshul Tuten",
+    "pos": "RB"
+   },
+   {
+    "name": "DJ Moore",
+    "pos": "WR"
+   },
+   {
+    "name": "Parker Washington",
+    "pos": "WR"
+   },
+   {
+    "name": "Josh Jacobs",
+    "pos": "RB"
+   },
+   {
+    "name": "Jordan Mason",
+    "pos": "RB"
+   },
+   {
+    "name": "KC Concepcion",
+    "pos": "WR"
+   },
+   {
+    "name": "Trevor Lawrence",
+    "pos": "QB"
+   },
+   {
+    "name": "Quentin Johnston",
+    "pos": "WR"
+   },
+   {
+    "name": "Jordyn Tyson",
+    "pos": "WR"
+   },
+   {
+    "name": "Packers D/ST",
+    "pos": "DST"
+   },
+   {
+    "name": "Trey Smack",
+    "pos": "K"
+   }
+  ],
+  "Tristen's Talented Team": [
+   {
+    "name": "Ja'Marr Chase",
+    "pos": "WR"
+   },
+   {
+    "name": "A.J. Brown",
+    "pos": "WR"
+   },
+   {
+    "name": "Josh Allen",
+    "pos": "QB"
+   },
+   {
+    "name": "Cam Skattebo",
+    "pos": "RB"
+   },
+   {
+    "name": "Bucky Irving",
+    "pos": "RB"
+   },
+   {
+    "name": "Luther Burden III",
+    "pos": "WR"
+   },
+   {
+    "name": "Jaylen Warren",
+    "pos": "RB"
+   },
+   {
+    "name": "J.K. Dobbins",
+    "pos": "RB"
+   },
+   {
+    "name": "Travis Kelce",
+    "pos": "TE"
+   },
+   {
+    "name": "Jayden Reed",
+    "pos": "WR"
+   },
+   {
+    "name": "Jordan Addison",
+    "pos": "WR"
+   },
+   {
+    "name": "Chris Rodriguez Jr.",
+    "pos": "RB"
+   },
+   {
+    "name": "Chargers D/ST",
+    "pos": "DST"
+   },
+   {
+    "name": "Tyler Loop",
+    "pos": "K"
+   }
+  ],
+  "Deshaun Watson Stans": [
+   {
+    "name": "Christian McCaffrey",
+    "pos": "RB"
+   },
+   {
+    "name": "Kenneth Walker III",
+    "pos": "RB"
+   },
+   {
+    "name": "DeVonta Smith",
+    "pos": "WR"
+   },
+   {
+    "name": "Ladd McConkey",
+    "pos": "WR"
+   },
+   {
+    "name": "Terry McLaurin",
+    "pos": "WR"
+   },
+   {
+    "name": "Tony Pollard",
+    "pos": "RB"
+   },
+   {
+    "name": "Mike Evans",
+    "pos": "WR"
+   },
+   {
+    "name": "Tucker Kraft",
+    "pos": "TE"
+   },
+   {
+    "name": "Broncos D/ST",
+    "pos": "DST"
+   },
+   {
+    "name": "Matthew Stafford",
+    "pos": "QB"
+   },
+   {
+    "name": "Josh Downs",
+    "pos": "WR"
+   },
+   {
+    "name": "Rashid Shaheed",
+    "pos": "WR"
+   },
+   {
+    "name": "Dalton Kincaid",
+    "pos": "TE"
+   },
+   {
+    "name": "Harrison Butker",
+    "pos": "K"
+   }
+  ],
+  "$weet $acks": [
+   {
+    "name": "Chase Brown",
+    "pos": "RB"
+   },
+   {
+    "name": "Saquon Barkley",
+    "pos": "RB"
+   },
+   {
+    "name": "Zay Flowers",
+    "pos": "WR"
+   },
+   {
+    "name": "Lamar Jackson",
+    "pos": "QB"
+   },
+   {
+    "name": "Rome Odunze",
+    "pos": "WR"
+   },
+   {
+    "name": "Kyle Pitts Sr.",
+    "pos": "TE"
+   },
+   {
+    "name": "Chuba Hubbard",
+    "pos": "RB"
+   },
+   {
+    "name": "Ka'imi Fairbairn",
+    "pos": "K"
+   },
+   {
+    "name": "Jaguars D/ST",
+    "pos": "DST"
+   },
+   {
+    "name": "Dallas Goedert",
+    "pos": "TE"
+   },
+   {
+    "name": "Romeo Doubs",
+    "pos": "WR"
+   },
+   {
+    "name": "Xavier Worthy",
+    "pos": "WR"
+   },
+   {
+    "name": "Jonah Coleman",
+    "pos": "RB"
+   },
+   {
+    "name": "Baker Mayfield",
+    "pos": "QB"
+   }
+  ],
+  "Matthew's Magnificent Team": [
+   {
+    "name": "James Cook III",
+    "pos": "RB"
+   },
+   {
+    "name": "De'Von Achane",
+    "pos": "RB"
+   },
+   {
+    "name": "Garrett Wilson",
+    "pos": "WR"
+   },
+   {
+    "name": "Emeka Egbuka",
+    "pos": "WR"
+   },
+   {
+    "name": "Tyler Warren",
+    "pos": "TE"
+   },
+   {
+    "name": "Joe Burrow",
+    "pos": "QB"
+   },
+   {
+    "name": "Marvin Harrison Jr.",
+    "pos": "WR"
+   },
+   {
+    "name": "Kenny Gainwell",
+    "pos": "RB"
+   },
+   {
+    "name": "Jason Myers",
+    "pos": "K"
+   },
+   {
+    "name": "Matthew Golden",
+    "pos": "WR"
+   },
+   {
+    "name": "Patriots D/ST",
+    "pos": "DST"
+   },
+   {
+    "name": "Khalil Shakir",
+    "pos": "WR"
+   },
+   {
+    "name": "Tyjae Spears",
+    "pos": "RB"
+   },
+   {
+    "name": "Jordan Love",
+    "pos": "QB"
+   }
+  ],
+  "Ray Rice Boxing Co": [
+   {
+    "name": "Omarion Hampton",
+    "pos": "RB"
+   },
+   {
+    "name": "Justin Jefferson",
+    "pos": "WR"
+   },
+   {
+    "name": "Tetairoa McMillan",
+    "pos": "WR"
+   },
+   {
+    "name": "Colston Loveland",
+    "pos": "TE"
+   },
+   {
+    "name": "Rhamondre Stevenson",
+    "pos": "RB"
+   },
+   {
+    "name": "Jalen Hurts",
+    "pos": "QB"
+   },
+   {
+    "name": "Rico Dowdle",
+    "pos": "RB"
+   },
+   {
+    "name": "Michael Pittman Jr.",
+    "pos": "WR"
+   },
+   {
+    "name": "Steelers D/ST",
+    "pos": "DST"
+   },
+   {
+    "name": "Harrison Mevis",
+    "pos": "K"
+   },
+   {
+    "name": "Brock Purdy",
+    "pos": "QB"
+   },
+   {
+    "name": "Rachaad White",
+    "pos": "RB"
+   },
+   {
+    "name": "Kyler Murray",
+    "pos": "QB"
+   },
+   {
+    "name": "Tyler Shough",
+    "pos": "QB"
+   }
+  ],
+  "Houston Hotdogs": [
+   {
+    "name": "Jaxon Smith-Njigba",
+    "pos": "WR"
+   },
+   {
+    "name": "Jeremiyah Love",
+    "pos": "RB"
+   },
+   {
+    "name": "Rashee Rice",
+    "pos": "WR"
+   },
+   {
+    "name": "D'Andre Swift",
+    "pos": "RB"
+   },
+   {
+    "name": "Quinshon Judkins",
+    "pos": "RB"
+   },
+   {
+    "name": "Justin Herbert",
+    "pos": "QB"
+   },
+   {
+    "name": "Jake Ferguson",
+    "pos": "TE"
+   },
+   {
+    "name": "Brian Thomas Jr.",
+    "pos": "WR"
+   },
+   {
+    "name": "Wan'Dale Robinson",
+    "pos": "WR"
+   },
+   {
+    "name": "Blake Corum",
+    "pos": "RB"
+   },
+   {
+    "name": "Eagles D/ST",
+    "pos": "DST"
+   },
+   {
+    "name": "Woody Marks",
+    "pos": "RB"
+   },
+   {
+    "name": "Jalen McMillan",
+    "pos": "WR"
+   },
+   {
+    "name": "Chris Boswell",
+    "pos": "K"
+   }
+  ],
+  "Kevin's Killers ": [
+   {
+    "name": "Bijan Robinson",
+    "pos": "RB"
+   },
+   {
+    "name": "George Pickens",
+    "pos": "WR"
+   },
+   {
+    "name": "Javonte Williams",
+    "pos": "RB"
+   },
+   {
+    "name": "Jaylen Waddle",
+    "pos": "WR"
+   },
+   {
+    "name": "Drake Maye",
+    "pos": "QB"
+   },
+   {
+    "name": "Christian Watson",
+    "pos": "WR"
+   },
+   {
+    "name": "Sam LaPorta",
+    "pos": "TE"
+   },
+   {
+    "name": "Alec Pierce",
+    "pos": "WR"
+   },
+   {
+    "name": "Rams D/ST",
+    "pos": "DST"
+   },
+   {
+    "name": "Jakobi Meyers",
+    "pos": "WR"
+   },
+   {
+    "name": "Aaron Jones Sr.",
+    "pos": "RB"
+   },
+   {
+    "name": "Jalen Coker",
+    "pos": "WR"
+   },
+   {
+    "name": "Cam Little",
+    "pos": "K"
+   },
+   {
+    "name": "Denzel Boston",
+    "pos": "WR"
+   }
+  ],
+  "Castelani's Cool Team": [
+   {
+    "name": "Puka Nacua",
+    "pos": "WR"
+   },
+   {
+    "name": "Nico Collins",
+    "pos": "WR"
+   },
+   {
+    "name": "Trey McBride",
+    "pos": "TE"
+   },
+   {
+    "name": "David Montgomery",
+    "pos": "RB"
+   },
+   {
+    "name": "Jadarian Price",
+    "pos": "RB"
+   },
+   {
+    "name": "Caleb Williams",
+    "pos": "QB"
+   },
+   {
+    "name": "Brandon Aubrey",
+    "pos": "K"
+   },
+   {
+    "name": "Michael Wilson",
+    "pos": "WR"
+   },
+   {
+    "name": "Seahawks D/ST",
+    "pos": "DST"
+   },
+   {
+    "name": "RJ Harvey",
+    "pos": "RB"
+   },
+   {
+    "name": "Juwan Johnson",
+    "pos": "TE"
+   },
+   {
+    "name": "Deebo Samuel Sr.",
+    "pos": "WR"
+   },
+   {
+    "name": "Bo Nix",
+    "pos": "QB"
+   },
+   {
+    "name": "Tyler Allgeier",
+    "pos": "RB"
+   }
+  ]
+ }
+}
