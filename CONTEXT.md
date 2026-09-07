@@ -52,3 +52,30 @@ A disagreement among Model evaluation, ECR consensus, and draft-timing signals. 
 **Home-screen icon**:
 The static icon shown when the GitHub Pages URL is saved to the phone home screen. It should use a terminal-prompt and football-seam visual rather than a single letter.
 _Avoid_: favicon when discussing the home-screen icon
+
+## Season decisions
+
+**Current roster**:
+The players a fantasy team owns according to the latest successful ESPN observation, including starters, bench and IR. It is distinct from that team's drafted roster.
+_Avoid_: draft board when referring to present ownership
+
+**Submitted lineup**:
+The actual fantasy-slot assignments recorded in ESPN for a scoring period. A recommended lineup is a scenario until execution is observed.
+
+**Decision deadline**:
+The latest verified time an action remains feasible, accounting for the relevant game locks, claim rules or offer expiration. A recommended action time is an earlier reminder, not the deadline itself.
+
+**Waiver plan**:
+An ordered set of proposed acquisitions and corresponding drops, including fallback choices and mutual exclusions. Its value includes the players and roster flexibility given up.
+
+**Trade offer**:
+An actual proposal observed in ESPN involving identified teams and players. A suggested trade is an analytical scenario and has not been sent to another manager.
+
+**Decision evidence**:
+The dated facts, forecasts and assumptions supporting a recommendation. Verified facts do not establish that a forecast will be correct.
+
+**Mutual trade benefit**:
+A supported improvement in each team's usable roster options relative to keeping its players and available alternatives. A sum of player trade values alone does not demonstrate it.
+
+**Market-derived estimate**:
+A forecast inferred from priced sports outcomes under explicit statistical and settlement assumptions. A posted betting threshold alone is not expected fantasy production.
