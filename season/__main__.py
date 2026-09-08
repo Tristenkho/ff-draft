@@ -1,4 +1,4 @@
-"""python3 -m season {refresh,serve,export,import-briefing,seasons}."""
+"""python3 -m season {refresh,refresh-props,serve,export,props,import-briefing,seasons}."""
 import argparse
 import json
 import sys
@@ -6,7 +6,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
-from . import service
+from . import props, service
 
 STATIC = service.ROOT / 'season/static'
 REFRESH_LOCK = threading.Lock()
@@ -65,6 +65,9 @@ def serve(port):
                           '/api/v1/waivers': view['free_agents'], '/api/v1/trade-offers': view['trade_inbox'],
                           '/api/v1/deadlines': view['deadlines'], '/api/v1/source-health': view['source_health'],
                           '/api/v1/decisions': (view['briefing'] or {}).get('decisions', [])}
+                # Computed only on request: it re-reads the snapshot.
+                if parsed.path == '/api/v1/market':
+                    routes[parsed.path] = props.compare(season, week)
                 if parsed.path in routes:
                     return self.send(200, routes[parsed.path] if parsed.path == '/api/v1/overview' else {
                         k: view[k] for k in ['schema_version', 'snapshot_id', 'generated_at', 'data_as_of', 'stale', 'warnings']
@@ -110,7 +113,7 @@ def serve(port):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['refresh', 'serve', 'export', 'import-briefing', 'seasons'])
+    parser.add_argument('command', choices=['refresh', 'serve', 'export', 'import-briefing', 'seasons', 'refresh-props', 'props'])
     parser.add_argument('--season', type=int, default=2026)
     parser.add_argument('--week', type=int, default=1)
     parser.add_argument('--port', type=int, default=8765)
@@ -123,6 +126,14 @@ def main():
         if args.command == 'refresh':
             result = service.safe_refresh(args.season, args.week)
             print(json.dumps({'snapshot_id': result['snapshot_id'], 'teams': len(result['teams']), 'draft': result['draft']['status'], 'warnings': result['warnings']}))
+        elif args.command == 'refresh-props':
+            result = props.refresh_props(args.season, args.week)
+            print(json.dumps({'players_priced': len(result['players']), 'events_priced': result['events_priced'], 'errors': result['errors']}))
+        elif args.command == 'props':
+            result = props.compare(args.season, args.week)
+            if not result:
+                raise LookupError('No market prices yet. Run refresh-props for this season and week.')
+            print(json.dumps(result, indent=2))
         elif args.command == 'export':
             print(json.dumps(service.get_overview(args.season, args.week), indent=2))
         elif args.command == 'import-briefing':

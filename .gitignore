@@ -19,3 +19,6 @@ scripts/render_draft_slot3_report.js
 
 # Private season snapshots, briefings and research evidence
 .season/
+
+# Odds API key
+.odds.json

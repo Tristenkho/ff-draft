@@ -42,6 +42,7 @@ def connect():
       CREATE TABLE IF NOT EXISTS drafts (season INTEGER PRIMARY KEY, payload TEXT);
       CREATE TABLE IF NOT EXISTS briefings (season INTEGER, week INTEGER, created TEXT, payload TEXT, PRIMARY KEY(season, week));
       CREATE TABLE IF NOT EXISTS refresh_errors (season INTEGER, week INTEGER, created TEXT, message TEXT);
+      CREATE TABLE IF NOT EXISTS props (season INTEGER, week INTEGER, created TEXT, payload TEXT, PRIMARY KEY(season, week));
     ''')
     DB.chmod(0o600)
     return connection
@@ -308,6 +309,14 @@ def refresh(season=2026, week=1):
     return get_overview(season, week)
 
 
+def conn_props(season, week):
+    """Stored market projections, or None. Kept here so get_overview never
+    imports the props module and risks a circular import."""
+    with connect() as conn:
+        row = conn.execute('SELECT payload FROM props WHERE season=? AND week=?', (season, week)).fetchone()
+    return json.loads(row[0]) if row else None
+
+
 def get_overview(season=2026, week=1):
     with connect() as conn:
         row = conn.execute('SELECT payload FROM snapshots WHERE season=? AND week=? ORDER BY created DESC LIMIT 1', (season, week)).fetchone()
@@ -321,6 +330,20 @@ def get_overview(season=2026, week=1):
     if error and error[0] > result['data_as_of']:
         result['stale'] = True
         result['warnings'].append('Latest refresh failed; displaying the last successful snapshot. ' + error[1])
+    market = conn_props(season, week)
+    result['market'] = None
+    if market:
+        # Join on player id: an independent market number sits beside the ESPN
+        # projection, and never silently replaces it.
+        for team in result['teams']:
+            for p in team['roster']:
+                entry = market['players'].get(str(p['id']))
+                p['market_projection'] = entry['points'] if entry else None
+        result['market'] = {k: market[k] for k in ('generated_at', 'method', 'events_priced', 'snapshot_id')}
+        result['market']['stale_vs_snapshot'] = market['snapshot_id'] != result['snapshot_id']
+        result['market']['players_priced'] = len(market['players'])
+        health = next(s for s in result['source_health'] if s['name'] == 'Sportsbook markets')
+        health.update(status='limited', checked_at=market['generated_at'], detail=market['method'])
     if briefing:
         result['briefing'] = json.loads(briefing[0])
         health = next(s for s in result['source_health'] if s['name'] == 'Independent research')
