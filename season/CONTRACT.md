@@ -7,7 +7,7 @@ Overview object:
 {
  schema_version:1, snapshot_id:string, generated_at:ISO, data_as_of:ISO,
  stale:boolean, warnings:[string], season:2026, week:1,
- league:{id:1238596447,name:string,my_team_id:5,timezone:'America/Chicago'},
+ league:{id:number,name:string,my_team_id:5,timezone:'America/Chicago'},
  rules:{lineup_slots:[{id:0,label:'QB',count:1}],waiver_priority:10,waiver_hours:24,waiver_timing_verified:false,trade_review_hours:24,trade_deadline:ISO|null,scoring:[{stat_id:string,points:number}]},
  teams:[{id:number,name:string,abbrev:string,waiver_priority:number|null,roster:[PLAYER],submitted:LINEUP,recommended:LINEUP}],
  matchup:{id:number,my_team_id:5,opponent_team_id:number}|null,
