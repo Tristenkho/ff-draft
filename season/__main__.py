@@ -177,7 +177,7 @@ def main():
                 raise LookupError('No market prices yet. Run refresh-props for this season and week.')
             print(json.dumps(result, indent=2))
         elif args.command == 'export-static':
-            out = args.file or f'out/season_{args.season}_week{args.week}.html'
+            out = args.file or f'.season/exports/season_{args.season}_week{args.week}.html'
             weeks = None if args.all_weeks else [args.week]
             print(json.dumps(bundle.write(out, args.season, weeks)))
         elif args.command == 'export':

@@ -8,6 +8,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 SEASON="${SEASON:-2026}"
 WEEK="${WEEK:-1}"
-OUT="${OUT:-out/season_${SEASON}_week${WEEK}.html}"
+# Defaults into gitignored .season/ on purpose: out/ is committed to a PUBLIC
+# repo, so exporting there would publish the league roster as a side effect.
+OUT="${OUT:-.season/exports/season_${SEASON}_week${WEEK}.html}"
 python3 -m season refresh --season "$SEASON" --week "$WEEK" >/dev/null
 python3 -m season export-static --season "$SEASON" --week "$WEEK" --file "$OUT"
