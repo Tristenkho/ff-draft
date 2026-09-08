@@ -1,4 +1,4 @@
-name: Deploy draft terminal to GitHub Pages
+name: Deploy draft terminal and season companion to GitHub Pages
 
 on:
   push:
@@ -28,6 +28,12 @@ jobs:
         run: |
           mkdir _site
           cp out/draft_terminal.html _site/index.html
+          # Season companion: a static export committed by agent-tools/publish-season.
+          # Absent on purpose until that runs, so a missing file must not fail the build.
+          if [ -f out/season_current.html ]; then
+            mkdir -p _site/season
+            cp out/season_current.html _site/season/index.html
+          fi
           cp out/draft-terminal-icon-180.png _site/draft-terminal-icon-180.png
           cp out/draft-terminal-icon-32.png _site/draft-terminal-icon-32.png
           touch _site/.nojekyll
