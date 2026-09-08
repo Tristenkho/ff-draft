@@ -236,7 +236,7 @@ def refresh(season=2026, week=1):
                 'locked': False, 'availability': pools[week].get(pid, {}).get('status', 'ONTEAM' if owner else 'UNKNOWN'),
                 'week_outlook': outlook, 'outlook': full.get('seasonOutlook', '')}
 
-    teams = [{'id': t['id'], 'name': t.get('name', f"Team {t['id']}"), 'abbrev': t.get('abbrev', ''), 'waiver_priority': t.get('waiverRank'),
+    teams = [{'id': t['id'], 'name': (t.get('name') or f"Team {t['id']}").strip(), 'abbrev': (t.get('abbrev') or '').strip(), 'waiver_priority': t.get('waiverRank'),
               'roster': [player_view(e['playerPoolEntry']['player'], e['lineupSlotId'], t['id']) for e in t.get('roster', {}).get('entries', [])]} for t in data['teams']]
     # Never silently import another account's league or infer a user team by name.
     my_id = int(creds.get('team_id', 5))
