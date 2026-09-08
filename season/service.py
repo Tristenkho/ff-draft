@@ -21,6 +21,13 @@ POS = {1: 'QB', 2: 'RB', 3: 'WR', 4: 'TE', 5: 'K', 16: 'DST'}
 SLOTS = {0: 'QB', 2: 'RB', 4: 'WR', 6: 'TE', 16: 'DST', 17: 'K', 20: 'Bench', 21: 'IR', 23: 'FLEX', 3: 'RB/WR', 5: 'WR/TE', 7: 'OP'}
 UNAVAILABLE = {'OUT', 'INJURY_RESERVE', 'SUSPENSION', 'SUSPENDED', 'PUP'}
 
+# Manager names, read off the 2026 round-one pick order (slot 1-12 = David,
+# Kevin, Tristen, Casta, Kyle, Jeremy, Jonathan, Seth, Matthew, Zach, Josh,
+# Joe). Keyed by ESPN team id, not draft slot, so it stays correct when next
+# season reorders the draft. The ESPN team name is kept alongside as espn_name.
+MANAGERS = {4: 'David', 11: 'Kevin', 5: 'Tristen', 12: 'Casta', 2: 'Kyle', 10: 'Jeremy',
+            6: 'Jonathan', 3: 'Seth', 8: 'Matthew', 1: 'Zach', 9: 'Josh', 7: 'Joe'}
+
 
 def now():
     return dt.datetime.now(dt.timezone.utc).isoformat()
@@ -236,7 +243,9 @@ def refresh(season=2026, week=1):
                 'locked': False, 'availability': pools[week].get(pid, {}).get('status', 'ONTEAM' if owner else 'UNKNOWN'),
                 'week_outlook': outlook, 'outlook': full.get('seasonOutlook', '')}
 
-    teams = [{'id': t['id'], 'name': (t.get('name') or f"Team {t['id']}").strip(), 'abbrev': (t.get('abbrev') or '').strip(), 'waiver_priority': t.get('waiverRank'),
+    teams = [{'id': t['id'], 'name': MANAGERS.get(t['id']) or (t.get('name') or f"Team {t['id']}").strip(),
+              'espn_name': (t.get('name') or '').strip(), 'manager': MANAGERS.get(t['id']),
+              'abbrev': (t.get('abbrev') or '').strip(), 'waiver_priority': t.get('waiverRank'),
               'roster': [player_view(e['playerPoolEntry']['player'], e['lineupSlotId'], t['id']) for e in t.get('roster', {}).get('entries', [])]} for t in data['teams']]
     # Never silently import another account's league or infer a user team by name.
     my_id = int(creds.get('team_id', 5))
