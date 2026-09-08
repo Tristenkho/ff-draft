@@ -11,7 +11,14 @@ cd "$(dirname "$0")/.."
 SEASON="${SEASON:-2026}"
 WEEK="${WEEK:-1}"
 
-python3 -m season refresh --season "$SEASON" --week "$WEEK" >/dev/null
+# Refreshing mints a new snapshot, which invalidates a briefing already
+# reconciled against the old one. SKIP_REFRESH=1 publishes exactly what you
+# just validated instead.
+if [ "${SKIP_REFRESH:-0}" = "1" ]; then
+  echo "skipping refresh; publishing the stored snapshot"
+else
+  python3 -m season refresh --season "$SEASON" --week "$WEEK" >/dev/null
+fi
 python3 -m season export-static --season "$SEASON" --week "$WEEK" --file out/season_current.html
 
 # Refuse to publish anything carrying a secret, whatever the export did.
@@ -32,6 +39,11 @@ if bad:
     sys.exit('REFUSING TO PUBLISH: export contains ' + ', '.join(bad))
 print('secret scan clean')
 PY
+
+# The refresh above mints a new snapshot. If the briefing still points at an
+# older one the published page shows "Research predates this sync", so surface
+# that here rather than letting it appear only on the live site.
+python3 -m season briefing-status --season "$SEASON" --week "$WEEK"
 
 git add out/season_current.html .github/workflows/pages.yml
 git commit -m "Publish season companion export for ${SEASON} week ${WEEK}" || echo "nothing to commit"

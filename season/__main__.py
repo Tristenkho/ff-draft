@@ -149,7 +149,7 @@ def serve(port, bind='127.0.0.1', extra_hosts=()):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['refresh', 'serve', 'export', 'import-briefing', 'seasons', 'refresh-props', 'props', 'export-static'])
+    parser.add_argument('command', choices=['refresh', 'serve', 'export', 'import-briefing', 'seasons', 'refresh-props', 'props', 'export-static', 'briefing-status'])
     parser.add_argument('--season', type=int, default=2026)
     parser.add_argument('--week', type=int, default=1)
     parser.add_argument('--port', type=int, default=8765)
@@ -176,6 +176,17 @@ def main():
             if not result:
                 raise LookupError('No market prices yet. Run refresh-props for this season and week.')
             print(json.dumps(result, indent=2))
+        elif args.command == 'briefing-status':
+            view = service.get_overview(args.season, args.week)
+            brief = view.get('briefing')
+            if not brief:
+                print(f'note: no briefing imported for {args.season} week {args.week}; data only.')
+            elif brief.get('snapshot_id') != view['snapshot_id']:
+                print(f"WARNING: briefing targets snapshot {brief.get('snapshot_id')} but the current "
+                      f"snapshot is {view['snapshot_id']}. The page will show "
+                      f'"Research predates this sync". Re-import the briefing to clear it.')
+            else:
+                print('briefing matches the current snapshot')
         elif args.command == 'export-static':
             out = args.file or f'.season/exports/season_{args.season}_week{args.week}.html'
             weeks = None if args.all_weeks else [args.week]
