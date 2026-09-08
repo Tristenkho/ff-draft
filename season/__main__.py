@@ -1,4 +1,4 @@
-"""python3 -m season {refresh,refresh-props,serve,export,props,import-briefing,seasons}."""
+"""python3 -m season {refresh,refresh-props,serve,export,export-static,props,import-briefing,seasons}."""
 import argparse
 import json
 import sys
@@ -6,7 +6,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlencode, urlparse
 
-from . import access, props, service
+from . import access, bundle, props, service
 
 STATIC = service.ROOT / 'season/static'
 REFRESH_LOCK = threading.Lock()
@@ -149,11 +149,13 @@ def serve(port, bind='127.0.0.1', extra_hosts=()):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['refresh', 'serve', 'export', 'import-briefing', 'seasons', 'refresh-props', 'props'])
+    parser.add_argument('command', choices=['refresh', 'serve', 'export', 'import-briefing', 'seasons', 'refresh-props', 'props', 'export-static'])
     parser.add_argument('--season', type=int, default=2026)
     parser.add_argument('--week', type=int, default=1)
     parser.add_argument('--port', type=int, default=8765)
     parser.add_argument('--file')
+    parser.add_argument('--all-weeks', action='store_true',
+                        help='export-static: include every stored week instead of just --week')
     parser.add_argument('--host', default='127.0.0.1',
                         help='Bind address. Use 0.0.0.0 to reach it from a phone; a token is then required.')
     parser.add_argument('--allow-host', action='append', default=[],
@@ -174,6 +176,10 @@ def main():
             if not result:
                 raise LookupError('No market prices yet. Run refresh-props for this season and week.')
             print(json.dumps(result, indent=2))
+        elif args.command == 'export-static':
+            out = args.file or f'out/season_{args.season}_week{args.week}.html'
+            weeks = None if args.all_weeks else [args.week]
+            print(json.dumps(bundle.write(out, args.season, weeks)))
         elif args.command == 'export':
             print(json.dumps(service.get_overview(args.season, args.week), indent=2))
         elif args.command == 'import-briefing':

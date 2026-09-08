@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Freeze the current week into one self-contained HTML file.
+#
+# No server, no network, no credentials: the snapshot is baked in, exactly like
+# out/draft_terminal.html. Open it on a phone or publish it. It shows the data
+# as of export time and never updates itself - re-run this to move it forward.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+SEASON="${SEASON:-2026}"
+WEEK="${WEEK:-1}"
+OUT="${OUT:-out/season_${SEASON}_week${WEEK}.html}"
+python3 -m season refresh --season "$SEASON" --week "$WEEK" >/dev/null
+python3 -m season export-static --season "$SEASON" --week "$WEEK" --file "$OUT"
