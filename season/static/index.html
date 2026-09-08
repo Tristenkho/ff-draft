@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08131f">
+  <title>Season Companion</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="rail" aria-label="Primary navigation">
+      <a class="wordmark" href="?view=week" aria-label="Season Companion home"><span class="wordmark-mark">SC</span><span>Season<br>Companion</span></a>
+      <nav class="nav-list" data-testid="primary-nav">
+        <a href="?view=week" data-view="week"><span class="nav-icon">◒</span><span>This Week</span></a>
+        <a href="?view=league" data-view="league"><span class="nav-icon">◎</span><span>League</span></a>
+        <a href="?view=moves" data-view="moves"><span class="nav-icon">↗</span><span>Moves</span></a>
+        <a href="?view=draft" data-view="draft"><span class="nav-icon">▦</span><span>Draft</span></a>
+      </nav>
+      <div class="rail-footer"><span class="status-dot"></span><span>Private league view</span></div>
+    </aside>
+    <main class="main-content">
+      <header class="topbar">
+        <div class="mobile-brand"><span class="wordmark-mark">SC</span><span>Season Companion</span></div>
+        <div class="context-controls">
+          <label class="select-label">Season <select id="season-select" data-testid="season-select" aria-label="Season"></select></label>
+          <label class="select-label">Week <select id="week-select" data-testid="week-select" aria-label="Week"></select></label>
+        </div>
+        <div class="top-actions"><button class="button secondary" id="refresh-button" data-testid="refresh-button" type="button">Refresh</button><button class="button secondary icon-button" id="copy-context" data-testid="copy-context" type="button" aria-label="Copy week context">⧉<span> Copy context</span></button></div>
+      </header>
+      <div id="global-state" aria-live="polite"></div>
+      <section id="app" aria-live="polite"><div class="loading-panel"><span class="spinner"></span><p>Loading league snapshot…</p></div></section>
+    </main>
+  </div>
+  <div id="drawer-root"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>

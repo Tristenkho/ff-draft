@@ -16,3 +16,6 @@ out/espn_league.json
 /ff-draft-live-icon-current.png
 out/draft_slot3_simulation_analysis.md
 scripts/render_draft_slot3_report.js
+
+# Private season snapshots, briefings and research evidence
+.season/
