@@ -144,7 +144,7 @@ Sunday, a player the board calls 30% to survive is closer to **60%** in this roo
 **No 2024 draft exists to add a second season, so consistency was tested WITHIN
 the draft instead** — using the conservative density-corrected model throughout:
 
-- **Positive bias in 12/12 managers**, range +0.157 (kevin) to +0.311 (rayrice).
+- **Positive bias in 12/12 managers**, range +0.157 (Kevin) to +0.311 (Josh).
   Manager-clustered bootstrap, 5,000 resamples: mean **+0.214, 95% CI
   [+0.191, +0.240]**.
 - **It is localised, not uniform.** Rounds 1–5 are calibrated (−0.037 to +0.043).

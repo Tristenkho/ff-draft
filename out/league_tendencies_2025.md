@@ -7,6 +7,13 @@ Market baseline: FantasyFootballCalculator half-PPR ADP, 12-team, 718 drafts,
 window 2025-08-31 to 2025-09-01 — the same weekend as the draft. Cached at
 `.cache/ff-backtest/ffc_half_ppr_adp_2025.json`.
 
+Managers are named by person throughout. Their 2025 ESPN team names were
+BERDS FLY FOREVER (David), Kevin's Killers (Kevin), Tristen's Talented
+(Tristen), Castelani's Cool (Casta), Kyle's Little Diddlers (Kyle), Houston
+Hotdogs (Jeremy), Deshaun Watson Stans (Jonathan), You are not Worthy (Seth),
+Matthew's Magnificent (Matthew), Capullo (Zach), Ray Rice Boxing Co (Josh) and
+$weet $acks (Joe). Several renamed for 2026.
+
 **No season outcomes are used anywhere in this document.** Every number is
 knowable before the draft starts. This is a study of process, not results.
 
@@ -19,7 +26,7 @@ Three exploitable abnormalities, in order of size:
 3. WR is priced at market. There is no WR edge here.
 
 The room is not sharp. Eleven of twelve managers spent a round 7–9 pick on a
-kicker or defense. Only Ray Rice Boxing Co waited on both.
+kicker or defense. Only Josh waited on both.
 
 ## Positional timing vs market
 
@@ -115,7 +122,7 @@ Twenty-one QBs were drafted in 2025. Eight of twelve managers rostered a backup.
 The free-agent pool opened at roughly QB22 — 279 projected, about **2.0/week**
 below QB12.
 
-Managers who carried only one QB: **Tristen**, Ray Rice, Capullo, Worthy.
+Managers who carried only one QB: **Tristen**, Josh, Zach, Seth.
 
 This matters because `recommendationEligibility()` in the terminal currently
 hard-blocks a second QB with the reason *"QB2 belongs on waivers."* That rule is
@@ -131,28 +138,28 @@ player evaluation from pick allocation.
 
 | rk | manager | total | skill only (n) | reaches >15 | early K/DST | RB+WR R1–10 | QBs |
 | ---: | --- | ---: | ---: | ---: | --- | ---: | ---: |
-| 1 | **Tristen's Talented** | **+75** | **+222 (12)** | 0 | 2 (R8, R9) | 6 | 1 |
-| 2 | Kevin's Killers | +42 | +131 (11) | 1 | 2 (R7, R8) | 6 | 2 |
-| 3 | Ray Rice Boxing Co | +38 | +102 (11) | 1 | **0** | 8 | 1 |
-| 4 | Houston Hotdogs | −4 | +140 (11) | 0 | 2 (R7, R9) | 7 | 2 |
-| 5 | Capullo | −7 | +49 (11) | 2 | 1 (R8) | 7 | 1 |
-| 6 | Deshaun Watson Stans | −20 | +123 (11) | 1 | 2 (R7, R9) | 6 | 2 |
-| 7 | You are not Worthy | −36 | +78 (11) | 0 | 1 (R9) | 8 | 1 |
-| 8 | Matthew's Magnificent | −64 | +38 (11) | 1 | 1 (R8) | 7 | 2 |
-| 9 | Kyle's Little Diddlers | −72 | +35 (11) | 1 | 2 (R7, R9) | 6 | 2 |
-| 10 | BERDS FLY FOREVER | −94 | +80 (10) | 0 | 2 (R8, R9) | 6 | 2 |
-| 11 | $weet $acks | −178 | +80 (10) | 1 | 2 (R7, R8) | 5 | 3 |
-| 12 | Castelani's Cool | −196 | +61 (9) | 2 | 2 (R8, R9) | 5 | 2 |
+| 1 | **Tristen** | **+75** | **+222 (12)** | 0 | 2 (R8, R9) | 6 | 1 |
+| 2 | Kevin | +42 | +131 (11) | 1 | 2 (R7, R8) | 6 | 2 |
+| 3 | Josh | +38 | +102 (11) | 1 | **0** | 8 | 1 |
+| 4 | Jeremy | −4 | +140 (11) | 0 | 2 (R7, R9) | 7 | 2 |
+| 5 | Zach | −7 | +49 (11) | 2 | 1 (R8) | 7 | 1 |
+| 6 | Jonathan | −20 | +123 (11) | 1 | 2 (R7, R9) | 6 | 2 |
+| 7 | Seth | −36 | +78 (11) | 0 | 1 (R9) | 8 | 1 |
+| 8 | Matthew | −64 | +38 (11) | 1 | 1 (R8) | 7 | 2 |
+| 9 | Kyle | −72 | +35 (11) | 1 | 2 (R7, R9) | 6 | 2 |
+| 10 | David | −94 | +80 (10) | 0 | 2 (R8, R9) | 6 | 2 |
+| 11 | Joe | −178 | +80 (10) | 1 | 2 (R7, R8) | 5 | 3 |
+| 12 | Casta | −196 | +61 (9) | 2 | 2 (R8, R9) | 5 | 2 |
 
 Ranking is stable under a softer ADP-170 floor; re-running at 150 moves nobody
 more than one place and leaves the top and bottom intact.
 
-**Ray Rice Boxing Co is the only structurally sound drafter in the room** — the
-sole manager to wait on both K and D/ST, and eight RB/WR through round 10. In
-2026 he picks at slot 11. He is the main competitor for the rounds 7–9 window.
+**Josh is the only structurally sound drafter in the room** — the sole manager
+to wait on both K and D/ST, and eight RB/WR through round 10. In 2026 they pick
+at slot 11. They are the main competitor for the rounds 7–9 window.
 
-**$weet $acks and Castelani** are the softest. $weet drafted three QBs and
-reached 118 picks on a tight end; Castelani reached on a TE, a kicker at market
+**Joe and Casta** are the softest. Joe drafted three QBs and
+reached 118 picks on a tight end; Casta reached on a TE, a kicker at market
 minus 44, and a defense.
 
 ### Correction to an earlier read

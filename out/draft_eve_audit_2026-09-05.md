@@ -51,18 +51,18 @@ Recounted all 168 picks in `out/league_draft_2025.json`. Rounds 7–9 contained 
 
 | 2026 slot / manager | 2025 first QB round | First TE round | K / DST rounds | Actionable observation |
 | --- | ---: | ---: | --- | --- |
-| 1 / berds | 3 | 2 | 9 / 8 | TE then QB in rounds 2/3 last year. |
-| 2 / kevin | 4 | 6 | 8 / 7 | RB/RB in 2/3; one of only two managers between our 22 and 27. |
-| 3 / tristen | 4 | 3 | 9 / 8 | Our own past K/DST picks in 8/9 are the behavior to improve. |
-| 4 / castelani | 4 | 3 | 8 / 9 | Three TEs; early K/DST. Do not copy those runs. |
-| 5 / kyle | 1 | 5 | 9 / 7 | Only first-round QB in this draft. |
-| 6 / hotdogs | 4 | 14 | 9 / 7 | Three WRs in rounds 4–6, TE waited until 14. |
-| 7 / deshaun | 4 | 8 | 9 / 7 | Three WRs in first five rounds; K/DST 7/9. |
-| 8 / worthy | 7 | 12 | 14 / 9 | Three RBs by round 5; no backup QB. |
-| 9 / matthew | 7 | 6 | 8 / 13 | Three RBs by round 5, QB in round 7. |
-| 10 / capullo | 7 | 6 | 14 / 8 | RB/RB opener and third RB in round 5. |
-| 11 / rayrice | 5 | 7 | 14 / 13 | Waited until 13/14 for special teams; likely skill-player competition if repeated. |
-| 12 / sweet | 2 | 5 | 8 / 7 | QB in round 2 plus two backups; do not count on late QB depth remaining. |
+| 1 / David | 3 | 2 | 9 / 8 | TE then QB in rounds 2/3 last year. |
+| 2 / Kevin | 4 | 6 | 8 / 7 | RB/RB in 2/3; one of only two managers between our 22 and 27. |
+| 3 / Tristen | 4 | 3 | 9 / 8 | Our own past K/DST picks in 8/9 are the behavior to improve. |
+| 4 / Casta | 4 | 3 | 8 / 9 | Three TEs; early K/DST. Do not copy those runs. |
+| 5 / Kyle | 1 | 5 | 9 / 7 | Only first-round QB in this draft. |
+| 6 / Jeremy | 4 | 14 | 9 / 7 | Three WRs in rounds 4–6, TE waited until 14. |
+| 7 / Jonathan | 4 | 8 | 9 / 7 | Three WRs in first five rounds; K/DST 7/9. |
+| 8 / Seth | 7 | 12 | 14 / 9 | Three RBs by round 5; no backup QB. |
+| 9 / Matthew | 7 | 6 | 8 / 13 | Three RBs by round 5, QB in round 7. |
+| 10 / Zach | 7 | 6 | 14 / 8 | RB/RB opener and third RB in round 5. |
+| 11 / Josh | 5 | 7 | 14 / 13 | Waited until 13/14 for special teams; likely skill-player competition if repeated. |
+| 12 / Joe | 2 | 5 | 8 / 7 | QB in round 2 plus two backups; do not count on late QB depth remaining. |
 
 There are four intervening picks between 22 and 27, all by Kevin and Berds. This is more useful than treating every opponent as equally likely to select a particular position. Watch their actual first two selections. On the long 3→22 and 27→46 gaps, all eleven opponents matter.
 

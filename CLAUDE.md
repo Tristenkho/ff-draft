@@ -51,8 +51,13 @@ legal complete lineup and account for the bench opportunity cost.
 
 ## League
 12 teams, snake, redraft, 14 rounds, 90s/pick. Draft slot: 3
-2026 order: berds, kevin, tristen, castelani, kyle, houston hotdogs, deshaun,
-worthy, matthew, capullo, ray rice, sweet
+2026 order: David, Kevin, Tristen (me), Casta, Kyle, Jeremy, Jonathan, Seth,
+Matthew, Zach, Josh, Joe
+Managers are named by person everywhere. ESPN team names change between
+seasons, so `season/service.py` MANAGERS maps ESPN team id to person; read it
+from there rather than retyping. Legacy nicknames (berds, castelani, hotdogs,
+rayrice, sweet, worthy, deshaun, capullo) survive only in
+`out/league_draft_2025.json` under `manager_aliases`.
 My picks: 3 22 27 46 51 70 75 94 99 118 123 142 147 166
 Starters: QB1 RB2 WR2 TE1 FLEX1 K1 DST1 · Bench 5 · IR 2
 Caps: QB4 RB8 WR8 TE3 K3 DST3

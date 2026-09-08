@@ -6,32 +6,32 @@
  "rounds": 14,
  "source": "ESPN draft recap, leagueId 1238596447",
  "order_2025": [
-  "berds",
-  "matthew",
-  "hotdogs",
-  "sweet",
-  "castelani",
-  "tristen",
-  "kevin",
-  "capullo",
-  "kyle",
-  "deshaun",
-  "worthy",
-  "rayrice"
+  "David",
+  "Matthew",
+  "Jeremy",
+  "Joe",
+  "Casta",
+  "Tristen",
+  "Kevin",
+  "Zach",
+  "Kyle",
+  "Jonathan",
+  "Seth",
+  "Josh"
  ],
  "order_2026": [
-  "berds",
-  "kevin",
-  "tristen",
-  "castelani",
-  "kyle",
-  "hotdogs",
-  "deshaun",
-  "worthy",
-  "matthew",
-  "capullo",
-  "rayrice",
-  "sweet"
+  "David",
+  "Kevin",
+  "Tristen",
+  "Casta",
+  "Kyle",
+  "Jeremy",
+  "Jonathan",
+  "Seth",
+  "Matthew",
+  "Zach",
+  "Josh",
+  "Joe"
  ],
  "picks": [
   {
@@ -39,1176 +39,1190 @@
    "round": 1,
    "name": "Ja'Marr Chase",
    "pos": "WR",
-   "mgr": "berds"
+   "mgr": "David"
   },
   {
    "overall": 2,
    "round": 1,
    "name": "Bijan Robinson",
    "pos": "RB",
-   "mgr": "matthew"
+   "mgr": "Matthew"
   },
   {
    "overall": 3,
    "round": 1,
    "name": "Jahmyr Gibbs",
    "pos": "RB",
-   "mgr": "hotdogs"
+   "mgr": "Jeremy"
   },
   {
    "overall": 4,
    "round": 1,
    "name": "Justin Jefferson",
    "pos": "WR",
-   "mgr": "sweet"
+   "mgr": "Joe"
   },
   {
    "overall": 5,
    "round": 1,
    "name": "Nico Collins",
    "pos": "WR",
-   "mgr": "castelani"
+   "mgr": "Casta"
   },
   {
    "overall": 6,
    "round": 1,
    "name": "Saquon Barkley",
    "pos": "RB",
-   "mgr": "tristen"
+   "mgr": "Tristen"
   },
   {
    "overall": 7,
    "round": 1,
    "name": "CeeDee Lamb",
    "pos": "WR",
-   "mgr": "kevin"
+   "mgr": "Kevin"
   },
   {
    "overall": 8,
    "round": 1,
    "name": "Christian McCaffrey",
    "pos": "RB",
-   "mgr": "capullo"
+   "mgr": "Zach"
   },
   {
    "overall": 9,
    "round": 1,
    "name": "Lamar Jackson",
    "pos": "QB",
-   "mgr": "kyle"
+   "mgr": "Kyle"
   },
   {
    "overall": 10,
    "round": 1,
    "name": "Malik Nabers",
    "pos": "WR",
-   "mgr": "deshaun"
+   "mgr": "Jonathan"
   },
   {
    "overall": 11,
    "round": 1,
    "name": "Amon-Ra St. Brown",
    "pos": "WR",
-   "mgr": "worthy"
+   "mgr": "Seth"
   },
   {
    "overall": 12,
    "round": 1,
    "name": "Puka Nacua",
    "pos": "WR",
-   "mgr": "rayrice"
+   "mgr": "Josh"
   },
   {
    "overall": 13,
    "round": 2,
    "name": "Ashton Jeanty",
    "pos": "RB",
-   "mgr": "rayrice"
+   "mgr": "Josh"
   },
   {
    "overall": 14,
    "round": 2,
    "name": "De'Von Achane",
    "pos": "RB",
-   "mgr": "worthy"
+   "mgr": "Seth"
   },
   {
    "overall": 15,
    "round": 2,
    "name": "Jonathan Taylor",
    "pos": "RB",
-   "mgr": "deshaun"
+   "mgr": "Jonathan"
   },
   {
    "overall": 16,
    "round": 2,
    "name": "Josh Jacobs",
    "pos": "RB",
-   "mgr": "kyle"
+   "mgr": "Kyle"
   },
   {
    "overall": 17,
    "round": 2,
    "name": "Derrick Henry",
    "pos": "RB",
-   "mgr": "capullo"
+   "mgr": "Zach"
   },
   {
    "overall": 18,
    "round": 2,
    "name": "Bucky Irving",
    "pos": "RB",
-   "mgr": "kevin"
+   "mgr": "Kevin"
   },
   {
    "overall": 19,
    "round": 2,
    "name": "Brian Thomas Jr.",
    "pos": "WR",
-   "mgr": "tristen"
+   "mgr": "Tristen"
   },
   {
    "overall": 20,
    "round": 2,
    "name": "Chase Brown",
    "pos": "RB",
-   "mgr": "castelani"
+   "mgr": "Casta"
   },
   {
    "overall": 21,
    "round": 2,
    "name": "Josh Allen",
    "pos": "QB",
-   "mgr": "sweet"
+   "mgr": "Joe"
   },
   {
    "overall": 22,
    "round": 2,
    "name": "Ladd McConkey",
    "pos": "WR",
-   "mgr": "hotdogs"
+   "mgr": "Jeremy"
   },
   {
    "overall": 23,
    "round": 2,
    "name": "Drake London",
    "pos": "WR",
-   "mgr": "matthew"
+   "mgr": "Matthew"
   },
   {
    "overall": 24,
    "round": 2,
    "name": "Brock Bowers",
    "pos": "TE",
-   "mgr": "berds"
+   "mgr": "David"
   },
   {
    "overall": 25,
    "round": 3,
    "name": "Jayden Daniels",
    "pos": "QB",
-   "mgr": "berds"
+   "mgr": "David"
   },
   {
    "overall": 26,
    "round": 3,
    "name": "Kyren Williams",
    "pos": "RB",
-   "mgr": "matthew"
+   "mgr": "Matthew"
   },
   {
    "overall": 27,
    "round": 3,
    "name": "James Cook III",
    "pos": "RB",
-   "mgr": "hotdogs"
+   "mgr": "Jeremy"
   },
   {
    "overall": 28,
    "round": 3,
    "name": "A.J. Brown",
    "pos": "WR",
-   "mgr": "sweet"
+   "mgr": "Joe"
   },
   {
    "overall": 29,
    "round": 3,
    "name": "George Kittle",
    "pos": "TE",
-   "mgr": "castelani"
+   "mgr": "Casta"
   },
   {
    "overall": 30,
    "round": 3,
    "name": "Trey McBride",
    "pos": "TE",
-   "mgr": "tristen"
+   "mgr": "Tristen"
   },
   {
    "overall": 31,
    "round": 3,
    "name": "Omarion Hampton",
    "pos": "RB",
-   "mgr": "kevin"
+   "mgr": "Kevin"
   },
   {
    "overall": 32,
    "round": 3,
    "name": "Terry McLaurin",
    "pos": "WR",
-   "mgr": "capullo"
+   "mgr": "Zach"
   },
   {
    "overall": 33,
    "round": 3,
    "name": "Tee Higgins",
    "pos": "WR",
-   "mgr": "kyle"
+   "mgr": "Kyle"
   },
   {
    "overall": 34,
    "round": 3,
    "name": "Jaxon Smith-Njigba",
    "pos": "WR",
-   "mgr": "deshaun"
+   "mgr": "Jonathan"
   },
   {
    "overall": 35,
    "round": 3,
    "name": "Alvin Kamara",
    "pos": "RB",
-   "mgr": "worthy"
+   "mgr": "Seth"
   },
   {
    "overall": 36,
    "round": 3,
    "name": "Tyreek Hill",
    "pos": "WR",
-   "mgr": "rayrice"
+   "mgr": "Josh"
   },
   {
    "overall": 37,
    "round": 4,
    "name": "Davante Adams",
    "pos": "WR",
-   "mgr": "rayrice"
+   "mgr": "Josh"
   },
   {
    "overall": 38,
    "round": 4,
    "name": "Xavier Worthy",
    "pos": "WR",
-   "mgr": "worthy"
+   "mgr": "Seth"
   },
   {
    "overall": 39,
    "round": 4,
    "name": "Jalen Hurts",
    "pos": "QB",
-   "mgr": "deshaun"
+   "mgr": "Jonathan"
   },
   {
    "overall": 40,
    "round": 4,
    "name": "DK Metcalf",
    "pos": "WR",
-   "mgr": "kyle"
+   "mgr": "Kyle"
   },
   {
    "overall": 41,
    "round": 4,
    "name": "Mike Evans",
    "pos": "WR",
-   "mgr": "capullo"
+   "mgr": "Zach"
   },
   {
    "overall": 42,
    "round": 4,
    "name": "Brock Purdy",
    "pos": "QB",
-   "mgr": "kevin"
+   "mgr": "Kevin"
   },
   {
    "overall": 43,
    "round": 4,
    "name": "Joe Burrow",
    "pos": "QB",
-   "mgr": "tristen"
+   "mgr": "Tristen"
   },
   {
    "overall": 44,
    "round": 4,
    "name": "Bo Nix",
    "pos": "QB",
-   "mgr": "castelani"
+   "mgr": "Casta"
   },
   {
    "overall": 45,
    "round": 4,
    "name": "James Conner",
    "pos": "RB",
-   "mgr": "sweet"
+   "mgr": "Joe"
   },
   {
    "overall": 46,
    "round": 4,
    "name": "Baker Mayfield",
    "pos": "QB",
-   "mgr": "hotdogs"
+   "mgr": "Jeremy"
   },
   {
    "overall": 47,
    "round": 4,
    "name": "Zay Flowers",
    "pos": "WR",
-   "mgr": "matthew"
+   "mgr": "Matthew"
   },
   {
    "overall": 48,
    "round": 4,
    "name": "Breece Hall",
    "pos": "RB",
-   "mgr": "berds"
+   "mgr": "David"
   },
   {
    "overall": 49,
    "round": 5,
    "name": "Garrett Wilson",
    "pos": "WR",
-   "mgr": "berds"
+   "mgr": "David"
   },
   {
    "overall": 50,
    "round": 5,
    "name": "Chuba Hubbard",
    "pos": "RB",
-   "mgr": "matthew"
+   "mgr": "Matthew"
   },
   {
    "overall": 51,
    "round": 5,
    "name": "DJ Moore",
    "pos": "WR",
-   "mgr": "hotdogs"
+   "mgr": "Jeremy"
   },
   {
    "overall": 52,
    "round": 5,
    "name": "Dalton Schultz",
    "pos": "TE",
-   "mgr": "sweet"
+   "mgr": "Joe"
   },
   {
    "overall": 53,
    "round": 5,
    "name": "Courtland Sutton",
    "pos": "WR",
-   "mgr": "castelani"
+   "mgr": "Casta"
   },
   {
    "overall": 54,
    "round": 5,
    "name": "TreVeyon Henderson",
    "pos": "RB",
-   "mgr": "tristen"
+   "mgr": "Tristen"
   },
   {
    "overall": 55,
    "round": 5,
    "name": "Marvin Harrison Jr.",
    "pos": "WR",
-   "mgr": "kevin"
+   "mgr": "Kevin"
   },
   {
    "overall": 56,
    "round": 5,
    "name": "Kenneth Walker III",
    "pos": "RB",
-   "mgr": "capullo"
+   "mgr": "Zach"
   },
   {
    "overall": 57,
    "round": 5,
    "name": "Sam LaPorta",
    "pos": "TE",
-   "mgr": "kyle"
+   "mgr": "Kyle"
   },
   {
    "overall": 58,
    "round": 5,
    "name": "DeVonta Smith",
    "pos": "WR",
-   "mgr": "deshaun"
+   "mgr": "Jonathan"
   },
   {
    "overall": 59,
    "round": 5,
    "name": "D'Andre Swift",
    "pos": "RB",
-   "mgr": "worthy"
+   "mgr": "Seth"
   },
   {
    "overall": 60,
    "round": 5,
    "name": "Patrick Mahomes",
    "pos": "QB",
-   "mgr": "rayrice"
+   "mgr": "Josh"
   },
   {
    "overall": 61,
    "round": 6,
    "name": "Tony Pollard",
    "pos": "RB",
-   "mgr": "rayrice"
+   "mgr": "Josh"
   },
   {
    "overall": 62,
    "round": 6,
    "name": "Tetairoa McMillan",
    "pos": "WR",
-   "mgr": "worthy"
+   "mgr": "Seth"
   },
   {
    "overall": 63,
    "round": 6,
    "name": "David Montgomery",
    "pos": "RB",
-   "mgr": "deshaun"
+   "mgr": "Jonathan"
   },
   {
    "overall": 64,
    "round": 6,
    "name": "Aaron Jones Sr.",
    "pos": "RB",
-   "mgr": "kyle"
+   "mgr": "Kyle"
   },
   {
    "overall": 65,
    "round": 6,
    "name": "T.J. Hockenson",
    "pos": "TE",
-   "mgr": "capullo"
+   "mgr": "Zach"
   },
   {
    "overall": 66,
    "round": 6,
    "name": "Travis Kelce",
    "pos": "TE",
-   "mgr": "kevin"
+   "mgr": "Kevin"
   },
   {
    "overall": 67,
    "round": 6,
    "name": "Calvin Ridley",
    "pos": "WR",
-   "mgr": "tristen"
+   "mgr": "Tristen"
   },
   {
    "overall": 68,
    "round": 6,
    "name": "Isiah Pacheco",
    "pos": "RB",
-   "mgr": "castelani"
+   "mgr": "Casta"
   },
   {
    "overall": 69,
    "round": 6,
    "name": "Nick Chubb",
    "pos": "RB",
-   "mgr": "sweet"
+   "mgr": "Joe"
   },
   {
    "overall": 70,
    "round": 6,
    "name": "Matthew Golden",
    "pos": "WR",
-   "mgr": "hotdogs"
+   "mgr": "Jeremy"
   },
   {
    "overall": 71,
    "round": 6,
    "name": "Mark Andrews",
    "pos": "TE",
-   "mgr": "matthew"
+   "mgr": "Matthew"
   },
   {
    "overall": 72,
    "round": 6,
    "name": "RJ Harvey",
    "pos": "RB",
-   "mgr": "berds"
+   "mgr": "David"
   },
   {
    "overall": 73,
    "round": 7,
    "name": "Jakobi Meyers",
    "pos": "WR",
-   "mgr": "berds"
+   "mgr": "David"
   },
   {
    "overall": 74,
    "round": 7,
    "name": "C.J. Stroud",
    "pos": "QB",
-   "mgr": "matthew"
+   "mgr": "Matthew"
   },
   {
    "overall": 75,
    "round": 7,
    "name": "Texans D/ST",
    "pos": "DST",
-   "mgr": "hotdogs"
+   "mgr": "Jeremy"
   },
   {
    "overall": 76,
    "round": 7,
    "name": "Steelers D/ST",
    "pos": "DST",
-   "mgr": "sweet"
+   "mgr": "Joe"
   },
   {
    "overall": 77,
    "round": 7,
    "name": "David Njoku",
    "pos": "TE",
-   "mgr": "castelani"
+   "mgr": "Casta"
   },
   {
    "overall": 78,
    "round": 7,
    "name": "Jaylen Waddle",
    "pos": "WR",
-   "mgr": "tristen"
+   "mgr": "Tristen"
   },
   {
    "overall": 79,
    "round": 7,
    "name": "Broncos D/ST",
    "pos": "DST",
-   "mgr": "kevin"
+   "mgr": "Kevin"
   },
   {
    "overall": 80,
    "round": 7,
    "name": "Justin Herbert",
    "pos": "QB",
-   "mgr": "capullo"
+   "mgr": "Zach"
   },
   {
    "overall": 81,
    "round": 7,
    "name": "Ravens D/ST",
    "pos": "DST",
-   "mgr": "kyle"
+   "mgr": "Kyle"
   },
   {
    "overall": 82,
    "round": 7,
    "name": "Vikings D/ST",
    "pos": "DST",
-   "mgr": "deshaun"
+   "mgr": "Jonathan"
   },
   {
    "overall": 83,
    "round": 7,
    "name": "Kyler Murray",
    "pos": "QB",
-   "mgr": "worthy"
+   "mgr": "Seth"
   },
   {
    "overall": 84,
    "round": 7,
    "name": "Evan Engram",
    "pos": "TE",
-   "mgr": "rayrice"
+   "mgr": "Josh"
   },
   {
    "overall": 85,
    "round": 8,
    "name": "Jerry Jeudy",
    "pos": "WR",
-   "mgr": "rayrice"
+   "mgr": "Josh"
   },
   {
    "overall": 86,
    "round": 8,
    "name": "George Pickens",
    "pos": "WR",
-   "mgr": "worthy"
+   "mgr": "Seth"
   },
   {
    "overall": 87,
    "round": 8,
    "name": "Dalton Kincaid",
    "pos": "TE",
-   "mgr": "deshaun"
+   "mgr": "Jonathan"
   },
   {
    "overall": 88,
    "round": 8,
    "name": "Travis Hunter",
    "pos": "WR",
-   "mgr": "kyle"
+   "mgr": "Kyle"
   },
   {
    "overall": 89,
    "round": 8,
    "name": "Eagles D/ST",
    "pos": "DST",
-   "mgr": "capullo"
+   "mgr": "Zach"
   },
   {
    "overall": 90,
    "round": 8,
    "name": "Cameron Dicker",
    "pos": "K",
-   "mgr": "kevin"
+   "mgr": "Kevin"
   },
   {
    "overall": 91,
    "round": 8,
    "name": "Seahawks D/ST",
    "pos": "DST",
-   "mgr": "tristen"
+   "mgr": "Tristen"
   },
   {
    "overall": 92,
    "round": 8,
    "name": "Brandon Aubrey",
    "pos": "K",
-   "mgr": "castelani"
+   "mgr": "Casta"
   },
   {
    "overall": 93,
    "round": 8,
    "name": "Chase McLaughlin",
    "pos": "K",
-   "mgr": "sweet"
+   "mgr": "Joe"
   },
   {
    "overall": 94,
    "round": 8,
    "name": "Jameson Williams",
    "pos": "WR",
-   "mgr": "hotdogs"
+   "mgr": "Jeremy"
   },
   {
    "overall": 95,
    "round": 8,
    "name": "Jake Bates",
    "pos": "K",
-   "mgr": "matthew"
+   "mgr": "Matthew"
   },
   {
    "overall": 96,
    "round": 8,
    "name": "Lions D/ST",
    "pos": "DST",
-   "mgr": "berds"
+   "mgr": "David"
   },
   {
    "overall": 97,
    "round": 9,
    "name": "Matt Gay",
    "pos": "K",
-   "mgr": "berds"
+   "mgr": "David"
   },
   {
    "overall": 98,
    "round": 9,
    "name": "Emeka Egbuka",
    "pos": "WR",
-   "mgr": "matthew"
+   "mgr": "Matthew"
   },
   {
    "overall": 99,
    "round": 9,
    "name": "Tyler Bass",
    "pos": "K",
-   "mgr": "hotdogs"
+   "mgr": "Jeremy"
   },
   {
    "overall": 100,
    "round": 9,
    "name": "Tucker Kraft",
    "pos": "TE",
-   "mgr": "sweet"
+   "mgr": "Joe"
   },
   {
    "overall": 101,
    "round": 9,
    "name": "Bills D/ST",
    "pos": "DST",
-   "mgr": "castelani"
+   "mgr": "Casta"
   },
   {
    "overall": 102,
    "round": 9,
    "name": "Jake Elliott",
    "pos": "K",
-   "mgr": "tristen"
+   "mgr": "Tristen"
   },
   {
    "overall": 103,
    "round": 9,
    "name": "Rome Odunze",
    "pos": "WR",
-   "mgr": "kevin"
+   "mgr": "Kevin"
   },
   {
    "overall": 104,
    "round": 9,
    "name": "Chris Olave",
    "pos": "WR",
-   "mgr": "capullo"
+   "mgr": "Zach"
   },
   {
    "overall": 105,
    "round": 9,
    "name": "Tyler Loop",
    "pos": "K",
-   "mgr": "kyle"
+   "mgr": "Kyle"
   },
   {
    "overall": 106,
    "round": 9,
    "name": "Chris Boswell",
    "pos": "K",
-   "mgr": "deshaun"
+   "mgr": "Jonathan"
   },
   {
    "overall": 107,
    "round": 9,
    "name": "Patriots D/ST",
    "pos": "DST",
-   "mgr": "worthy"
+   "mgr": "Seth"
   },
   {
    "overall": 108,
    "round": 9,
    "name": "Rashee Rice",
    "pos": "WR",
-   "mgr": "rayrice"
+   "mgr": "Josh"
   },
   {
    "overall": 109,
    "round": 10,
    "name": "Ricky Pearsall",
    "pos": "WR",
-   "mgr": "rayrice"
+   "mgr": "Josh"
   },
   {
    "overall": 110,
    "round": 10,
    "name": "Stefon Diggs",
    "pos": "WR",
-   "mgr": "worthy"
+   "mgr": "Seth"
   },
   {
    "overall": 111,
    "round": 10,
    "name": "Deebo Samuel",
    "pos": "WR",
-   "mgr": "deshaun"
+   "mgr": "Jonathan"
   },
   {
    "overall": 112,
    "round": 10,
    "name": "Cooper Kupp",
    "pos": "WR",
-   "mgr": "kyle"
+   "mgr": "Kyle"
   },
   {
    "overall": 113,
    "round": 10,
    "name": "Keenan Allen",
    "pos": "WR",
-   "mgr": "capullo"
+   "mgr": "Zach"
   },
   {
    "overall": 114,
    "round": 10,
    "name": "Michael Pittman Jr.",
    "pos": "WR",
-   "mgr": "kevin"
+   "mgr": "Kevin"
   },
   {
    "overall": 115,
    "round": 10,
    "name": "Tyrone Tracy Jr.",
    "pos": "RB",
-   "mgr": "tristen"
+   "mgr": "Tristen"
   },
   {
    "overall": 116,
    "round": 10,
    "name": "J.K. Dobbins",
    "pos": "RB",
-   "mgr": "castelani"
+   "mgr": "Casta"
   },
   {
    "overall": 117,
    "round": 10,
    "name": "Keon Coleman",
    "pos": "WR",
-   "mgr": "sweet"
+   "mgr": "Joe"
   },
   {
    "overall": 118,
    "round": 10,
    "name": "Jaylen Warren",
    "pos": "RB",
-   "mgr": "hotdogs"
+   "mgr": "Jeremy"
   },
   {
    "overall": 119,
    "round": 10,
    "name": "Jacory Croskey-Merritt",
    "pos": "RB",
-   "mgr": "matthew"
+   "mgr": "Matthew"
   },
   {
    "overall": 120,
    "round": 10,
    "name": "Austin Ekeler",
    "pos": "RB",
-   "mgr": "berds"
+   "mgr": "David"
   },
   {
    "overall": 121,
    "round": 11,
    "name": "Justin Fields",
    "pos": "QB",
-   "mgr": "berds"
+   "mgr": "David"
   },
   {
    "overall": 122,
    "round": 11,
    "name": "Dak Prescott",
    "pos": "QB",
-   "mgr": "matthew"
+   "mgr": "Matthew"
   },
   {
    "overall": 123,
    "round": 11,
    "name": "Jayden Higgins",
    "pos": "WR",
-   "mgr": "hotdogs"
+   "mgr": "Jeremy"
   },
   {
    "overall": 124,
    "round": 11,
    "name": "Caleb Williams",
    "pos": "QB",
-   "mgr": "sweet"
+   "mgr": "Joe"
   },
   {
    "overall": 125,
    "round": 11,
    "name": "Tyler Warren",
    "pos": "TE",
-   "mgr": "castelani"
+   "mgr": "Casta"
   },
   {
    "overall": 126,
    "round": 11,
    "name": "Rhamondre Stevenson",
    "pos": "RB",
-   "mgr": "tristen"
+   "mgr": "Tristen"
   },
   {
    "overall": 127,
    "round": 11,
    "name": "Javonte Williams",
    "pos": "RB",
-   "mgr": "kevin"
+   "mgr": "Kevin"
   },
   {
    "overall": 128,
    "round": 11,
    "name": "Jake Ferguson",
    "pos": "TE",
-   "mgr": "capullo"
+   "mgr": "Zach"
   },
   {
    "overall": 129,
    "round": 11,
    "name": "Joe Mixon",
    "pos": "RB",
-   "mgr": "kyle"
+   "mgr": "Kyle"
   },
   {
    "overall": 130,
    "round": 11,
    "name": "Kaleb Johnson",
    "pos": "RB",
-   "mgr": "deshaun"
+   "mgr": "Jonathan"
   },
   {
    "overall": 131,
    "round": 11,
    "name": "Cam Skattebo",
    "pos": "RB",
-   "mgr": "worthy"
+   "mgr": "Seth"
   },
   {
    "overall": 132,
    "round": 11,
    "name": "Jordan Addison",
    "pos": "WR",
-   "mgr": "rayrice"
+   "mgr": "Josh"
   },
   {
    "overall": 133,
    "round": 12,
    "name": "Jauan Jennings",
    "pos": "WR",
-   "mgr": "rayrice"
+   "mgr": "Josh"
   },
   {
    "overall": 134,
    "round": 12,
    "name": "Colston Loveland",
    "pos": "TE",
-   "mgr": "worthy"
+   "mgr": "Seth"
   },
   {
    "overall": 135,
    "round": 12,
    "name": "J.J. McCarthy",
    "pos": "QB",
-   "mgr": "deshaun"
+   "mgr": "Jonathan"
   },
   {
    "overall": 136,
    "round": 12,
    "name": "Kyle Pitts Sr.",
    "pos": "TE",
-   "mgr": "kyle"
+   "mgr": "Kyle"
   },
   {
    "overall": 137,
    "round": 12,
    "name": "Chris Godwin Jr.",
    "pos": "WR",
-   "mgr": "capullo"
+   "mgr": "Zach"
   },
   {
    "overall": 138,
    "round": 12,
    "name": "Drake Maye",
    "pos": "QB",
-   "mgr": "kevin"
+   "mgr": "Kevin"
   },
   {
    "overall": 139,
    "round": 12,
    "name": "Khalil Shakir",
    "pos": "WR",
-   "mgr": "tristen"
+   "mgr": "Tristen"
   },
   {
    "overall": 140,
    "round": 12,
    "name": "Rashid Shaheed",
    "pos": "WR",
-   "mgr": "castelani"
+   "mgr": "Casta"
   },
   {
    "overall": 141,
    "round": 12,
    "name": "Jared Goff",
    "pos": "QB",
-   "mgr": "sweet"
+   "mgr": "Joe"
   },
   {
    "overall": 142,
    "round": 12,
    "name": "Jordan Love",
    "pos": "QB",
-   "mgr": "hotdogs"
+   "mgr": "Jeremy"
   },
   {
    "overall": 143,
    "round": 12,
    "name": "Christian Kirk",
    "pos": "WR",
-   "mgr": "matthew"
+   "mgr": "Matthew"
   },
   {
    "overall": 144,
    "round": 12,
    "name": "Zach Charbonnet",
    "pos": "RB",
-   "mgr": "berds"
+   "mgr": "David"
   },
   {
    "overall": 145,
    "round": 13,
    "name": "Darnell Mooney",
    "pos": "WR",
-   "mgr": "berds"
+   "mgr": "David"
   },
   {
    "overall": 146,
    "round": 13,
    "name": "Chiefs D/ST",
    "pos": "DST",
-   "mgr": "matthew"
+   "mgr": "Matthew"
   },
   {
    "overall": 147,
    "round": 13,
    "name": "Jordan Mason",
    "pos": "RB",
-   "mgr": "hotdogs"
+   "mgr": "Jeremy"
   },
   {
    "overall": 148,
    "round": 13,
    "name": "Justice Hill",
    "pos": "RB",
-   "mgr": "sweet"
+   "mgr": "Joe"
   },
   {
    "overall": 149,
    "round": 13,
    "name": "Tua Tagovailoa",
    "pos": "QB",
-   "mgr": "castelani"
+   "mgr": "Casta"
   },
   {
    "overall": 150,
    "round": 13,
    "name": "Jayden Reed",
    "pos": "WR",
-   "mgr": "tristen"
+   "mgr": "Tristen"
   },
   {
    "overall": 151,
    "round": 13,
    "name": "Josh Downs",
    "pos": "WR",
-   "mgr": "kevin"
+   "mgr": "Kevin"
   },
   {
    "overall": 152,
    "round": 13,
    "name": "Jaydon Blue",
    "pos": "RB",
-   "mgr": "capullo"
+   "mgr": "Zach"
   },
   {
    "overall": 153,
    "round": 13,
    "name": "Matthew Stafford",
    "pos": "QB",
-   "mgr": "kyle"
+   "mgr": "Kyle"
   },
   {
    "overall": 154,
    "round": 13,
    "name": "Dallas Goedert",
    "pos": "TE",
-   "mgr": "deshaun"
+   "mgr": "Jonathan"
   },
   {
    "overall": 155,
    "round": 13,
    "name": "Travis Etienne Jr.",
    "pos": "RB",
-   "mgr": "worthy"
+   "mgr": "Seth"
   },
   {
    "overall": 156,
    "round": 13,
    "name": "Colts D/ST",
    "pos": "DST",
-   "mgr": "rayrice"
+   "mgr": "Josh"
   },
   {
    "overall": 157,
    "round": 14,
    "name": "Harrison Butker",
    "pos": "K",
-   "mgr": "rayrice"
+   "mgr": "Josh"
   },
   {
    "overall": 158,
    "round": 14,
    "name": "Cairo Santos",
    "pos": "K",
-   "mgr": "worthy"
+   "mgr": "Seth"
   },
   {
    "overall": 159,
    "round": 14,
    "name": "Hollywood Brown",
    "pos": "WR",
-   "mgr": "deshaun"
+   "mgr": "Jonathan"
   },
   {
    "overall": 160,
    "round": 14,
    "name": "Xavier Legette",
    "pos": "WR",
-   "mgr": "kyle"
+   "mgr": "Kyle"
   },
   {
    "overall": 161,
    "round": 14,
    "name": "Ka'imi Fairbairn",
    "pos": "K",
-   "mgr": "capullo"
+   "mgr": "Zach"
   },
   {
    "overall": 162,
    "round": 14,
    "name": "Chig Okonkwo",
    "pos": "TE",
-   "mgr": "kevin"
+   "mgr": "Kevin"
   },
   {
    "overall": 163,
    "round": 14,
    "name": "Jerome Ford",
    "pos": "RB",
-   "mgr": "tristen"
+   "mgr": "Tristen"
   },
   {
    "overall": 164,
    "round": 14,
    "name": "Cedric Tillman",
    "pos": "WR",
-   "mgr": "castelani"
+   "mgr": "Casta"
   },
   {
    "overall": 165,
    "round": 14,
    "name": "Tank Bigsby",
    "pos": "RB",
-   "mgr": "sweet"
+   "mgr": "Joe"
   },
   {
    "overall": 166,
    "round": 14,
    "name": "Cade Stover",
    "pos": "TE",
-   "mgr": "hotdogs"
+   "mgr": "Jeremy"
   },
   {
    "overall": 167,
    "round": 14,
    "name": "Zach Ertz",
    "pos": "TE",
-   "mgr": "matthew"
+   "mgr": "Matthew"
   },
   {
    "overall": 168,
    "round": 14,
    "name": "Amari Cooper",
    "pos": "WR",
-   "mgr": "berds"
+   "mgr": "David"
   }
- ]
+ ],
+ "manager_aliases": {
+  "David": "berds",
+  "Kevin": "kevin",
+  "Tristen": "tristen",
+  "Casta": "castelani",
+  "Kyle": "kyle",
+  "Jeremy": "hotdogs",
+  "Jonathan": "deshaun",
+  "Seth": "worthy",
+  "Matthew": "matthew",
+  "Zach": "capullo",
+  "Josh": "rayrice",
+  "Joe": "sweet"
+ }
 }
