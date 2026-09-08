@@ -324,12 +324,20 @@ def get_overview(season=2026, week=1):
             raise LookupError('No snapshot yet. Run refresh for this season and week.')
         briefing = conn.execute('SELECT payload FROM briefings WHERE season=? AND week=?', (season, week)).fetchone()
         error = conn.execute('SELECT created,message FROM refresh_errors WHERE season=? AND week=? ORDER BY created DESC LIMIT 1', (season, week)).fetchone()
+        # Every briefing imported this season, so a decision can be reviewed
+        # after the week it was made rather than vanishing with the snapshot.
+        archive = conn.execute('SELECT week, created, payload FROM briefings WHERE season=? ORDER BY week', (season,)).fetchall()
     result = enrich(json.loads(row[0]))
     result['generated_at'] = now()
     result['stale'] = (dt.datetime.now(dt.timezone.utc) - dt.datetime.fromisoformat(result['data_as_of'])).total_seconds() > 900
     if error and error[0] > result['data_as_of']:
         result['stale'] = True
         result['warnings'].append('Latest refresh failed; displaying the last successful snapshot. ' + error[1])
+    result['decision_history'] = [
+        {'week': w, 'generated_at': created, 'current_week': w == week,
+         'decisions': [{k: d.get(k) for k in ('id', 'title', 'recommendation', 'status', 'flip_condition')}
+                       for d in json.loads(payload).get('decisions', [])]}
+        for w, created, payload in archive]
     market = conn_props(season, week)
     result['market'] = None
     if market:
