@@ -63,6 +63,9 @@ def build(season=2026, weeks=None, generated_at=None):
     html = html.replace('id="refresh-button" data-testid="refresh-button" type="button">Refresh',
                         'id="refresh-button" data-testid="refresh-button" type="button" title="Saved export; re-run the export to update">Saved')
     stamped = dt.datetime.fromisoformat(stamp).astimezone(dt.timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
+    # Published deliberately, but there is no reason to invite search engines.
+    html = html.replace('<meta name="theme-color" content="#08131f">',
+                        '<meta name="theme-color" content="#08131f">\n  <meta name="robots" content="noindex, nofollow">')
     html = html.replace('<title>Season Companion</title>',
                         f'<title>Season Companion · {contents}</title>\n'
                         f'<!-- Static export generated {stamped}. Data is frozen at that moment. -->')

@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Refresh, export, and publish the season companion to GitHub Pages.
+#
+# PUBLISHES PUBLICLY. The exported page carries the league name, all team
+# names, every roster and the draft recap. It carries no credentials and no
+# league id, and is marked noindex, but anyone with the URL can read it.
+#
+# The page is frozen at export time - re-run this whenever it should move.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+SEASON="${SEASON:-2026}"
+WEEK="${WEEK:-1}"
+
+python3 -m season refresh --season "$SEASON" --week "$WEEK" >/dev/null
+python3 -m season export-static --season "$SEASON" --week "$WEEK" --file out/season_current.html
+
+# Refuse to publish anything carrying a secret, whatever the export did.
+python3 - <<'PY'
+import json, pathlib, sys
+html = pathlib.Path('out/season_current.html').read_text()
+bad = []
+creds = json.loads(pathlib.Path('.espn.json').read_text())
+for name in ('espn_s2', 'swid'):
+    if str(creds.get(name, '\x00')) in html:
+        bad.append(name)
+if str(creds.get('league_id', '\x00')) in html:
+    bad.append('league_id')
+token = pathlib.Path('.season/token')
+if token.exists() and token.read_text().strip() and token.read_text().strip() in html:
+    bad.append('access token')
+if bad:
+    sys.exit('REFUSING TO PUBLISH: export contains ' + ', '.join(bad))
+print('secret scan clean')
+PY
+
+git add out/season_current.html .github/workflows/pages.yml
+git commit -m "Publish season companion export for ${SEASON} week ${WEEK}" || echo "nothing to commit"
+git push origin main
+echo "Published: https://tristenkho.github.io/ff-draft/season/"
