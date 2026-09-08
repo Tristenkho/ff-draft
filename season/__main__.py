@@ -4,22 +4,28 @@ import json
 import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlencode, urlparse
 
-from . import props, service
+from . import access, props, service
 
 STATIC = service.ROOT / 'season/static'
 REFRESH_LOCK = threading.Lock()
 
 
-def serve(port):
+def serve(port, bind='127.0.0.1', extra_hosts=()):
+    # A token is required the moment the server is reachable by anyone else.
+    token = None if access.is_loopback(bind) else access.ensure_token()
+    allowed = access.allowed_hosts(port, bind, extra_hosts)
+
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, fmt, *args):
             pass
 
-        def send(self, code, payload, kind='application/json'):
+        def send(self, code, payload, kind='application/json', headers=()):
             body = json.dumps(payload).encode() if kind == 'application/json' else payload
             self.send_response(code)
+            for name, value in headers:
+                self.send_header(name, value)
             self.send_header('Content-Type', kind + '; charset=utf-8')
             self.send_header('Content-Length', str(len(body)))
             self.send_header('Cache-Control', 'no-store')
@@ -30,18 +36,40 @@ def serve(port):
             self.wfile.write(body)
 
         def authorized(self):
-            allowed = {f'127.0.0.1:{port}', f'localhost:{port}'}
             if self.headers.get('Host') not in allowed:
                 return False
             origin = self.headers.get('Origin')
-            if origin and origin not in {f'http://{h}' for h in allowed}:
+            if origin and origin not in {f'http://{h}' for h in allowed} | {f'https://{h}' for h in allowed}:
                 return False
-            return self.headers.get('Sec-Fetch-Site') not in {'cross-site'}
+            if self.headers.get('Sec-Fetch-Site') == 'cross-site':
+                return False
+            if token is None:
+                return True
+            return access.token_matches(access.cookie_token(self.headers.get('Cookie')), token)
+
+        def claim_token(self, parsed):
+            """Trade a ?token= link for a cookie, then drop it from the URL so the
+            secret stops travelling in browser history and referrers."""
+            if token is None:
+                return False
+            supplied = parse_qs(parsed.query).get('token', [''])[0]
+            if not access.token_matches(supplied, token):
+                return False
+            query = {k: v for k, v in parse_qs(parsed.query).items() if k != 'token'}
+            rest = urlencode({k: v[0] for k, v in query.items()})
+            self.send(302, b'', 'text/plain', headers=[
+                ('Set-Cookie', f'{access.COOKIE}={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=7776000'),
+                ('Location', parsed.path + ('?' + rest if rest else ''))])
+            return True
 
         def do_GET(self):
-            if not self.authorized():
-                return self.send(403, {'error': 'Local access only'})
             parsed = urlparse(self.path)
+            if self.claim_token(parsed):
+                return
+            if not self.authorized():
+                return self.send(401 if token else 403,
+                                 {'error': 'This companion needs its access link. Open the URL printed by "season serve".'
+                                           if token else 'Local access only'})
             files = {'/': ('index.html', 'text/html'), '/index.html': ('index.html', 'text/html'),
                      '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
             if parsed.path in files:
@@ -106,8 +134,16 @@ def serve(port):
             finally:
                 REFRESH_LOCK.release()
 
-    server = ThreadingHTTPServer(('127.0.0.1', port), Handler)
-    print(f'Season companion: http://127.0.0.1:{port} (local/private; no background research)', flush=True)
+    server = ThreadingHTTPServer((bind, port), Handler)
+    if token is None:
+        print(f'Season companion: http://127.0.0.1:{port} (this machine only; no background research)', flush=True)
+    else:
+        print('Season companion is reachable from other devices on this network.', flush=True)
+        print('Open one of these once per device; the link is a password, so do not share it:', flush=True)
+        seen = sorted({h for h in allowed if not access.is_loopback(h.rsplit(':', 1)[0])})
+        for host in seen or [f'{bind}:{port}']:
+            print(f'  http://{host}/?token={token}', flush=True)
+        print(f'Token stored in {access.TOKEN_FILE}. Delete that file to revoke every device.', flush=True)
     server.serve_forever()
 
 
@@ -118,10 +154,14 @@ def main():
     parser.add_argument('--week', type=int, default=1)
     parser.add_argument('--port', type=int, default=8765)
     parser.add_argument('--file')
+    parser.add_argument('--host', default='127.0.0.1',
+                        help='Bind address. Use 0.0.0.0 to reach it from a phone; a token is then required.')
+    parser.add_argument('--allow-host', action='append', default=[],
+                        help='Extra Host header to accept, e.g. a Tailscale name. Repeatable.')
     args = parser.parse_args()
     try:
         if args.command == 'serve':
-            serve(args.port)
+            serve(args.port, args.host, args.allow_host)
             return
         if args.command == 'refresh':
             result = service.safe_refresh(args.season, args.week)

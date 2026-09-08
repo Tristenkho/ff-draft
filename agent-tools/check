@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# Full validation for the season companion and draft terminal.
+# Syntax checks alone miss this project's real failure mode (smart quotes used
+# as HTML attribute delimiters inside template literals parse fine but render
+# the UI unstyled), so the unicode scan is not optional.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+echo "== unit tests =="
+python3 -m unittest discover -s tests -q
+
+echo "== javascript parses =="
+node -e "new Function(require('fs').readFileSync('season/static/app.js','utf8'))" \
+  && echo "app.js ok"
+
+echo "== css braces balanced =="
+python3 - <<'PY'
+s = open('season/static/style.css').read()
+assert s.count('{') == s.count('}'), 'unbalanced braces in style.css'
+print('style.css ok')
+PY
+
+echo "== smart quotes outside string literals =="
+# bash 3.2 cannot express \uXXXX in $'...', so this must be python.
+python3 - <<'PY'
+import re, sys
+bad = []
+for path in ('season/static/app.js', 'season/static/style.css', 'season/static/index.html'):
+    src = open(path, encoding='utf-8').read()
+    for m in re.finditer(r'[‘’“”]', src):
+        line = src[:m.start()].count('\n') + 1
+        context = src[max(0, m.start()-60):m.start()+20]
+        # Only flag quotes acting as delimiters (class=", href="), not prose.
+        if re.search(r'(class|href|id|type|rel|target)\s*=\s*$', context):
+            bad.append(f'{path}:{line} smart quote used as an attribute delimiter')
+if bad:
+    print('\n'.join(bad), file=sys.stderr)
+    sys.exit(1)
+print('no smart-quote delimiters')
+PY
+
+echo "== engine runs headless =="
+python3 - <<'PY'
+from season import service
+try:
+    ov = service.get_overview(2026, 1)
+except LookupError as exc:
+    print(f'skipped: {exc}')
+else:
+    slots = sum(s['count'] for s in ov['rules']['lineup_slots'])
+    for team in ov['teams']:
+        assert len(team['recommended']['assignments']) <= slots, team['name']
+    print(f"overview ok: {len(ov['teams'])} teams, {slots} starting slots")
+PY
+
+echo "ALL CHECKS PASSED"

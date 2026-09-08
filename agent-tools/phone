@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Serve the season companion to this machine's phone/tablet over the LAN.
+#
+# Binds beyond loopback, so the server requires its token: the printed link is
+# a password. caffeinate is mandatory, not a nicety - this Mac's sleep timer is
+# one minute, which kills the server before you reach the couch. It self-releases
+# when you stop the server, and cannot beat a closed lid on Apple Silicon.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+PORT="${PORT:-8765}"
+exec caffeinate -is python3 -m season serve --port "$PORT" --host 0.0.0.0 "$@"
