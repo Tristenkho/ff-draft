@@ -6,8 +6,11 @@
 # as of export time and never updates itself - re-run this to move it forward.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-SEASON="${SEASON:-2026}"
-WEEK="${WEEK:-1}"
+# Default to the week the league is actually on. WEEK= still overrides, but a
+# hardcoded 1 is how a Tuesday publish silently republishes last week.
+read -r DETECTED_SEASON DETECTED_WEEK < <(./agent-tools/current-week)
+SEASON="${SEASON:-$DETECTED_SEASON}"
+WEEK="${WEEK:-$DETECTED_WEEK}"
 # Defaults into gitignored .season/ on purpose: out/ is committed to a PUBLIC
 # repo, so exporting there would publish the league roster as a side effect.
 OUT="${OUT:-.season/exports/season_${SEASON}_week${WEEK}.html}"

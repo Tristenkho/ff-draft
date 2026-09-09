@@ -1,0 +1,4 @@
+interface:
+  display_name: "Refresh FF Season Companion"
+  short_description: "Refresh, publish and verify the fantasy board"
+  default_prompt: "Refresh the fantasy season companion end-to-end: detect the league's current week, validate, pull the read-only ESPN snapshot, publish to GitHub Pages, and verify the live board is serving the new snapshot."

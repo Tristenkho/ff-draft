@@ -8,8 +8,11 @@
 # The page is frozen at export time - re-run this whenever it should move.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-SEASON="${SEASON:-2026}"
-WEEK="${WEEK:-1}"
+# Default to the week the league is actually on. WEEK= still overrides, but a
+# hardcoded 1 is how a Tuesday publish silently republishes last week.
+read -r DETECTED_SEASON DETECTED_WEEK < <(./agent-tools/current-week)
+SEASON="${SEASON:-$DETECTED_SEASON}"
+WEEK="${WEEK:-$DETECTED_WEEK}"
 
 # Refreshing mints a new snapshot, which invalidates a briefing already
 # reconciled against the old one. SKIP_REFRESH=1 publishes exactly what you

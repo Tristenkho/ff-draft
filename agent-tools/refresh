@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# One lever: move the season companion to now, everywhere.
+#
+# Detects the league's real week, validates, refreshes the ESPN snapshot,
+# exports, publishes to GitHub Pages, and then VERIFIES the live page is
+# actually serving the new snapshot. A green push is not proof: Pages deploys
+# asynchronously, so the only evidence that the phone board moved is the
+# snapshot id coming back from the public URL.
+#
+# ESPN access is read-only. Nothing here changes a lineup, a claim or a roster.
+#
+# PUBLISH=0 stops after the local refresh and export (no commit, no push).
+# WEEK=/SEASON= override detection. SKIP_REFRESH=1 republishes the stored
+# snapshot without minting a new one.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+read -r DETECTED_SEASON DETECTED_WEEK < <(./agent-tools/current-week)
+SEASON="${SEASON:-$DETECTED_SEASON}"
+WEEK="${WEEK:-$DETECTED_WEEK}"
+export SEASON WEEK
+echo "== league is on ${SEASON} week ${WEEK} =="
+
+./agent-tools/check
+
+if [ "${PUBLISH:-1}" = "0" ]; then
+  echo "== local refresh and export only =="
+  ./agent-tools/export-week
+  python3 -m season briefing-status --season "$SEASON" --week "$WEEK"
+  echo "NOT PUBLISHED (PUBLISH=0)"
+  exit 0
+fi
+
+./agent-tools/publish-season
+
+# The published file is frozen at export time, so the id baked into it is the
+# one the live page must return.
+SNAPSHOT=$(python3 - <<'PY'
+import re, pathlib
+html = pathlib.Path('out/season_current.html').read_text()
+match = re.search(r'"snapshot_id":\s*"([0-9a-f]+)"', html)
+if not match:
+    raise SystemExit('could not read a snapshot id out of the export')
+print(match.group(1))
+PY
+)
+echo "== waiting for Pages to serve snapshot ${SNAPSHOT} =="
+URL=https://tristenkho.github.io/ff-draft/season/
+PAGE=$(mktemp)
+trap 'rm -f "$PAGE"' EXIT
+for attempt in $(seq 1 40); do
+  # Fetch to a file first: `curl | grep -q` closes the pipe on the first match,
+  # curl dies of SIGPIPE, and pipefail then reports the successful case as a
+  # failure - so the loop would spin until it timed out on a page that was
+  # already correct.
+  if curl -fsS -H 'Cache-Control: no-cache' "$URL" -o "$PAGE" && grep -q "$SNAPSHOT" "$PAGE"; then
+    echo "VERIFIED: ${URL} is serving ${SNAPSHOT}"
+    exit 0
+  fi
+  sleep 15
+done
+echo "NOT VERIFIED: ${URL} still does not contain ${SNAPSHOT} after 10 minutes." >&2
+echo "The push succeeded; check the Pages run with: gh run list --limit 3" >&2
+exit 1

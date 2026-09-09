@@ -22,3 +22,6 @@ scripts/render_draft_slot3_report.js
 
 # Odds API key
 .odds.json
+
+# Local Claude Code permissions, per machine
+.claude/settings.local.json

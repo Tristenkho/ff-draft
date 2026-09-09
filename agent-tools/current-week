@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Print the season and fantasy week this league is actually on, as "2026 1".
+#
+# The week is a required argument everywhere else in this project and it has
+# defaulted to 1 since the app was written, so every command silently kept
+# publishing week 1 once the league moved on. ESPN's own league status is the
+# authority here, not a date table: it is the same number the site uses for
+# scoring, so a locally computed guess could disagree with the roster the
+# snapshot contains. Fails loudly rather than guessing a week.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+exec python3 - <<'PY'
+import json
+from season import service
+
+creds = json.loads((service.ROOT / '.espn.json').read_text())
+season = int(creds.get('season', 2026))
+url = (f"https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/{season}"
+       f"/segments/0/leagues/{creds['league_id']}?view=mStatus")
+league = service.fetch_json(url, {'Cookie': f"espn_s2={creds['espn_s2']}; SWID={creds['swid']}"})
+
+week = league.get('scoringPeriodId')
+final = league.get('status', {}).get('finalScoringPeriod')
+if not isinstance(week, int) or not 1 <= week <= (final or 18):
+    raise SystemExit(f'ESPN returned no usable scoringPeriodId (got {week!r}); pass WEEK= explicitly.')
+print(season, week)
+PY

@@ -33,6 +33,21 @@ validation. Roster deadlines and one-QB/one-TE construction are defaults, not
 league rules or proven optima. A deliberate override is allowed; preserve a
 legal complete lineup and account for the bench opportunity cost.
 
+## Season operations (the draft is over)
+The live artifact is now the season companion in `season/`, published at
+`https://tristenkho.github.io/ff-draft/season/`. `out/draft_terminal.html` is
+frozen history and still serves the site root.
+- `./agent-tools/refresh` is the one lever: detect the league's real week,
+  validate, pull the read-only ESPN snapshot, export, publish, and confirm the
+  public page is serving the new snapshot id. A push is not proof of a live update.
+- The week is never assumed. `./agent-tools/current-week` reads ESPN's own
+  `scoringPeriodId` and fails loudly rather than guessing.
+- Research briefings are a separate manual import, not part of a refresh; a
+  refresh deliberately leaves the briefing marked as predating the snapshot.
+- ESPN stays read-only. Lineups, claims and trades are executed by the user.
+The `refresh-ff-season` skill in `.claude/skills/` wraps this and is symlinked
+into `~/.codex/skills/`, so Codex and Claude Code run the identical file.
+
 ## Delivery automation
 - After completing and validating requested code or site changes, automatically
   stage only the files owned by that task, create a focused commit, and push it.
