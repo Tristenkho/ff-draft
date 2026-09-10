@@ -8,6 +8,7 @@ import json
 import sqlite3
 import ssl
 import urllib.request
+import zoneinfo
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 from pathlib import Path
@@ -20,6 +21,16 @@ DB = DATA / 'season.sqlite3'
 POS = {1: 'QB', 2: 'RB', 3: 'WR', 4: 'TE', 5: 'K', 16: 'DST'}
 SLOTS = {0: 'QB', 2: 'RB', 4: 'WR', 6: 'TE', 16: 'DST', 17: 'K', 20: 'Bench', 21: 'IR', 23: 'FLEX', 3: 'RB/WR', 5: 'WR/TE', 7: 'OP'}
 UNAVAILABLE = {'OUT', 'INJURY_RESERVE', 'SUSPENSION', 'SUSPENDED', 'PUP'}
+
+# ESPN schedules waiver processing on its own clock, not the league's.
+ESPN_TZ = zoneinfo.ZoneInfo('America/New_York')
+WEEKDAYS = {'MONDAY': 0, 'TUESDAY': 1, 'WEDNESDAY': 2, 'THURSDAY': 3,
+            'FRIDAY': 4, 'SATURDAY': 5, 'SUNDAY': 6}
+
+# The observable end state a briefing decision claims. Every value is a list of
+# player ids, so a recommendation can be checked against the roster instead of
+# read.
+EXPECTATIONS = ('start', 'bench', 'roster', 'drop')
 
 # Manager names, read off the 2026 round-one pick order (slot 1-12 = David,
 # Kevin, Tristen, Casta, Kyle, Jeremy, Jonathan, Seth, Matthew, Zach, Josh,
@@ -96,6 +107,95 @@ def locked(player, at=None):
     at = at or now()
     return bool(player.get('locked') or player.get('game_state') in {'in', 'post'}
                 or (player.get('game_state') == 'pre' and player.get('kickoff') and player['kickoff'] <= at))
+
+
+def waiver_window(acquisition, last_execution, at=None):
+    """When ESPN next processes waivers, anchored to a run it actually performed.
+
+    ESPN reports `waiverProcessDays` and a `waiverProcessHour`, but the hour did
+    not match the run this league actually observed (`waiverProcessHour` 11 for a
+    run at 03:02 ET), so the hour is taken from `waiverLastExecutionDate` and the
+    configured days only have to agree with it. Both sources are required: one
+    alone would be an assumption about a deadline, which is the thing this field
+    exists to avoid.
+
+    Floored to the hour, because a claim deadline that is slightly early is
+    useful and one that is slightly late is worse than none at all.
+    """
+    at = dt.datetime.fromisoformat(at) if isinstance(at, str) else (at or dt.datetime.now(dt.timezone.utc))
+    days = {WEEKDAYS[d] for d in (acquisition.get('waiverProcessDays') or []) if d in WEEKDAYS}
+    anchor = (dt.datetime.fromtimestamp(last_execution / 1000, dt.timezone.utc).astimezone(ESPN_TZ)
+              if last_execution else None)
+    if not days or anchor is None or anchor.weekday() not in days:
+        return {'at': None, 'verified': False,
+                'detail': 'ESPN did not report a waiver schedule and an observed run that agree. '
+                          'Confirm the processing time in the league settings before relying on it.'}
+    named = ', '.join(name.title() for name, index in sorted(WEEKDAYS.items(), key=lambda kv: kv[1]) if index in days)
+    detail = (f'Runs {named} in the {anchor.hour}:00 ET hour, anchored to the last observed ESPN run '
+              f'({anchor.strftime("%a %Y-%m-%d %H:%M")} ET). Claims must be in before it. '
+              'A single observed run fixes the hour, not the minute.')
+    local = at.astimezone(ESPN_TZ)
+    for ahead in range(9):
+        day = local.date() + dt.timedelta(days=ahead)
+        if day.weekday() not in days:
+            continue
+        # Constructed per date rather than by adding days to a datetime, so the
+        # hour stays put across a DST change instead of sliding an hour.
+        run = dt.datetime(day.year, day.month, day.day, anchor.hour, tzinfo=ESPN_TZ)
+        if run > local:
+            return {'at': run.astimezone(dt.timezone.utc).isoformat(), 'verified': True, 'detail': detail}
+    return {'at': None, 'verified': False, 'detail': detail}
+
+
+def reconcile_decision(expects, starters, owned, names=None):
+    """Did the roster end up where a briefing decision said it should?
+
+    Only a structured `expects` block is checked. A recommendation written in
+    prose alone reports as uncheckable rather than being parsed for intent: a
+    wrong "done" badge on a lineup call is worse than no badge at all.
+    """
+    names = names or {}
+    label = lambda pid: names.get(pid, f'Player {pid}')
+    checks = []
+    for key in EXPECTATIONS:
+        for pid in (expects or {}).get(key) or []:
+            pid = int(pid)
+            if key == 'start':
+                checks.append((pid, pid in starters, 'starting'))
+            elif key == 'bench':
+                checks.append((pid, pid in owned and pid not in starters, 'benched'))
+            elif key == 'roster':
+                checks.append((pid, pid in owned, 'on the roster'))
+            else:
+                checks.append((pid, pid not in owned, 'off the roster'))
+    if not checks:
+        return {'state': 'not checkable',
+                'detail': 'This decision records no structured end state, so execution cannot be '
+                          'confirmed from the roster.'}
+    met = [c for c in checks if c[1]]
+    if len(met) == len(checks):
+        return {'state': 'executed',
+                'detail': 'Roster matches: ' + ', '.join(f'{label(pid)} {word}' for pid, _, word in checks) + '.'}
+    outstanding = '; '.join(f'{label(pid)} is not {word}' for pid, ok, word in checks if not ok)
+    state = 'partly executed' if met else 'not executed'
+    return {'state': state, 'detail': 'Outstanding: ' + outstanding + '.'}
+
+
+def decision_states(snapshot, decisions):
+    """Attach a derived `execution` to each decision, in place."""
+    my_id = snapshot.get('league', {}).get('my_team_id')
+    team = next((t for t in snapshot.get('teams', []) if t['id'] == my_id), None)
+    if team is None:
+        return decisions
+    # Bench and IR are the only non-starting slots, which is the same rule
+    # enrich() uses to build the submitted lineup.
+    starters = {p['id'] for p in team['roster'] if p['slot_id'] not in (20, 21)}
+    owned = {p['id'] for p in team['roster']}
+    names = {p['id']: p['name'] for other in snapshot['teams'] for p in other['roster']}
+    names.update({p['id']: p['name'] for p in snapshot.get('free_agents', [])})
+    for decision in decisions:
+        decision['execution'] = reconcile_decision(decision.get('expects'), starters, owned, names)
+    return decisions
 
 
 def lineup(roster, slots, assignments):
@@ -258,8 +358,10 @@ def refresh(season=2026, week=1):
     settings = data['settings']
     slots = [{'id': int(k), 'label': SLOTS.get(int(k), f'Slot {k}'), 'count': int(v)} for k, v in settings['rosterSettings']['lineupSlotCounts'].items() if v and int(k) not in (20, 21)]
     slots.sort(key=lambda s: [0, 2, 4, 6, 23, 17, 16].index(s['id']) if s['id'] in [0, 2, 4, 6, 23, 17, 16] else 99)
+    waivers = waiver_window(settings.get('acquisitionSettings', {}), data.get('status', {}).get('waiverLastExecutionDate'), observed)
     rules = {'lineup_slots': slots, 'waiver_priority': next(t['waiver_priority'] for t in teams if t['id'] == my_id),
-             'waiver_hours': settings.get('acquisitionSettings', {}).get('waiverHours'), 'waiver_timing_verified': False,
+             'waiver_hours': settings.get('acquisitionSettings', {}).get('waiverHours'),
+             'waiver_timing_verified': waivers['verified'],
              'trade_review_hours': settings.get('tradeSettings', {}).get('revisionHours'),
              'trade_deadline': instant(settings.get('tradeSettings', {}).get('deadlineDate')),
              'scoring': [{'stat_id': str(s['statId']), 'points': s.get('points', 0)} for s in settings['scoringSettings']['scoringItems']]}
@@ -286,7 +388,8 @@ def refresh(season=2026, week=1):
     draft = {'status': 'frozen' if reconciled else 'unreconciled' if completed else 'in_progress', 'version': 1,
              'frozen_at': observed if reconciled else None, 'picks': picks,
              'note': 'Actual ESPN picks. ECR is the captured 2026 pre-draft reference, not a current ranking.' if baseline else 'Actual ESPN picks. Historical pre-draft ECR unavailable.'}
-    deadlines = [{'id': 'waivers', 'label': 'Waiver review', 'at': None, 'verified': False, 'detail': 'Processing timezone and individual clearance times require ESPN confirmation.'}]
+    deadlines = [{'id': 'waivers', 'label': 'Waiver review', 'at': waivers['at'], 'verified': waivers['verified'],
+                  'detail': waivers['detail'] + f" Waiver period is {rules['waiver_hours']}h; an individual player's clearance can be later than the next run."}]
     my_roster = next(t['roster'] for t in teams if t['id'] == my_id)
     for kickoff in sorted({p['kickoff'] for p in my_roster if p['kickoff'] and p['kickoff'] > observed}):
         names = ', '.join(p['name'] for p in my_roster if p['kickoff'] == kickoff)
@@ -336,17 +439,26 @@ def get_overview(season=2026, week=1):
         # Every briefing imported this season, so a decision can be reviewed
         # after the week it was made rather than vanishing with the snapshot.
         archive = conn.execute('SELECT week, created, payload FROM briefings WHERE season=? ORDER BY week', (season,)).fetchall()
+        # Each briefed week is reconciled against its OWN latest snapshot, so a
+        # call made in week 3 is judged by week 3's roster rather than today's.
+        week_rosters = {w: conn.execute('SELECT payload FROM snapshots WHERE season=? AND week=? ORDER BY created DESC LIMIT 1',
+                                        (season, w)).fetchone() for w, _, _ in archive}
     result = enrich(json.loads(row[0]))
     result['generated_at'] = now()
     result['stale'] = (dt.datetime.now(dt.timezone.utc) - dt.datetime.fromisoformat(result['data_as_of'])).total_seconds() > 900
     if error and error[0] > result['data_as_of']:
         result['stale'] = True
         result['warnings'].append('Latest refresh failed; displaying the last successful snapshot. ' + error[1])
-    result['decision_history'] = [
-        {'week': w, 'generated_at': created, 'current_week': w == week,
-         'decisions': [{k: d.get(k) for k in ('id', 'title', 'recommendation', 'status', 'flip_condition')}
-                       for d in json.loads(payload).get('decisions', [])]}
-        for w, created, payload in archive]
+    history = []
+    for w, created, payload in archive:
+        decisions = json.loads(payload).get('decisions', [])
+        stored = week_rosters.get(w)
+        if stored:
+            decision_states(json.loads(stored[0]), decisions)
+        history.append({'week': w, 'generated_at': created, 'current_week': w == week,
+                        'decisions': [{k: d.get(k) for k in ('id', 'title', 'recommendation', 'status', 'flip_condition', 'execution')}
+                                      for d in decisions]})
+    result['decision_history'] = history
     market = conn_props(season, week)
     result['market'] = None
     if market:
@@ -363,6 +475,9 @@ def get_overview(season=2026, week=1):
         health.update(status='limited', checked_at=market['generated_at'], detail=market['method'])
     if briefing:
         result['briefing'] = json.loads(briefing[0])
+        # Derived at read time, never written back: the stored briefing stays the
+        # research as written, and the badge always reflects the current roster.
+        decision_states(result, result['briefing'].get('decisions', []))
         health = next(s for s in result['source_health'] if s['name'] == 'Independent research')
         health.update(status='limited', checked_at=result['briefing']['generated_at'], detail=result['briefing']['coverage_note'])
     return result
@@ -396,6 +511,17 @@ def import_briefing(path):
     for item in payload['decisions'] + payload['news']:
         if not set(item.get('source_ids', [])) <= source_ids:
             raise ValueError('Unknown evidence source')
+    for decision in payload['decisions']:
+        # An `expects` block is optional, but a malformed one must fail here:
+        # silently ignored, it would read as "cannot be checked" forever.
+        expects = decision.get('expects')
+        if expects is None:
+            continue
+        if not isinstance(expects, dict) or not set(expects) <= set(EXPECTATIONS):
+            raise ValueError(f"Decision '{decision.get('id')}' expects must be an object using only: " + ', '.join(EXPECTATIONS))
+        for key, ids in expects.items():
+            if not isinstance(ids, list) or not all(isinstance(pid, int) for pid in ids):
+                raise ValueError(f"Decision '{decision.get('id')}' expects.{key} must be a list of player ids")
     instant(payload['generated_at'])
     with connect() as conn:
         conn.execute('INSERT OR REPLACE INTO briefings VALUES (?,?,?,?)', (payload['season'], payload['week'], payload['generated_at'], json.dumps(payload)))
