@@ -92,7 +92,8 @@ def serve(port, bind='127.0.0.1', extra_hosts=()):
                 routes = {'/api/v1/overview': view, '/api/v1/briefing': view['briefing'],
                           '/api/v1/waivers': view['free_agents'], '/api/v1/trade-offers': view['trade_inbox'],
                           '/api/v1/deadlines': view['deadlines'], '/api/v1/source-health': view['source_health'],
-                          '/api/v1/decisions': (view['briefing'] or {}).get('decisions', [])}
+                          '/api/v1/decisions': (view['briefing'] or {}).get('decisions', []),
+                          '/api/v1/attention': view['attention'], '/api/v1/changes': view['team_changes']}
                 # Computed only on request: it re-reads the snapshot.
                 if parsed.path == '/api/v1/market':
                     routes[parsed.path] = props.compare(season, week)

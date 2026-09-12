@@ -9,6 +9,7 @@ import sqlite3
 import ssl
 import urllib.request
 import zoneinfo
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 from pathlib import Path
@@ -21,6 +22,20 @@ DB = DATA / 'season.sqlite3'
 POS = {1: 'QB', 2: 'RB', 3: 'WR', 4: 'TE', 5: 'K', 16: 'DST'}
 SLOTS = {0: 'QB', 2: 'RB', 4: 'WR', 6: 'TE', 16: 'DST', 17: 'K', 20: 'Bench', 21: 'IR', 23: 'FLEX', 3: 'RB/WR', 5: 'WR/TE', 7: 'OP'}
 UNAVAILABLE = {'OUT', 'INJURY_RESERVE', 'SUSPENSION', 'SUSPENDED', 'PUP'}
+# A starter left in one of these before kickoff is an action. QUESTIONABLE is
+# only a check against the final injury report.
+ACT_STATUSES = UNAVAILABLE | {'DOUBTFUL'}
+STATUS_LABELS = {'ACTIVE': 'Active', 'QUESTIONABLE': 'Questionable', 'DOUBTFUL': 'Doubtful', 'OUT': 'Out',
+                 'INJURY_RESERVE': 'Injured reserve', 'SUSPENSION': 'Suspended', 'SUSPENDED': 'Suspended',
+                 'PUP': 'PUP list', 'DAY_TO_DAY': 'Day to day'}
+# ESPN nudges projections by a point or so between syncs; a move this large is
+# worth reporting as a change.
+PROJECTION_MOVE = 2.0
+# Projected gain, in league points, before a lineup difference is named at all
+# (below it the optimizer is splitting near-ties), and before it is called an
+# action rather than a lean worth checking.
+LINEUP_GAIN = 0.5
+LINEUP_ACT = 3.0
 
 # ESPN schedules waiver processing on its own clock, not the league's.
 ESPN_TZ = zoneinfo.ZoneInfo('America/New_York')
@@ -198,6 +213,150 @@ def decision_states(snapshot, decisions):
     return decisions
 
 
+def status_label(status):
+    return STATUS_LABELS.get(status) or (status or 'Unknown').replace('_', ' ').title()
+
+
+def team_changes(snapshots, team_id):
+    """What changed on one fantasy team across consecutive stored syncs.
+
+    `snapshots` are raw stored payloads, oldest first. A refresh cannot say when
+    something happened, only that it happened between two syncs, so each change
+    carries the first sync that saw it and the sync before that. Projections are
+    compared only inside one scoring week: at a week boundary every projection
+    moves, and none of that is news.
+    """
+    events = []
+    for before, after in zip(snapshots, snapshots[1:]):
+        old = next((t for t in before.get('teams', []) if t['id'] == team_id), None)
+        new = next((t for t in after.get('teams', []) if t['id'] == team_id), None)
+        if old is None or new is None:
+            continue
+        previous = {p['id']: p for p in old['roster']}
+        current = {p['id']: p for p in new['roster']}
+        found = []
+        for pid in sorted(current.keys() - previous.keys()):
+            p = current[pid]
+            found.append(('added', p, None, p['slot'], f"Added to the roster at {p['slot']}."))
+        for pid in sorted(previous.keys() - current.keys()):
+            p = previous[pid]
+            found.append(('dropped', p, p['slot'], None, f"No longer on the roster (was at {p['slot']})."))
+        for pid in sorted(previous.keys() & current.keys(), key=lambda i: (current[i]['slot_id'], i)):
+            p, q = previous[pid], current[pid]
+            if p.get('status') != q.get('status'):
+                found.append(('status', q, p.get('status'), q.get('status'),
+                              f"{status_label(p.get('status'))} → {status_label(q.get('status'))}."))
+            # With no game, nfl_team falls back to the draft-time team, which would
+            # read as a trade every bye week. Only scheduled teams are compared.
+            if p.get('kickoff') and q.get('kickoff') and p.get('nfl_team') != q.get('nfl_team'):
+                found.append(('nfl_team', q, p.get('nfl_team'), q.get('nfl_team'),
+                              f"NFL team {p.get('nfl_team')} → {q.get('nfl_team')}."))
+            if p.get('slot') != q.get('slot'):
+                found.append(('slot', q, p.get('slot'), q.get('slot'), f"Moved from {p.get('slot')} to {q.get('slot')}."))
+            if (before.get('week') == after.get('week') and p.get('projection') is not None
+                    and q.get('projection') is not None and abs(q['projection'] - p['projection']) >= PROJECTION_MOVE):
+                found.append(('projection', q, round(p['projection'], 1), round(q['projection'], 1),
+                              f"ESPN projection {p['projection']:.1f} → {q['projection']:.1f} "
+                              f"({q['projection'] - p['projection']:+.1f})."))
+        for kind, p, old_value, new_value, detail in found:
+            events.append({'id': f"{after['snapshot_id']}-{kind}-{p['id']}", 'kind': kind, 'player_id': p['id'],
+                           'name': p['name'], 'pos': p.get('pos'), 'from': old_value, 'to': new_value,
+                           'detail': detail, 'week': after.get('week'), 'observed_at': after['data_as_of'],
+                           'previous_observed_at': before['data_as_of']})
+    # Newest sync first; the sort is stable, so each sync keeps roster order.
+    events.sort(key=lambda e: e['observed_at'], reverse=True)
+    return events
+
+
+def roster_alerts(snapshot, team_id):
+    """Lineup problems read straight off one enriched snapshot.
+
+    No research and no forecast beyond ESPN's own numbers: an empty starting
+    slot, a starter with no game, a starter ESPN lists as unable or unlikely to
+    play, an injured-reserve player holding a roster spot, and the gap between
+    the submitted lineup and ESPN's strongest legal one. Locked starters are
+    skipped, because nothing can change them this week.
+    """
+    team = next((t for t in snapshot.get('teams', []) if t['id'] == team_id), None)
+    if team is None:
+        return []
+    roster = team['roster']
+    by_id = {p['id']: p for p in roster}
+    starters = [p for p in roster if p['slot_id'] not in (20, 21)]
+    alerts = []
+
+    def alert(key, severity, title, detail, players, act_by=None):
+        alerts.append({'id': key, 'severity': severity, 'title': title, 'detail': detail,
+                       'player_ids': [p['id'] for p in players], 'act_by': act_by})
+
+    filled = Counter(p['slot_id'] for p in starters)
+    missing = [s['label'] for s in snapshot['rules']['lineup_slots']
+               for _ in range(max(0, s['count'] - filled.get(s['id'], 0)))]
+    if missing:
+        alert('empty-slot', 'act', 'Empty starting slot', f"Nothing is starting at {', '.join(missing)}.", [])
+
+    scheduled = any(p.get('kickoff') for p in roster)
+    for p in starters:
+        if p['locked']:
+            continue
+        status = p.get('status')
+        if status in ACT_STATUSES:
+            alert(f"starter-status-{p['id']}", 'act', f"{p['name']} is listed {status_label(status).lower()}",
+                  f"Starting at {p['slot']}. Replace before kickoff unless reports confirm availability.",
+                  [p], p.get('kickoff'))
+        elif status == 'QUESTIONABLE':
+            alert(f"starter-status-{p['id']}", 'check', f"{p['name']} is questionable",
+                  f"Starting at {p['slot']}. Check the final injury report before kickoff.", [p], p.get('kickoff'))
+        # Kickoffs loaded for teammates but not for this player: no game this week.
+        if scheduled and not p.get('kickoff'):
+            alert(f"no-game-{p['id']}", 'act', f"{p['name']} has no game this week",
+                  f"Starting at {p['slot']} with no scheduled NFL game, usually a bye. Start someone who plays.", [p])
+
+    ir_slots = snapshot['rules'].get('ir_slots')
+    on_ir = sum(1 for p in roster if p['slot_id'] == 21)
+    final = "ESPN's own eligibility check is final."
+    for p in roster:
+        if p.get('status') != 'INJURY_RESERVE' or p['slot_id'] == 21:
+            continue
+        if ir_slots is None:
+            capacity, room = 'Check how many IR slots are open in ESPN.', True
+        elif on_ir >= ir_slots:
+            capacity, room = (f'All {ir_slots} IR slots are in use.' if ir_slots else 'This league has no IR slots.'), False
+        else:
+            capacity, room = f'{ir_slots - on_ir} of {ir_slots} IR slots open.', True
+        if not room:
+            alert(f"ir-{p['id']}", 'check', f"No open IR slot for {p['name']}",
+                  f"ESPN lists injured reserve. {capacity} The player is holding a roster spot at {p['slot']}.", [p])
+        elif p['locked']:
+            alert(f"ir-{p['id']}", 'later', f"Move {p['name']} to IR once the lineup unlocks",
+                  f"ESPN lists injured reserve. The {p['slot']} slot is locked for this week. {capacity} "
+                  f"Moving frees a roster spot; {final}", [p])
+        else:
+            alert(f"ir-{p['id']}", 'act', f"Move {p['name']} to IR",
+                  f"ESPN lists injured reserve and the player is at {p['slot']}. {capacity} "
+                  f"Moving frees a roster spot; {final}", [p])
+
+    submitted, best = team.get('submitted') or {}, team.get('recommended') or {}
+    if submitted.get('remaining_projection') is not None and best.get('remaining_projection') is not None:
+        gain = best['remaining_projection'] - submitted['remaining_projection']
+        chosen = {a['player_id'] for a in submitted.get('assignments', [])}
+        preferred = {a['player_id'] for a in best.get('assignments', [])}
+        ranked = lambda ids: sorted((by_id[i] for i in ids if i in by_id), key=lambda p: -(p['projection'] or 0))
+        ins, outs = ranked(preferred - chosen), ranked(chosen - preferred)
+        if gain >= LINEUP_GAIN and ins:
+            names = lambda players: ' and '.join(p['name'] for p in players)
+            lean = gain < LINEUP_ACT
+            alert('lineup-gap', 'check' if lean else 'act',
+                  f"Start {names(ins)} over {names(outs)}" if outs else f"Start {names(ins)}",
+                  f"ESPN projects +{gain:.1f} points for its strongest legal lineup. This is ESPN's baseline, "
+                  "not researched advice" + ("; a gain this small is a lean, so check news before switching." if lean else "."),
+                  ins + outs, min((p['kickoff'] for p in ins + outs if p.get('kickoff')), default=None))
+
+    rank = {'act': 0, 'check': 1, 'later': 2}
+    alerts.sort(key=lambda a: (rank[a['severity']], a['act_by'] or '9999'))
+    return alerts
+
+
 def lineup(roster, slots, assignments):
     indexed = {p['id']: p for p in roster}
     selected = [indexed[a['player_id']] for a in assignments]
@@ -359,7 +518,9 @@ def refresh(season=2026, week=1):
     slots = [{'id': int(k), 'label': SLOTS.get(int(k), f'Slot {k}'), 'count': int(v)} for k, v in settings['rosterSettings']['lineupSlotCounts'].items() if v and int(k) not in (20, 21)]
     slots.sort(key=lambda s: [0, 2, 4, 6, 23, 17, 16].index(s['id']) if s['id'] in [0, 2, 4, 6, 23, 17, 16] else 99)
     waivers = waiver_window(settings.get('acquisitionSettings', {}), data.get('status', {}).get('waiverLastExecutionDate'), observed)
-    rules = {'lineup_slots': slots, 'waiver_priority': next(t['waiver_priority'] for t in teams if t['id'] == my_id),
+    ir_slots = settings['rosterSettings']['lineupSlotCounts'].get('21')
+    rules = {'lineup_slots': slots, 'ir_slots': int(ir_slots) if ir_slots is not None else None,
+             'waiver_priority': next(t['waiver_priority'] for t in teams if t['id'] == my_id),
              'waiver_hours': settings.get('acquisitionSettings', {}).get('waiverHours'),
              'waiver_timing_verified': waivers['verified'],
              'trade_review_hours': settings.get('tradeSettings', {}).get('revisionHours'),
@@ -443,7 +604,19 @@ def get_overview(season=2026, week=1):
         # call made in week 3 is judged by week 3's roster rather than today's.
         week_rosters = {w: conn.execute('SELECT payload FROM snapshots WHERE season=? AND week=? ORDER BY created DESC LIMIT 1',
                                         (season, w)).fetchone() for w, _, _ in archive}
+        # This week's syncs plus the last one before the week, so a change made
+        # between weeks is still reported once.
+        synced = conn.execute('SELECT payload FROM snapshots WHERE season=? AND week=? ORDER BY created', (season, week)).fetchall()
+        before = conn.execute('SELECT payload FROM snapshots WHERE season=? AND week<? ORDER BY week DESC, created DESC LIMIT 1',
+                              (season, week)).fetchone()
     result = enrich(json.loads(row[0]))
+    # Both are derived on every read and never stored: they are ESPN's data
+    # restated, not research.
+    my_id = result.get('league', {}).get('my_team_id')
+    syncs = [json.loads(r[0]) for r in ([before] if before else []) + synced]
+    result['team_changes'] = {'team_id': my_id, 'since': syncs[0]['data_as_of'], 'until': result['data_as_of'],
+                              'syncs_compared': len(syncs), 'events': team_changes(syncs, my_id)}
+    result['attention'] = roster_alerts(result, my_id)
     result['generated_at'] = now()
     result['stale'] = (dt.datetime.now(dt.timezone.utc) - dt.datetime.fromisoformat(result['data_as_of'])).total_seconds() > 900
     if error and error[0] > result['data_as_of']:

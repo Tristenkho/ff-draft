@@ -311,5 +311,191 @@ class DecisionReconciliationTests(unittest.TestCase):
         self.assertEqual(decisions[0]["execution"]["state"], "executed")
         self.assertEqual(decisions[1]["execution"]["state"], "not executed")
 
+
+def rostered(pid, projection, slot_id=20, *, name=None, pos="RB", nfl_team="PIT", **kw):
+    p = player(pid, projection, slot_id=slot_id, **kw)
+    p.update(name=name or f"Player {pid}", pos=pos, slot=service.SLOTS[slot_id], nfl_team=nfl_team,
+             opponent="vs ATL" if p["kickoff"] else None)
+    return p
+
+
+def sync(snapshot_id, at, roster, *, week=1, others=()):
+    return {"snapshot_id": snapshot_id, "data_as_of": at, "week": week,
+            "teams": [{"id": 5, "roster": roster}, {"id": 6, "roster": list(others)}]}
+
+
+RB_FLEX = [{"id": 2, "label": "RB", "count": 1}, {"id": 23, "label": "FLEX", "count": 1}]
+
+
+def team_snapshot(roster, *, ir_slots=2, slots=RB_FLEX):
+    return service.enrich({"rules": {"lineup_slots": slots, "ir_slots": ir_slots},
+                           "league": {"my_team_id": 5}, "teams": [{"id": 5, "roster": roster}]})
+
+
+class TeamChangesTests(unittest.TestCase):
+    T1 = "2026-09-08T00:00:00+00:00"
+    T2 = "2026-09-09T00:00:00+00:00"
+    T3 = "2026-09-10T00:00:00+00:00"
+
+    def changes(self, *syncs):
+        return [(e["kind"], e["name"], e["from"], e["to"]) for e in service.team_changes(list(syncs), 5)]
+
+    def test_a_status_change_is_dated_by_the_first_sync_that_saw_it(self):
+        brown = dict(name="A.J. Brown", pos="WR")
+        events = service.team_changes([
+            sync("a", self.T1, [rostered(1, 13.2, 4, **brown)]),
+            sync("b", self.T2, [rostered(1, 13.2, 4, **brown)]),
+            sync("c", self.T3, [rostered(1, 13.2, 4, status="INJURY_RESERVE", **brown)])], 5)
+        self.assertEqual([(e["kind"], e["from"], e["to"]) for e in events], [("status", "ACTIVE", "INJURY_RESERVE")])
+        self.assertEqual((events[0]["observed_at"], events[0]["previous_observed_at"]), (self.T3, self.T2))
+        self.assertIn("Active → Injured reserve", events[0]["detail"])
+
+    def test_newest_sync_comes_first(self):
+        events = service.team_changes([
+            sync("a", self.T1, [rostered(1, 10, status="QUESTIONABLE")]),
+            sync("b", self.T2, [rostered(1, 10)]),
+            sync("c", self.T3, [rostered(1, 10, status="OUT")])], 5)
+        self.assertEqual([e["to"] for e in events], ["OUT", "ACTIVE"])
+
+    def test_a_flex_swap_reports_both_players(self):
+        self.assertCountEqual(self.changes(
+            sync("a", self.T1, [rostered(1, 11.2, 23, name="Burden"), rostered(2, 12.6, 20, name="Warren")]),
+            sync("b", self.T2, [rostered(1, 11.2, 20, name="Burden"), rostered(2, 12.6, 23, name="Warren")])),
+            [("slot", "Burden", "FLEX", "Bench"), ("slot", "Warren", "Bench", "FLEX")])
+
+    def test_adds_and_drops(self):
+        self.assertCountEqual(self.changes(
+            sync("a", self.T1, [rostered(1, 5.1, name="Rodriguez")]),
+            sync("b", self.T2, [rostered(2, 8.4, name="Holani")])),
+            [("added", "Holani", None, "Bench"), ("dropped", "Rodriguez", "Bench", None)])
+
+    def test_only_projection_moves_of_two_points_are_reported(self):
+        self.assertEqual(self.changes(
+            sync("a", self.T1, [rostered(1, 12.6), rostered(2, 5.1)]),
+            sync("b", self.T2, [rostered(1, 13.8), rostered(2, 7.6)])),
+            [("projection", "Player 2", 5.1, 7.6)])
+
+    def test_projections_are_not_compared_across_weeks(self):
+        self.assertEqual(self.changes(
+            sync("a", self.T1, [rostered(1, 18.6)], week=1),
+            sync("b", self.T2, [rostered(1, 10.0)], week=2)), [])
+
+    def test_a_player_without_a_game_is_not_reported_as_traded(self):
+        scheduled = sync("a", self.T1, [rostered(1, 10, nfl_team="NE")])
+        bye = sync("b", self.T2, [rostered(1, 10, nfl_team="PHI", kickoff=None)])
+        self.assertEqual(self.changes(scheduled, bye), [])
+        moved = sync("c", self.T3, [rostered(1, 10, nfl_team="PHI")])
+        self.assertEqual(self.changes(scheduled, moved), [("nfl_team", "Player 1", "NE", "PHI")])
+
+    def test_other_teams_are_ignored(self):
+        self.assertEqual(self.changes(
+            sync("a", self.T1, [rostered(1, 10)], others=[rostered(9, 10)]),
+            sync("b", self.T2, [rostered(1, 10)], others=[rostered(9, 10, status="OUT")])), [])
+
+
+class RosterAlertTests(unittest.TestCase):
+    def alerts(self, roster, **kw):
+        return service.roster_alerts(team_snapshot(roster, **kw), 5)
+
+    def starters(self, first=None):
+        """RB 13.7 and FLEX 12.6 starting, a 9.8 back on the bench: nothing to flag."""
+        return [first or rostered(1, 13.7, 2, eligible=(2, 23)), rostered(2, 12.6, 23, eligible=(2, 23)),
+                rostered(3, 9.8, eligible=(2, 23))]
+
+    def test_a_sound_lineup_flags_nothing(self):
+        self.assertEqual(self.alerts(self.starters()), [])
+
+    def test_a_projection_gap_names_the_swap_and_calls_it_a_lean(self):
+        roster = [rostered(1, 13.7, 2, eligible=(2, 23)),
+                  rostered(2, 11.2, 23, eligible=(23,), name="Luther Burden III"),
+                  rostered(3, 12.6, eligible=(2, 23), name="Jaylen Warren")]
+        [alert] = self.alerts(roster)
+        self.assertEqual(alert["title"], "Start Jaylen Warren over Luther Burden III")
+        self.assertEqual(alert["severity"], "check")
+        self.assertIn("+1.4", alert["detail"])
+        self.assertEqual(alert["player_ids"], [3, 2])
+
+    def test_a_large_projection_gap_is_an_action(self):
+        roster = [rostered(1, 13.7, 2, eligible=(2, 23)), rostered(2, 4.0, 23, eligible=(23,)),
+                  rostered(3, 12.6, eligible=(2, 23))]
+        self.assertEqual([(a["id"], a["severity"]) for a in self.alerts(roster)], [("lineup-gap", "act")])
+
+    def test_an_out_starter_before_kickoff_must_be_replaced(self):
+        alerts = self.alerts(self.starters(rostered(1, 0, 2, eligible=(2, 23), status="OUT")))
+        self.assertEqual([(a["id"], a["severity"]) for a in alerts],
+                         [("starter-status-1", "act"), ("lineup-gap", "act")])
+        self.assertEqual(alerts[0]["act_by"], FUTURE)
+        # ESPN's strongest lineup already benches the out player, so the fix is named.
+        self.assertEqual(alerts[1]["title"], "Start Player 3 over Player 1")
+
+    def test_a_questionable_starter_is_a_check_before_kickoff(self):
+        [alert] = self.alerts(self.starters(rostered(1, 13.7, 2, eligible=(2, 23), status="QUESTIONABLE")))
+        self.assertEqual((alert["id"], alert["severity"], alert["act_by"]), ("starter-status-1", "check", FUTURE))
+
+    def test_locked_starters_are_left_alone(self):
+        done = rostered(1, 0, 2, eligible=(2, 23), status="OUT", game_state="post", actual=5.1)
+        self.assertEqual(self.alerts(self.starters(done)), [])
+
+    def test_injured_reserve_in_a_locked_slot_waits_for_the_unlock(self):
+        brown = rostered(1, 13.2, 2, eligible=(2, 23, 21), status="INJURY_RESERVE", game_state="post",
+                         actual=5.1, name="A.J. Brown")
+        [alert] = self.alerts(self.starters(brown))
+        self.assertEqual((alert["severity"], alert["title"]), ("later", "Move A.J. Brown to IR once the lineup unlocks"))
+        self.assertIn("2 of 2 IR slots open", alert["detail"])
+
+    def test_injured_reserve_on_the_bench_can_move_now(self):
+        [alert] = self.alerts(self.starters() + [rostered(4, 0, status="INJURY_RESERVE")])
+        self.assertEqual((alert["id"], alert["severity"]), ("ir-4", "act"))
+
+    def test_a_full_ir_is_a_check_not_an_action(self):
+        roster = self.starters() + [rostered(5, 0, 21, status="OUT"), rostered(4, 0, status="INJURY_RESERVE")]
+        [alert] = self.alerts(roster, ir_slots=1)
+        self.assertEqual((alert["severity"], alert["title"]), ("check", "No open IR slot for Player 4"))
+
+    def test_unknown_ir_capacity_defers_to_espn(self):
+        [alert] = self.alerts(self.starters() + [rostered(4, 0, status="INJURY_RESERVE")], ir_slots=None)
+        self.assertIn("Check how many IR slots are open in ESPN", alert["detail"])
+
+    def test_an_empty_slot_is_flagged(self):
+        [alert] = self.alerts([rostered(1, 13.7, 2, eligible=(2, 23))])
+        self.assertEqual((alert["id"], alert["detail"]), ("empty-slot", "Nothing is starting at FLEX."))
+
+    def test_a_starter_with_no_game_is_flagged(self):
+        alerts = self.alerts(self.starters(rostered(1, 0, 2, eligible=(2, 23), kickoff=None)))
+        self.assertCountEqual([a["id"] for a in alerts], ["no-game-1", "lineup-gap"])
+
+    def test_actions_sort_ahead_of_checks(self):
+        roster = self.starters(rostered(1, 13.7, 2, eligible=(2, 23), status="QUESTIONABLE"))
+        roster.append(rostered(4, 0, status="INJURY_RESERVE"))
+        self.assertEqual([a["severity"] for a in self.alerts(roster)], ["act", "check"])
+
+    def test_a_team_missing_from_the_snapshot_has_no_alerts(self):
+        self.assertEqual(service.roster_alerts(team_snapshot(self.starters()), 99), [])
+
+
+class OverviewChangeLogTests(unittest.TestCase):
+    def test_overview_reports_the_week_and_the_sync_before_it(self):
+        def stored(snapshot_id, at, week, roster):
+            return {"schema_version": 1, "snapshot_id": snapshot_id, "generated_at": at, "data_as_of": at,
+                    "season": 2026, "week": week, "league": {"my_team_id": 5},
+                    "rules": {"lineup_slots": [{"id": 2, "label": "RB", "count": 1}], "ir_slots": 2},
+                    "teams": [{"id": 5, "roster": roster}], "warnings": [], "source_health": []}
+        rows = [stored("w1", "2026-09-08T00:00:00+00:00", 1, [rostered(1, 10, 2)]),
+                stored("w2a", "2026-09-15T00:00:00+00:00", 2, [rostered(1, 10, 2, status="QUESTIONABLE")]),
+                stored("w2b", "2026-09-16T00:00:00+00:00", 2,
+                       [rostered(1, 10, 2, status="QUESTIONABLE"), rostered(2, 8)])]
+        with tempfile.TemporaryDirectory() as temp, patch.object(service, "DATA", Path(temp)), \
+                patch.object(service, "DB", Path(temp) / "season.sqlite3"):
+            with service.connect() as conn:
+                for s in rows:
+                    conn.execute("INSERT INTO snapshots VALUES (?,?,?,?,?)",
+                                 (s["snapshot_id"], s["season"], s["week"], s["data_as_of"], json.dumps(s)))
+            view = service.get_overview(2026, 2)
+        changes = view["team_changes"]
+        self.assertEqual((changes["since"], changes["syncs_compared"]), ("2026-09-08T00:00:00+00:00", 3))
+        self.assertEqual([(e["kind"], e["player_id"]) for e in changes["events"]], [("added", 2), ("status", 1)])
+        self.assertEqual([a["id"] for a in view["attention"]], ["starter-status-1"])
+
+
 if __name__ == "__main__":
     unittest.main()

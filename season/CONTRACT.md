@@ -8,7 +8,7 @@ Overview object:
  schema_version:1, snapshot_id:string, generated_at:ISO, data_as_of:ISO,
  stale:boolean, warnings:[string], season:2026, week:1,
  league:{id:number,name:string,my_team_id:5,timezone:'America/Chicago'},
- rules:{lineup_slots:[{id:0,label:'QB',count:1}],waiver_priority:10,waiver_hours:24,waiver_timing_verified:false,trade_review_hours:24,trade_deadline:ISO|null,scoring:[{stat_id:string,points:number}]},
+ rules:{lineup_slots:[{id:0,label:'QB',count:1}],ir_slots:number|null,waiver_priority:10,waiver_hours:24,waiver_timing_verified:false,trade_review_hours:24,trade_deadline:ISO|null,scoring:[{stat_id:string,points:number}]},
  teams:[{id:number,name:string,abbrev:string,waiver_priority:number|null,roster:[PLAYER],submitted:LINEUP,recommended:LINEUP}],
  matchup:{id:number,my_team_id:5,opponent_team_id:number}|null,
  deadlines:[{id:string,label:string,at:ISO|null,verified:boolean,detail:string}],
@@ -18,10 +18,14 @@ Overview object:
  draft:{status:'frozen'|'unreconciled'|'in_progress',version:1,frozen_at:ISO|null,picks:[{overall:number,round:number,team_id:number,player_id:number,name:string,pos:string,ecr:number|null}],note:string},
  briefing:BRIEFING|null,
  decision_history:[{week:number,generated_at:ISO,current_week:boolean,decisions:[{id:string,title:string,recommendation:string,status:string,flip_condition:string,execution:EXECUTION}]}],
+ attention:[ALERT],
+ team_changes:{team_id:number|null,since:ISO,until:ISO,syncs_compared:number,events:[CHANGE]},
  market:{generated_at:ISO,method:string,events_priced:number,snapshot_id:string,stale_vs_snapshot:boolean,players_priced:number}|null
 }
 PLAYER={id:number,name:string,pos:string,nfl_team:string,status:string,slot_id:number,slot:string,owner_id:number,eligible_slots:[number],projection:number|null,actual:number|null,kickoff:ISO|null,opponent:string|null,game_state:'pre'|'in'|'post'|'unknown',locked:boolean,availability:string,week_outlook:[{week:number,projection:number|null,opponent:string|null,kickoff:ISO|null}],outlook:string,market_projection:number|null}
 EXECUTION={state:'executed'|'partly executed'|'not executed'|'not checkable',detail:string}
+ALERT={id:string,severity:'act'|'check'|'later',title:string,detail:string,player_ids:[number],act_by:ISO|null}
+CHANGE={id:string,kind:'added'|'dropped'|'status'|'slot'|'nfl_team'|'projection',player_id:number,name:string,pos:string|null,from:string|number|null,to:string|number|null,detail:string,week:number,observed_at:ISO,previous_observed_at:ISO}
 LINEUP={assignments:[{slot_id:number,slot:string,player_id:number}],projection:number|null,actual:number,remaining_projection:number|null,in_progress:boolean,complete:boolean,note:string}
 BRIEFING={title:string,season:number,week:number,generated_at:ISO,snapshot_id:string,summary:string,coverage_note:string,decisions:[{id:string,title:string,recommendation:string,rationale:string,counterargument:string,flip_condition:string,player_ids:[number],source_ids:[string],status:string,expects:{start:[number],bench:[number],roster:[number],drop:[number]}|null,execution:EXECUTION}],news:[{title:string,summary:string,player_ids:[number],source_ids:[string]}],sources:[{id:string,title:string,url:string,checked_at:ISO,published_at:string|null}],trade_ideas:[{title:string,benefit_us:string,benefit_partner:string,reason_to_decline:string,status:string}],watchlist:[{name:string,reason:string}]}
 ```
@@ -36,3 +40,5 @@ Waiver review is a real deadline, not a placeholder. It is the next ESPN process
 Decision history spans every briefing imported for the season, so a call survives the week it was made and can be reviewed afterwards. It is a projection of stored briefings, never a separate record: correcting a briefing by re-importing it corrects the history too.
 
 `export-static` freezes the stored snapshots into one self-contained HTML file with no server, no network and no credentials, the same shape as out/draft_terminal.html. The app detects `window.__SEASON_BUNDLE__` and reads from it instead of the API; Refresh becomes inert and the week selector offers only bundled weeks. The league id is nulled on export because the UI never renders it and an export may be shared. A browser cannot replace the server here: ESPN's credentialed endpoints send no CORS headers for a third-party origin, so a purely static page can never fetch the league itself.
+
+`attention` and `team_changes` restate ESPN syncs for the user's team and are never research; both are derived on every read and never stored. `attention` checks the current snapshot: an empty starting slot (`act`); an unlocked starter with no scheduled game (`act`), listed OUT, DOUBTFUL, INJURY_RESERVE, SUSPENSION or PUP (`act`) or QUESTIONABLE (`check`); a player ESPN lists on injured reserve outside an IR slot (`act`, `later` while the slot is locked, `check` when no IR slot is open or `ir_slots` shows none free); and the projected gain of ESPN's strongest legal lineup over the submitted one, named as the players to swap (nothing under 0.5 points, `check` under 3, `act` from 3). Locked starters are skipped because nothing can change them this week. Alerts sort act, check, later, then by `act_by`. `team_changes` walks every stored sync of the week plus the last sync before it, reporting roster adds and drops, status, lineup slot, NFL team (only when both syncs have a scheduled game, so a bye never reads as a trade) and projection moves of at least 2 points within one scoring week. A refresh only brackets when something happened, so each change carries the first sync that observed it (`observed_at`) and the one before (`previous_observed_at`), newest first. GET /api/v1/attention and /api/v1/changes return them. `ir_slots` is read from league settings on refresh and is null in snapshots taken before it existed.

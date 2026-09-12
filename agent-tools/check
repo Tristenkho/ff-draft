@@ -50,7 +50,10 @@ else:
     slots = sum(s['count'] for s in ov['rules']['lineup_slots'])
     for team in ov['teams']:
         assert len(team['recommended']['assignments']) <= slots, team['name']
-    print(f"overview ok: {len(ov['teams'])} teams, {slots} starting slots")
+    assert isinstance(ov['attention'], list), 'attention checks missing from overview'
+    assert ov['team_changes']['syncs_compared'] >= 1, 'change log missing from overview'
+    print(f"overview ok: {len(ov['teams'])} teams, {slots} starting slots, "
+          f"{len(ov['attention'])} attention items, {len(ov['team_changes']['events'])} changes")
 PY
 
 echo "ALL CHECKS PASSED"
