@@ -497,5 +497,116 @@ class OverviewChangeLogTests(unittest.TestCase):
         self.assertEqual([a["id"] for a in view["attention"]], ["starter-status-1"])
 
 
+LEAGUE_SCORING = [
+    {"stat_id": "3", "points": 0.04}, {"stat_id": "4", "points": 4}, {"stat_id": "24", "points": 0.1},
+    {"stat_id": "25", "points": 6}, {"stat_id": "26", "points": 2}, {"stat_id": "42", "points": 0.1},
+    {"stat_id": "43", "points": 6}, {"stat_id": "53", "points": 0.5}, {"stat_id": "72", "points": -2},
+    {"stat_id": "211", "points": 0.1}, {"stat_id": "212", "points": 0.25}, {"stat_id": "213", "points": 0.5},
+    {"stat_id": "95", "points": 0, "overrides": {"16": 2}}, {"stat_id": "99", "points": 0, "overrides": {"16": 1}},
+]
+# ESPN's Week 2 projected stat lines as returned on 2026-09-12; ESPN's totals were
+# 10.69 for Warren and 11.21 for Burden.
+WARREN_WEEK2 = {"23": 10.34, "24": 44.81, "25": 0.23, "26": 0.01, "42": 18.64, "43": 0.08, "53": 2.77,
+                "58": 3.43, "72": 0.05, "212": 2.44, "213": 1.11}
+BURDEN_WEEK2 = {"23": 0.55, "24": 2.94, "25": 0.02, "42": 54.68, "43": 0.31, "53": 4.32,
+                "58": 6.56, "72": 0.04, "212": 0.27, "213": 2.55}
+
+
+class ProjectionBreakdownTests(unittest.TestCase):
+    def warren(self, total=10.69):
+        return service.projection_breakdown(WARREN_WEEK2, LEAGUE_SCORING, "RB", total)
+
+    def test_categories_reproduce_espns_total(self):
+        breakdown = self.warren()
+        self.assertTrue(breakdown["reconciled"])
+        self.assertEqual([g["label"] for g in breakdown["groups"]],
+                         ["Rushing yards", "Receiving yards", "Receptions", "First downs", "Touchdowns", "Turnovers"])
+        self.assertAlmostEqual(sum(g["points"] for g in breakdown["groups"]), 10.69, delta=0.15)
+
+    def test_first_downs_are_their_own_category(self):
+        first_downs = next(g for g in self.warren()["groups"] if g["label"] == "First downs")
+        self.assertAlmostEqual(first_downs["points"], 2.44 * 0.25 + 1.11 * 0.5, delta=0.01)
+
+    def test_usage_is_reported_beside_the_points(self):
+        volume = {v["label"]: v["value"] for v in self.warren()["volume"]}
+        self.assertEqual((volume["Carries"], volume["Targets"], volume["Rushing first downs"]), (10.3, 3.4, 2.4))
+
+    def test_defense_points_come_from_the_dst_slot_override(self):
+        line = {"99": 2.27, "95": 0.82}
+        dst = service.projection_breakdown(line, LEAGUE_SCORING, "DST", 3.91)
+        self.assertEqual([(g["label"], g["points"]) for g in dst["groups"]], [("Sacks", 2.27), ("Takeaways", 1.64)])
+        self.assertTrue(dst["reconciled"])
+        # The same stats score nothing for a position without the override.
+        self.assertEqual(service.projection_breakdown(line, LEAGUE_SCORING, "RB", 0)["groups"], [])
+
+    def test_a_breakdown_that_misses_espns_total_is_flagged(self):
+        self.assertFalse(self.warren(total=15.0)["reconciled"])
+        self.assertFalse(self.warren(total=None)["reconciled"])
+
+    def test_enrich_scores_rostered_and_free_agents_and_drops_the_raw_line(self):
+        rostered_player = dict(rostered(1, 11.21, 23, eligible=(4, 23), pos="WR"), projected_stats=dict(BURDEN_WEEK2))
+        free_agent = dict(rostered(9, 10.69, eligible=(2, 23)), projected_stats=dict(WARREN_WEEK2))
+        view = service.enrich({"rules": {"lineup_slots": RB_FLEX, "scoring": LEAGUE_SCORING},
+                               "league": {"my_team_id": 5}, "teams": [{"id": 5, "roster": [rostered_player]}],
+                               "free_agents": [free_agent]})
+        for p in (view["teams"][0]["roster"][0], view["free_agents"][0]):
+            self.assertNotIn("projected_stats", p)
+            self.assertTrue(p["breakdown"]["reconciled"])
+
+
+class ComparePlayersTests(unittest.TestCase):
+    WARREN, BURDEN, BROWN, BLACK, HOLANI, CHARGERS = 4569987, 4685278, 4047646, 4696044, 4429835, -16024
+
+    def overview(self, briefing=None):
+        roster = [rostered(1, 13.7, 2, eligible=(2, 23), name="Cam Skattebo"),
+                  rostered(2, 18.6, 4, eligible=(4, 23), name="Ja'Marr Chase", pos="WR"),
+                  rostered(self.BROWN, 13.2, 4, eligible=(4, 23, 21), name="A.J. Brown", pos="WR",
+                           game_state="post", actual=5.1),
+                  rostered(self.WARREN, 12.6, 20, eligible=(2, 23), name="Jaylen Warren"),
+                  rostered(self.BURDEN, 11.2, 23, eligible=(4, 23), name="Luther Burden III", pos="WR"),
+                  rostered(self.CHARGERS, 6.7, 16, eligible=(16,), name="Chargers D/ST", pos="DST")]
+        free_agents = [dict(rostered(self.BLACK, 8.5, eligible=(2, 23), name="Kaelon Black"), availability="WAIVERS"),
+                       dict(rostered(self.HOLANI, 12.4, eligible=(2, 23), name="George Holani"), availability="WAIVERS")]
+        slots = [{"id": 2, "label": "RB", "count": 1}, {"id": 4, "label": "WR", "count": 2},
+                 {"id": 23, "label": "FLEX", "count": 1}, {"id": 16, "label": "D/ST", "count": 1}]
+        return service.enrich({"snapshot_id": "snap", "season": 2026, "week": 1, "rules": {"lineup_slots": slots},
+                               "league": {"my_team_id": 5}, "teams": [{"id": 5, "name": "Tristen", "roster": roster}],
+                               "free_agents": free_agents, "briefing": briefing})
+
+    def test_names_the_leader_and_calls_a_small_edge_a_lean(self):
+        result = service.compare_players(self.overview(), [self.BURDEN, self.WARREN])
+        self.assertEqual((result["leader_id"], result["edge"], result["strength"]), (self.WARREN, 1.4, "lean"))
+        self.assertEqual([p["name"] for p in result["players"]], ["Luther Burden III", "Jaylen Warren"])
+        self.assertEqual(result["players"][0]["owner"], "Tristen")
+
+    def test_a_near_tie_is_not_called_a_lean(self):
+        result = service.compare_players(self.overview(), [self.WARREN, self.HOLANI])
+        self.assertEqual(result["strength"], "none")
+
+    def test_shared_slots_and_the_earliest_unlocked_kickoff(self):
+        result = service.compare_players(self.overview(), [self.WARREN, self.BURDEN, self.BROWN])
+        self.assertEqual(result["shared_slots"], ["FLEX"])
+        # Brown's game is over, so only the unlocked players set the deadline.
+        self.assertEqual(result["decide_by"], FUTURE)
+
+    def test_a_roster_decision_across_positions_has_no_shared_slot(self):
+        result = service.compare_players(self.overview(), [self.BLACK, self.CHARGERS])
+        self.assertEqual(result["shared_slots"], [])
+        self.assertIsNone(result["players"][0]["owner"])
+
+    def test_research_mentioning_either_player_comes_along(self):
+        briefing = {"decisions": [{"id": "flex", "player_ids": [self.WARREN, self.BURDEN]}, {"id": "k", "player_ids": [7]}],
+                    "news": [{"title": "Burden cleared", "player_ids": [self.BURDEN]}]}
+        result = service.compare_players(self.overview(briefing), [self.WARREN, self.BURDEN])
+        self.assertEqual([d["id"] for d in result["decisions"]], ["flex"])
+        self.assertEqual([n["title"] for n in result["news"]], ["Burden cleared"])
+
+    def test_rejects_unknown_players_and_a_single_player(self):
+        with self.assertRaises(LookupError):
+            service.compare_players(self.overview(), [self.WARREN, 999])
+        with self.assertRaises(ValueError):
+            service.compare_players(self.overview(), [self.WARREN, str(self.WARREN)])
+
+
 if __name__ == "__main__":
     unittest.main()

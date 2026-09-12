@@ -1,4 +1,4 @@
-"""python3 -m season {refresh,refresh-props,serve,export,export-static,props,import-briefing,seasons}."""
+"""python3 -m season {refresh,refresh-props,serve,export,export-static,props,import-briefing,seasons,compare}."""
 import argparse
 import json
 import sys
@@ -97,6 +97,9 @@ def serve(port, bind='127.0.0.1', extra_hosts=()):
                 # Computed only on request: it re-reads the snapshot.
                 if parsed.path == '/api/v1/market':
                     routes[parsed.path] = props.compare(season, week)
+                if parsed.path == '/api/v1/compare':
+                    ids = [i for i in query.get('ids', [''])[0].split(',') if i]
+                    return self.send(200, {'snapshot_id': view['snapshot_id'], 'data': service.compare_players(view, ids)})
                 if parsed.path in routes:
                     return self.send(200, routes[parsed.path] if parsed.path == '/api/v1/overview' else {
                         k: view[k] for k in ['schema_version', 'snapshot_id', 'generated_at', 'data_as_of', 'stale', 'warnings']
@@ -150,7 +153,8 @@ def serve(port, bind='127.0.0.1', extra_hosts=()):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['refresh', 'serve', 'export', 'import-briefing', 'seasons', 'refresh-props', 'props', 'export-static', 'briefing-status'])
+    parser.add_argument('command', choices=['refresh', 'serve', 'export', 'import-briefing', 'seasons', 'refresh-props', 'props', 'export-static', 'briefing-status', 'compare'])
+    parser.add_argument('--ids', help='compare: comma-separated ESPN player ids, e.g. 4569987,4685278')
     parser.add_argument('--season', type=int, default=2026)
     parser.add_argument('--week', type=int, default=1)
     parser.add_argument('--port', type=int, default=8765)
@@ -192,6 +196,11 @@ def main():
             out = args.file or f'.season/exports/season_{args.season}_week{args.week}.html'
             weeks = None if args.all_weeks else [args.week]
             print(json.dumps(bundle.write(out, args.season, weeks)))
+        elif args.command == 'compare':
+            if not args.ids:
+                parser.error('--ids is required, e.g. --ids 4569987,4685278')
+            view = service.get_overview(args.season, args.week)
+            print(json.dumps(service.compare_players(view, args.ids.split(',')), indent=2))
         elif args.command == 'export':
             print(json.dumps(service.get_overview(args.season, args.week), indent=2))
         elif args.command == 'import-briefing':

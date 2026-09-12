@@ -36,6 +36,27 @@ PROJECTION_MOVE = 2.0
 # action rather than a lean worth checking.
 LINEUP_GAIN = 0.5
 LINEUP_ACT = 3.0
+# ESPN stat ids grouped into the categories a comparison reads. Scoring decides
+# the points; a group only names where they came from.
+SCORE_GROUPS = (
+    ('Passing yards', {3}), ('Rushing yards', {24}), ('Receiving yards', {42}), ('Receptions', {53}),
+    ('First downs', {211, 212, 213}), ('Touchdowns', {4, 25, 43}), ('Two-point conversions', {19, 26, 44}),
+    ('Turnovers', {20, 72}), ('Field goals', {74, 77, 80, 198, 201}), ('Extra points', {86}),
+    ('Missed kicks', {85, 88}), ('Sacks', {99}), ('Takeaways', {95, 96}),
+    ('Points allowed', {89, 90, 91, 92, 123, 124, 125}),
+    ('Yards allowed', {128, 129, 130, 131, 132, 133, 134, 135, 136}),
+    ('Return and defensive TDs', {63, 93, 101, 102, 103, 104}), ('Other defense', {97, 98, 206, 209}),
+)
+# Projected usage shown beside the points: expected counts, not scoring.
+VOLUME_STATS = ((0, 'Pass attempts'), (3, 'Passing yards'), (23, 'Carries'), (24, 'Rushing yards'),
+                (58, 'Targets'), (53, 'Receptions'), (42, 'Receiving yards'), (211, 'Passing first downs'),
+                (212, 'Rushing first downs'), (213, 'Receiving first downs'), (99, 'Sacks'),
+                (95, 'Interceptions'), (96, 'Fumble recoveries'), (120, 'Points allowed'),
+                (127, 'Yards allowed'), (84, 'Field goal attempts'), (83, 'Field goals made'),
+                (87, 'Extra point attempts'))
+# ESPN keys per-position scoring overrides by the lineup slot a position fills.
+POSITION_SLOT = {'QB': 0, 'RB': 2, 'WR': 4, 'TE': 6, 'DST': 16, 'K': 17}
+COMPARE_MAX = 4
 
 # ESPN schedules waiver processing on its own clock, not the league's.
 ESPN_TZ = zoneinfo.ZoneInfo('America/New_York')
@@ -92,6 +113,17 @@ def stats(player, season, week, source):
         if (item.get('seasonId') == season and item.get('scoringPeriodId') == week
                 and item.get('statSourceId') == source and item.get('statSplitTypeId') == 1):
             return item.get('appliedTotal')
+    return None
+
+
+def stat_line(player, season, week, keep):
+    """ESPN's projected stat line for one week, trimmed to the stats that scoring
+    or the compare view reads. Values are expected counts, so rarely whole."""
+    for item in player.get('stats', []):
+        if (item.get('seasonId') == season and item.get('scoringPeriodId') == week
+                and item.get('statSourceId') == 1 and item.get('statSplitTypeId') == 1):
+            line = {k: round(v, 2) for k, v in (item.get('stats') or {}).items() if k in keep and v and abs(v) >= 0.005}
+            return line or None
     return None
 
 
@@ -357,6 +389,70 @@ def roster_alerts(snapshot, team_id):
     return alerts
 
 
+def projection_breakdown(line, scoring, pos, total):
+    """Where a projection's points come from, under this league's scoring.
+
+    ESPN returns the projected stat line and its total but not the points per
+    stat, so the line is scored here. The result is only trustworthy if it adds
+    back up to ESPN's own total; `reconciled` says whether it does, and a
+    breakdown that does not should not be shown as fact.
+    """
+    slot = str(POSITION_SLOT.get(pos))
+    group_of = {sid: label for label, ids in SCORE_GROUPS for sid in ids}
+    points_by_group, scored = {}, 0.0
+    for item in scoring:
+        value = line.get(str(item['stat_id']))
+        points = (item.get('overrides') or {}).get(slot, item.get('points', 0))
+        if not value or not points:
+            continue
+        label = group_of.get(int(item['stat_id']), 'Other')
+        points_by_group[label] = points_by_group.get(label, 0.0) + value * points
+        scored += value * points
+    order = [label for label, _ in SCORE_GROUPS] + ['Other']
+    reconciled = total is not None and abs(scored - total) <= max(0.15, 0.02 * abs(total))
+    return {'reconciled': reconciled, 'scored_total': round(scored, 2),
+            'groups': [{'label': label, 'points': round(points_by_group[label], 2)} for label in order
+                       if abs(points_by_group.get(label, 0.0)) >= 0.05],
+            'volume': [{'label': label, 'value': round(line[str(sid)], 1)} for sid, label in VOLUME_STATS
+                       if abs(line.get(str(sid), 0)) >= 0.05]}
+
+
+def compare_players(overview, ids):
+    """Two to four players from one enriched overview, side by side.
+
+    This is the record the compare view renders, so an agent answering "A or B?"
+    reads what the page shows. It restates ESPN's numbers and the imported
+    research; the only judgement is the lean threshold shared with the lineup
+    checks.
+    """
+    ids = list(dict.fromkeys(int(i) for i in ids))
+    if not 2 <= len(ids) <= COMPARE_MAX:
+        raise ValueError(f'Compare needs 2 to {COMPARE_MAX} distinct player ids')
+    owners = {p['id']: t for t in overview['teams'] for p in t['roster']}
+    pool = {p['id']: p for p in overview.get('free_agents', [])}
+    pool.update({p['id']: p for t in overview['teams'] for p in t['roster']})
+    missing = [i for i in ids if i not in pool]
+    if missing:
+        raise LookupError('Not in this snapshot: ' + ', '.join(str(i) for i in missing))
+    players = [pool[i] for i in ids]
+    ranked = sorted((p for p in players if p.get('projection') is not None), key=lambda p: -p['projection'])
+    edge = round(ranked[0]['projection'] - ranked[1]['projection'], 2) if len(ranked) >= 2 else None
+    shared = [s['label'] for s in overview['rules']['lineup_slots'] if all(s['id'] in p['eligible_slots'] for p in players)]
+    briefing = overview.get('briefing') or {}
+    mentions = lambda item: bool(set(item.get('player_ids') or []) & set(ids))
+    return {
+        'snapshot_id': overview.get('snapshot_id'), 'season': overview.get('season'), 'week': overview.get('week'),
+        'players': [dict(p, owner=owners[p['id']]['name'] if p['id'] in owners else None) for p in players],
+        'leader_id': ranked[0]['id'] if edge else None, 'edge': edge,
+        'strength': None if edge is None else 'none' if edge < LINEUP_GAIN else 'lean' if edge < LINEUP_ACT else 'clear',
+        'shared_slots': shared,
+        'decide_by': min((p['kickoff'] for p in players if p.get('kickoff') and not p.get('locked')), default=None),
+        'decisions': [d for d in briefing.get('decisions', []) if mentions(d)],
+        'news': [n for n in briefing.get('news', []) if mentions(n)],
+        'note': "ESPN's league-scored projection is the only forecast. A breakdown is trustworthy only when it reconciles to ESPN's total.",
+    }
+
+
 def lineup(roster, slots, assignments):
     indexed = {p['id']: p for p in roster}
     selected = [indexed[a['player_id']] for a in assignments]
@@ -423,6 +519,13 @@ def optimize(roster, slots):
 def enrich(snapshot):
     snapshot = copy.deepcopy(snapshot)
     slots = [s for s in snapshot['rules']['lineup_slots'] for _ in range(s['count'])]
+    # Scored once here so the page and agents read the same breakdown; the raw
+    # line stays in the stored snapshot and is not shipped again.
+    scoring = snapshot['rules'].get('scoring', [])
+    for p in [p for t in snapshot['teams'] for p in t['roster']] + snapshot.get('free_agents', []):
+        line = p.pop('projected_stats', None)
+        if line:
+            p['breakdown'] = projection_breakdown(line, scoring, p.get('pos'), p.get('projection'))
     for team in snapshot['teams']:
         for p in team['roster']:
             p['locked'] = locked(p)
@@ -484,6 +587,10 @@ def refresh(season=2026, week=1):
         for entry in t.get('roster', {}).get('entries', []):
             all_players.setdefault(entry['playerId'], entry['playerPoolEntry']['player'])
 
+    # Keep only what scoring or the compare view reads; the full line is ~60 stats.
+    keep = ({str(s['statId']) for s in data['settings']['scoringSettings']['scoringItems']}
+            | {str(sid) for sid, _ in VOLUME_STATS})
+
     def player_view(player, slot=20, owner=0):
         pid = player['id']
         full = pools[week].get(pid, {}).get('player', player)
@@ -500,7 +607,8 @@ def refresh(season=2026, week=1):
                 'projection': stats(full, season, week, 1), 'actual': stats(full, season, week, 0),
                 'kickoff': game.get('kickoff'), 'opponent': game.get('opponent'), 'game_state': game.get('game_state', 'unknown'),
                 'locked': False, 'availability': pools[week].get(pid, {}).get('status', 'ONTEAM' if owner else 'UNKNOWN'),
-                'week_outlook': outlook, 'outlook': full.get('seasonOutlook', '')}
+                'week_outlook': outlook, 'outlook': full.get('seasonOutlook', ''),
+                'projected_stats': stat_line(full, season, week, keep)}
 
     teams = [{'id': t['id'], 'name': MANAGERS.get(t['id']) or (t.get('name') or f"Team {t['id']}").strip(),
               'espn_name': (t.get('name') or '').strip(), 'manager': MANAGERS.get(t['id']),
@@ -525,7 +633,10 @@ def refresh(season=2026, week=1):
              'waiver_timing_verified': waivers['verified'],
              'trade_review_hours': settings.get('tradeSettings', {}).get('revisionHours'),
              'trade_deadline': instant(settings.get('tradeSettings', {}).get('deadlineDate')),
-             'scoring': [{'stat_id': str(s['statId']), 'points': s.get('points', 0)} for s in settings['scoringSettings']['scoringItems']]}
+             # Overrides carry D/ST scoring, which ESPN stores as 0 points plus a per-slot value.
+             'scoring': [{'stat_id': str(s['statId']), 'points': s.get('points', 0),
+                          **({'overrides': s['pointsOverrides']} if s.get('pointsOverrides') else {})}
+                         for s in settings['scoringSettings']['scoringItems']]}
     pending = data.get('pendingTransactions')
     offers = []
     for tx in pending or []:
@@ -617,6 +728,7 @@ def get_overview(season=2026, week=1):
     result['team_changes'] = {'team_id': my_id, 'since': syncs[0]['data_as_of'], 'until': result['data_as_of'],
                               'syncs_compared': len(syncs), 'events': team_changes(syncs, my_id)}
     result['attention'] = roster_alerts(result, my_id)
+    result['thresholds'] = {'lineup_gain': LINEUP_GAIN, 'lineup_act': LINEUP_ACT}
     result['generated_at'] = now()
     result['stale'] = (dt.datetime.now(dt.timezone.utc) - dt.datetime.fromisoformat(result['data_as_of'])).total_seconds() > 900
     if error and error[0] > result['data_as_of']:

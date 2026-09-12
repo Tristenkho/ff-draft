@@ -52,6 +52,13 @@ else:
         assert len(team['recommended']['assignments']) <= slots, team['name']
     assert isinstance(ov['attention'], list), 'attention checks missing from overview'
     assert ov['team_changes']['syncs_compared'] >= 1, 'change log missing from overview'
+    # A breakdown is only shown when it adds back up to ESPN's total; if most do
+    # not, the league scoring or stat mapping has drifted.
+    players = [p for t in ov['teams'] for p in t['roster']] + ov['free_agents']
+    scored = [p for p in players if p.get('breakdown')]
+    unreconciled = [f"{p['name']} {p['breakdown']['scored_total']} vs {p['projection']}" for p in scored if not p['breakdown']['reconciled']]
+    assert len(unreconciled) <= 0.05 * len(scored), f'breakdowns do not reproduce ESPN totals: {unreconciled[:5]}'
+    print(f"breakdowns: {len(scored) - len(unreconciled)}/{len(scored)} reconcile to ESPN's projection")
     print(f"overview ok: {len(ov['teams'])} teams, {slots} starting slots, "
           f"{len(ov['attention'])} attention items, {len(ov['team_changes']['events'])} changes")
 PY
