@@ -48,6 +48,15 @@ frozen history and still serves the site root.
 The `refresh-ff-season` skill in `.claude/skills/` wraps this and is symlinked
 into `~/.codex/skills/`, so Codex and Claude Code run the identical file.
 
+## External ROS research
+Before giving waiver or trade advice, read `season/research/ros_rankings_2026.json`.
+It is the project-owned external research layer and should drive rest-of-season
+player comparisons. ESPN's `projection` remains the league-specific weekly
+baseline only, not a ROS ranking. Join the research to the current ESPN
+snapshot by player id, account for source dates and health/role changes, and
+surface disagreement between sources. Public PPR ROS ranks are relative
+evidence, not exact forecasts under this league's first-down scoring.
+
 ## Delivery automation
 - After completing and validating requested code or site changes, automatically
   stage only the files owned by that task, create a focused commit, and push it.

@@ -34,6 +34,13 @@ BRIEFING={title:string,season:number,week:number,generated_at:ISO,snapshot_id:st
 ```
 Briefing may be stale vs snapshot; UI must show its own generated time and use snapshot comparison to label 'Research predates this sync; recheck decisions'. Projections are ESPN league scoring only, not consensus. Recommended lineups are projection baselines, not independently researched picks. Opponent default recommended; allow submitted toggle. No win probability. When either forecast incomplete/in progress, do not name projected winner from incomplete totals. Player drawer via player query; escape all external data. All kickoff times America/Chicago. No fake data production fallback. Empty states explicit. Focused first release, source evidence via links and JSON export. No automatic research promise: user invokes subscription agent and imports briefing locally via CLI.
 
+The manually maintained external ROS research layer lives at
+`season/research/ros_rankings_2026.json`. It is separate from the ESPN snapshot
+and must be consulted first for ROS waiver and trade decisions. Its public PPR
+and trade-value sources are relative evidence, not exact league-scoring
+projections; current ownership, availability and injuries always come from the
+latest read-only ESPN snapshot.
+
 Market projections are a second opinion, never a replacement: `projection` stays ESPN's and `market_projection` is derived from de-vigged sportsbook lines converted with league scoring and the measured nflverse first-down rates. Absent a posted line the value is null and the UI shows 'no line' rather than zero. Market totals exclude multi-touchdown games and any unpriced component, so they are deliberately conservative: compare players against each other, not the market total against ESPN's. Refreshing ESPN never fetches odds; `refresh-props` is a separate explicit command requiring an odds API key.
 
 A decision's `status` is what the research author wrote; `execution` is derived at read time by comparing its `expects` block to the roster, so a recommendation the user has carried out shows as executed without anyone marking it. It is never written back to the stored briefing, and each briefed week is reconciled against that week's own latest snapshot rather than today's. `expects` is optional and lists player ids only: `start` must be in the submitted lineup, `bench` must be rostered and not starting, `roster` must be owned, `drop` must not be. A decision stated in prose alone reports `not checkable` rather than being parsed for intent, because a wrong "done" badge is worse than none. A malformed `expects` is rejected at import.

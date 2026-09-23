@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "season": 2026,
+  "updated_on": "2026-09-23",
+  "purpose": "External rest-of-season research for waiver and trade decisions. This is a relative market layer, not a replacement for the league-scored weekly forecast.",
+  "league_context": {
+    "format": "12-team redraft, 1QB",
+    "league_scoring": "0.5 PPR with first-down bonuses",
+    "translation_warning": "Most public ROS rankings below are PPR consensus or trade-value proxies. Use them to compare players and tiers; do not treat them as exact points in this league."
+  },
+  "decision_policy": {
+    "use_order": [
+      "External ROS consensus and market value",
+      "Agreement or disagreement across independent sources",
+      "Role, health, schedule and playoff outlook",
+      "Roster construction and replacement value",
+      "ESPN projection for the current scoring week"
+    ],
+    "rules": [
+      "Read this file before giving waiver or trade advice.",
+      "ESPN projection is the league-specific weekly baseline only; it is not a ROS ranking.",
+      "Join this research to the current ESPN snapshot by player id because ownership, availability and injury status change.",
+      "Surface source disagreement and stale or paywalled evidence instead of silently presenting one source as truth.",
+      "A public PPR rank is relative evidence, not a direct forecast under this league's first-down scoring."
+    ]
+  },
+  "sources": [
+    {
+      "id": "leaguelogs_ros_ppr_w3",
+      "publisher": "LeagueLogs / FantasyPros ECR",
+      "kind": "expert_consensus_ros",
+      "format": "PPR",
+      "url": "https://leaguelogs.com/rankings/ros/ppr/wr",
+      "checked_on": "2026-09-23",
+      "notes": "Public consensus page used for positional ROS ranks. The overall PPR page is https://leaguelogs.com/rankings/ros."
+    },
+    {
+      "id": "fantasypros_trade_values_w3",
+      "publisher": "FantasyPros",
+      "kind": "analyst_trade_value_proxy",
+      "format": "PPR redraft",
+      "url": "https://www.fantasypros.com/2026/09/fantasy-football-trade-value-chart-week-3-2026/",
+      "checked_on": "2026-09-23",
+      "notes": "Trade values are useful for package calibration, but should be adjusted for this roster's positional needs and injury risk."
+    },
+    {
+      "id": "pff_ros_context_2026",
+      "publisher": "PFF",
+      "kind": "analyst_ros_context",
+      "format": "ROS",
+      "url": "https://www.pff.com/news/fantasy-football-rest-of-season-rankings",
+      "checked_on": "2026-09-23",
+      "notes": "Independent ROS context. The public article indicates current movement in the rankings; exact tables may be subscription-gated, so no exact PFF rank is invented here."
+    },
+    {
+      "id": "rotoballer_waiver_w3",
+      "publisher": "RotoBaller",
+      "kind": "waiver_context",
+      "format": "Week 3 waiver / ROS add context",
+      "url": "https://www.rotoballer.com/waiver-wire-rankings-fantasy-football-week-3-2026/1946337",
+      "checked_on": "2026-09-23",
+      "notes": "Used for independent waiver context, not as a substitute for current roster availability."
+    },
+    {
+      "id": "rotoballer_shaheed_w3",
+      "publisher": "RotoBaller",
+      "kind": "player_role_context",
+      "format": "Week 3 analysis",
+      "url": "https://www.rotoballer.com/player-news/rashid-shaheed-remains-a-boom-or-bust-stash/1947486",
+      "checked_on": "2026-09-23",
+      "notes": "Specific role and volatility context for Rashid Shaheed."
+    }
+  ],
+  "players": [
+    {
+      "player_id": 4362628,
+      "name": "Ja'Marr Chase",
+      "position": "WR",
+      "ros_ppr_positional_rank": 1.6,
+      "sources": ["leaguelogs_ros_ppr_w3"]
+    },
+    {
+      "player_id": 4595348,
+      "name": "Malik Nabers",
+      "position": "WR",
+      "ros_ppr_positional_rank": 14.2,
+      "ros_ppr_overall_rank": 30.0,
+      "trade_value": 36.6,
+      "sources": ["leaguelogs_ros_ppr_w3", "fantasypros_trade_values_w3"],
+      "notes": "Elite upside, but current return-from-ACL health and quarterback uncertainty make the range of outcomes wider than the consensus rank implies."
+    },
+    {
+      "player_id": 4047646,
+      "name": "A.J. Brown",
+      "position": "WR",
+      "ros_ppr_overall_rank": 52.0,
+      "trade_value": 29.5,
+      "sources": ["leaguelogs_ros_ppr_w3", "fantasypros_trade_values_w3"],
+      "notes": "High-end per-game talent with meaningful current injury uncertainty; do not value the rank as if the missed time were risk-free."
+    },
+    {
+      "player_id": 4569987,
+      "name": "Jaylen Warren",
+      "position": "RB",
+      "ros_ppr_overall_rank": 82.0,
+      "trade_value": 25.5,
+      "sources": ["leaguelogs_ros_ppr_w3", "fantasypros_trade_values_w3"],
+      "notes": "The public market still assigns useful RB value; moving him should require a real upgrade rather than being a throw-in."
+    },
+    {
+      "player_id": 4596448,
+      "name": "Bucky Irving",
+      "position": "RB",
+      "ros_ppr_overall_rank": 47.0,
+      "sources": ["leaguelogs_ros_ppr_w3"]
+    },
+    {
+      "player_id": 4696981,
+      "name": "Cam Skattebo",
+      "position": "RB",
+      "ros_ppr_overall_rank": 53.0,
+      "sources": ["leaguelogs_ros_ppr_w3"]
+    },
+    {
+      "player_id": 4685278,
+      "name": "Luther Burden III",
+      "position": "WR",
+      "ros_ppr_positional_rank": 25.0,
+      "ros_ppr_overall_rank": 56.7,
+      "sources": ["leaguelogs_ros_ppr_w3"]
+    },
+    {
+      "player_id": 3121422,
+      "name": "Terry McLaurin",
+      "position": "WR",
+      "ros_ppr_positional_rank": 27.0,
+      "ros_ppr_overall_rank": 57.3,
+      "sources": ["leaguelogs_ros_ppr_w3"]
+    },
+    {
+      "player_id": 4688813,
+      "name": "Josh Downs",
+      "position": "WR",
+      "ros_ppr_positional_rank": 29.0,
+      "ros_ppr_overall_rank": 61.0,
+      "sources": ["leaguelogs_ros_ppr_w3"]
+    },
+    {
+      "player_id": 4870653,
+      "name": "KC Concepcion",
+      "position": "WR",
+      "ros_ppr_positional_rank": 39.0,
+      "ros_ppr_overall_rank": 77.0,
+      "trade_value": 17.7,
+      "sources": ["leaguelogs_ros_ppr_w3", "fantasypros_trade_values_w3"],
+      "notes": "Useful upside profile, but the crowded Cleveland receiver room makes the immediate floor less certain."
+    },
+    {
+      "player_id": 4361432,
+      "name": "Romeo Doubs",
+      "position": "WR",
+      "ros_ppr_positional_rank": 40.0,
+      "ros_ppr_overall_rank": 88.0,
+      "trade_value": 15.6,
+      "sources": ["leaguelogs_ros_ppr_w3", "fantasypros_trade_values_w3"],
+      "notes": "More attractive as a free bench add than as a centerpiece; market sees a plausible weekly role with limited elite-ceiling certainty."
+    },
+    {
+      "player_id": 4429025,
+      "name": "Quentin Johnston",
+      "position": "WR",
+      "ros_ppr_positional_rank": 44.0,
+      "sources": ["leaguelogs_ros_ppr_w3"]
+    },
+    {
+      "player_id": 3916433,
+      "name": "Jakobi Meyers",
+      "position": "WR",
+      "ros_ppr_positional_rank": 46.0,
+      "ros_ppr_overall_rank": 93.7,
+      "trade_value": 14.6,
+      "sources": ["leaguelogs_ros_ppr_w3", "fantasypros_trade_values_w3"]
+    },
+    {
+      "player_id": 4032473,
+      "name": "Rashid Shaheed",
+      "position": "WR",
+      "ros_ppr_positional_rank": 62.0,
+      "trade_value": 9.3,
+      "sources": ["leaguelogs_ros_ppr_w3", "fantasypros_trade_values_w3", "rotoballer_shaheed_w3"],
+      "notes": "Boom-or-bust bench stash rather than a priority claim when steadier options are available."
+    },
+    {
+      "player_id": 4362249,
+      "name": "Jayden Reed",
+      "position": "WR",
+      "ros_ppr_positional_rank": 72.0,
+      "sources": ["leaguelogs_ros_ppr_w3"]
+    },
+    {
+      "player_id": 4869645,
+      "name": "Caleb Douglas",
+      "position": "WR",
+      "ros_ppr_positional_rank": 56.0,
+      "sources": ["leaguelogs_ros_ppr_w3"]
+    }
+  ],
+  "current_decision_notes": [
+    {
+      "question": "A.J. Brown plus Jaylen Warren for Malik Nabers",
+      "answer": "Decline or counter with A.J. Brown straight up. The independent trade-value proxy is Nabers 36.6 versus Brown 29.5 plus Warren 25.5, and Warren is more valuable to this roster than the raw ROS rank suggests because RB depth is thinner than WR depth.",
+      "source_ids": ["fantasypros_trade_values_w3", "leaguelogs_ros_ppr_w3"]
+    },
+    {
+      "question": "Best currently available dropped WRs",
+      "answer": "Romeo Doubs is the preferred first claim among the newly available names, followed by KC Concepcion for upside, then Jakobi Meyers for floor. Rashid Shaheed is a lower-priority volatility stash.",
+      "source_ids": ["leaguelogs_ros_ppr_w3", "fantasypros_trade_values_w3", "rotoballer_waiver_w3"]
+    }
+  ]
+}
