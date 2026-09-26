@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+"""Pull FantasyCalc redraft trade values into the ROS research layer.
+
+FantasyCalc values come from real user trades (12-team, 1QB, half-PPR,
+redraft). This rewrites only `market.fantasycalc` and the matching source
+entry in season/research/ros_rankings_2026.json; hand-imported sources are
+left untouched. ESPN ids come from FantasyCalc itself, so the join to the
+ESPN snapshot is by player id, never by name.
+"""
+import datetime as dt
+import json
+import pathlib
+import subprocess
+import sys
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+PATH = ROOT / 'season' / 'research' / 'ros_rankings_2026.json'
+URL = 'https://api.fantasycalc.com/values/current?isDynasty=false&numQbs=1&numTeams=12&ppr=0.5'
+SOURCE = {
+    'id': 'fantasycalc_redraft_half_ppr',
+    'publisher': 'FantasyCalc',
+    'kind': 'crowd_trade_market',
+    'format': '12-team 1QB half-PPR redraft',
+    'url': 'https://fantasycalc.com/trade-value-chart',
+    'notes': 'Values derived from real user trades, not analyst opinion. Pulled by agent-tools/research-market. flex_rank ranks RB/WR/TE only.',
+}
+
+
+def main():
+    # curl, not urllib: python.org builds on macOS ship without a CA bundle.
+    rows = json.loads(subprocess.run(['curl', '-fsS', '--max-time', '30', URL], check=True,
+                                     capture_output=True, text=True).stdout)
+    if len(rows) < 100:
+        sys.exit(f'FantasyCalc returned only {len(rows)} players; refusing to overwrite')
+    players = []
+    for row in rows:
+        p = row['player']
+        if not p.get('espnId'):
+            continue
+        players.append({'player_id': int(p['espnId']), 'name': p['name'], 'position': p['position'],
+                        'value': row['value'], 'overall_rank': row['overallRank'],
+                        'position_rank': row['positionRank'], 'trend_30d': row.get('trend30Day')})
+    players.sort(key=lambda p: -p['value'])
+    flex = [p for p in players if p['position'] in ('RB', 'WR', 'TE')]
+    for i, p in enumerate(flex, 1):
+        p['flex_rank'] = i
+    today = dt.date.today().isoformat()
+    doc = json.loads(PATH.read_text())
+    doc['sources'] = [s for s in doc['sources'] if s['id'] != SOURCE['id']] + [dict(SOURCE, checked_on=today)]
+    doc.setdefault('market', {})['fantasycalc'] = {'source_id': SOURCE['id'], 'fetched_on': today, 'players': players}
+    PATH.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + '\n')
+    print(f'fantasycalc: {len(players)} players ({len(flex)} flex) written to {PATH.relative_to(ROOT)}')
+
+
+if __name__ == '__main__':
+    main()
