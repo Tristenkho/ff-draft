@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "season": 2026,
-  "updated_on": "2026-09-26",
+  "updated_on": "2026-10-13",
   "purpose": "External rest-of-season research for waiver and trade decisions. This is a relative market layer, not a replacement for the league-scored weekly forecast.",
   "league_context": {
     "format": "12-team redraft, 1QB",
@@ -21,7 +21,14 @@
       "ESPN projection is the league-specific weekly baseline only; it is not a ROS ranking.",
       "Join this research to the current ESPN snapshot by player id because ownership, availability and injury status change.",
       "Surface source disagreement and stale or paywalled evidence instead of silently presenting one source as truth.",
-      "A public PPR rank is relative evidence, not a direct forecast under this league's first-down scoring."
+      "A public PPR rank is relative evidence, not a direct forecast under this league's first-down scoring.",
+      "For all lineup, waiver, drop, trade and follow-up advice, consult current-week and ROS evidence from at least two non-ESPN source families before firm recommendations; ESPN forecasts alone are insufficient.",
+      "LeagueLogs and FantasyPros ECR count as the same source family. Disclose shared experts and distinguish independent analysis from republished consensus.",
+      "Check each source season, scoring, week and update date; recheck stale imports and current role/injury news online. A new file timestamp does not refresh older source values.",
+      "Full roster reviews must cover every owned player including IR, K and DST, plus currently available alternatives joined by player id.",
+      "Distinguish weekly projections, ROS projected totals, positional ranks and trade values; label missing data and material source disagreements.",
+      "Before dropping an injury replacement with recent starter volume, verify the injured starter return status; an ESPN or older ROS backup valuation is not sufficient.",
+      "If external coverage is missing or gated, state the limitation and make the advice provisional rather than using ESPN as the sole judgment source."
     ]
   },
   "sources": [
@@ -4571,5 +4578,918 @@
       ]
     },
     "how_to_use": "Cross-position (flex) order comes from fantasycalc.flex_rank and fantasypros trade_value; leaguelogs/espn are positional only. Join to the ESPN snapshot by player_id. fantasycalc refreshes via agent-tools/research-market; the other three are manual imports dated by fetched_on."
-  }
+  },
+  "reviews": [
+    {
+      "season": 2026,
+      "week": 6,
+      "checked_on": "2026-10-13",
+      "snapshot_id": "b5733fcb7a0ed950",
+      "snapshot_as_of": "2026-10-13T23:59:12.058347+00:00",
+      "coverage": "All 15 rostered players plus 17 available alternatives. Available pool screened against both external ROS tables. Factual ESPN ownership joins use player_id; external source names normalized and verified against position/team.",
+      "sources": [
+        {
+          "id": "footballguys_w6_ros_2026",
+          "publisher": "Footballguys",
+          "family": "footballguys",
+          "url": "https://www.footballguys.com/rankings/duration/restofseason",
+          "checked_on": "2026-10-13",
+          "season": 2026,
+          "week": 6,
+          "format": "Default PPR, 4-point passing TD, -1 passing INT, no first-down points",
+          "measures": [
+            "Week 6 projected points",
+            "ROS projected points",
+            "ROS positional rank"
+          ],
+          "notes": "Default scoring verified from selected page controls. ROS total is remaining-season total, not points per game. No exact league conversion is claimed."
+        },
+        {
+          "id": "fantasypros_ecr_via_leaguelogs_w6",
+          "publisher": "LeagueLogs / FantasyPros ECR",
+          "family": "fantasypros_ecr",
+          "urls": [
+            "https://leaguelogs.com/rankings/week-6/ppr/rb",
+            "https://leaguelogs.com/rankings/week-6/ppr/wr",
+            "https://leaguelogs.com/rankings/week-6/qb",
+            "https://leaguelogs.com/rankings/week-6/ppr/te",
+            "https://leaguelogs.com/rankings/week-6/k",
+            "https://leaguelogs.com/rankings/week-6/dst",
+            "https://leaguelogs.com/rankings/ros",
+            "https://leaguelogs.com/rankings/ros/qb",
+            "https://leaguelogs.com/rankings/ros/k",
+            "https://leaguelogs.com/rankings/ros/dst"
+          ],
+          "checked_on": "2026-10-13",
+          "season": 2026,
+          "week": 6,
+          "format": "PPR positional expert consensus; standard QB/K/DST boards",
+          "measures": [
+            "Week 6 positional table placement and mean expert rank",
+            "ROS positional table placement and mean expert rank"
+          ],
+          "notes": "One source family with FantasyPros, not independent validation from two publishers. For RB/WR/TE, ROS position_rank is derived by counting that position in the complete overall board; average is mean overall expert rank. Weekly rank is table placement, not rounded mean rank. Some experts may overlap Footballguys."
+        },
+        {
+          "id": "draftsharks_braelon_w5_role",
+          "publisher": "Draft Sharks",
+          "url": "https://www.draftsharks.com/fantasy-football-news/83346/braelon-allen-handles-a-bell-cow-workload-without-breece-hall",
+          "published_on": "2026-10-12",
+          "checked_on": "2026-10-13"
+        },
+        {
+          "id": "jets_braelon_w5_role",
+          "publisher": "New York Jets",
+          "url": "https://www.newyorkjets.com/news/garrett-wilson-braelon-allen-power-jets-offense-vs-browns-10-12-2026",
+          "published_on": "2026-10-12",
+          "checked_on": "2026-10-13"
+        },
+        {
+          "id": "nfl_waivers_w6",
+          "publisher": "NFL.com",
+          "url": "https://amp.nfl.com/news/2026-nfl-fantasy-football-waiver-wire-week-6-rb-woody-marks-te-brenton-strange-among-targets",
+          "published_on": "2026-10-12",
+          "checked_on": "2026-10-13"
+        },
+        {
+          "id": "fantasypros_waivers_w6",
+          "publisher": "FantasyPros",
+          "url": "https://www.fantasypros.com/2026/10/fantasy-football-waiver-wire-advice-players-to-add-stash-drop-week-6-2026/",
+          "checked_on": "2026-10-13"
+        },
+        {
+          "id": "dk_boston_role_w6",
+          "publisher": "DraftKings Network",
+          "url": "https://dknetwork.draftkings.com/2026/10/12/is-denzel-boston-a-must-add-week-6-waiver-pickup-with-kc-concepcion-injured/",
+          "published_on": "2026-10-12",
+          "checked_on": "2026-10-13"
+        }
+      ],
+      "limitations": [
+        "Tuesday early-week rankings, before Week 6 Wednesday practices. Hall is QUESTIONABLE in ESPN; Week 5 absence does not establish Week 6 ruled out. Braelon start is conditional on Hall absence or meaningful limitation.",
+        "Older market imports dated September 26 remain historical, not refreshed by this review.",
+        "External PPR projection totals are not league-scored forecasts. Do not sum or average them with ESPN half-PPR plus first-down points.",
+        "An omitted weekly rank is null, not zero. Bye and unavailable status come from ESPN. A low ranked IR player is not confirmed available.",
+        "Footballguys missing match for Blake Grupe remains null.",
+        "Waiver processing time is not verified by ESPN. No claims submitted."
+      ],
+      "players": [
+        {
+          "player_id": 4362628,
+          "name": "Ja'Marr Chase",
+          "position": "WR",
+          "rostered": true,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 0.0,
+            "ros_ppr_points": 215.78,
+            "ros_position_rank": "WR2"
+          },
+          "consensus": {
+            "week6": null,
+            "ros": {
+              "rank": 5,
+              "pos": "WR",
+              "position_rank": 2,
+              "average": 7.0
+            }
+          },
+          "assessment": "Bye; keep."
+        },
+        {
+          "player_id": 4047646,
+          "name": "A.J. Brown",
+          "position": "WR",
+          "rostered": true,
+          "status": "INJURY_RESERVE",
+          "fbg": {
+            "week6_ppr_points": 0.0,
+            "ros_ppr_points": 140.89,
+            "ros_position_rank": "WR26"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 80,
+              "average": 65.8
+            },
+            "ros": {
+              "rank": 50,
+              "pos": "WR",
+              "position_rank": 26,
+              "average": 51.8
+            }
+          },
+          "assessment": "Keep on IR; do not assume return this week."
+        },
+        {
+          "player_id": 3918298,
+          "name": "Josh Allen",
+          "position": "QB",
+          "rostered": true,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 24.05,
+            "ros_ppr_points": 280.5,
+            "ros_position_rank": "QB1"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 1,
+              "average": 1.0
+            },
+            "ros": {
+              "rank": 1,
+              "pos": "QB",
+              "position_rank": 1,
+              "average": 1.0
+            }
+          },
+          "assessment": "Start; Week 7 bye requires a streamer."
+        },
+        {
+          "player_id": 4696981,
+          "name": "Cam Skattebo",
+          "position": "RB",
+          "rostered": true,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 13.54,
+            "ros_ppr_points": 138.49,
+            "ros_position_rank": "RB21"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 15,
+              "average": 15.5
+            },
+            "ros": {
+              "rank": 53,
+              "pos": "RB",
+              "position_rank": 19,
+              "average": 54.5
+            }
+          },
+          "assessment": "Start in RB/FLEX."
+        },
+        {
+          "player_id": 4596448,
+          "name": "Bucky Irving",
+          "position": "RB",
+          "rostered": true,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 13.77,
+            "ros_ppr_points": 164.0,
+            "ros_position_rank": "RB14"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 14,
+              "average": 14.3
+            },
+            "ros": {
+              "rank": 46,
+              "pos": "RB",
+              "position_rank": 18,
+              "average": 48.8
+            }
+          },
+          "assessment": "Start."
+        },
+        {
+          "player_id": 4870653,
+          "name": "KC Concepcion",
+          "position": "WR",
+          "rostered": true,
+          "status": "QUESTIONABLE",
+          "fbg": {
+            "week6_ppr_points": 3.97,
+            "ros_ppr_points": 130.74,
+            "ros_position_rank": "WR33"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 65,
+              "average": 65.1
+            },
+            "ros": {
+              "rank": 77,
+              "pos": "WR",
+              "position_rank": 40,
+              "average": 81.5
+            }
+          },
+          "assessment": "Hold; concussion protocol makes Week 6 start conditional on clearance."
+        },
+        {
+          "player_id": 4360234,
+          "name": "Evan McPherson",
+          "position": "K",
+          "rostered": true,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 0.0,
+            "ros_ppr_points": 89.79,
+            "ros_position_rank": "PK8"
+          },
+          "consensus": {
+            "week6": null,
+            "ros": {
+              "rank": 5,
+              "pos": "K",
+              "position_rank": 5,
+              "average": 6.4
+            }
+          },
+          "assessment": "Bye; replace with Butker rather than carrying a second kicker."
+        },
+        {
+          "player_id": 4685247,
+          "name": "Braelon Allen",
+          "position": "RB",
+          "rostered": true,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 14.65,
+            "ros_ppr_points": 85.34,
+            "ros_position_rank": "RB48"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 18,
+              "average": 17.3
+            },
+            "ros": {
+              "rank": 144,
+              "pos": "RB",
+              "position_rank": 38,
+              "average": 149.8
+            }
+          },
+          "assessment": "Keep. Start over Pollard if Hall is out; re-evaluate if Hall returns with normal workload."
+        },
+        {
+          "player_id": 4262921,
+          "name": "Justin Jefferson",
+          "position": "WR",
+          "rostered": true,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 0.0,
+            "ros_ppr_points": 157.73,
+            "ros_position_rank": "WR20"
+          },
+          "consensus": {
+            "week6": null,
+            "ros": {
+              "rank": 18,
+              "pos": "WR",
+              "position_rank": 10,
+              "average": 20.5
+            }
+          },
+          "assessment": "Bye; keep. ROS sources disagree substantially (WR20 vs WR10)."
+        },
+        {
+          "player_id": 4429096,
+          "name": "Blake Corum",
+          "position": "RB",
+          "rostered": true,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 8.3,
+            "ros_ppr_points": 90.89,
+            "ros_position_rank": "RB44"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 30,
+              "average": 32.0
+            },
+            "ros": {
+              "rank": 116,
+              "pos": "RB",
+              "position_rank": 33,
+              "average": 118.5
+            }
+          },
+          "assessment": "Hold unless upgrading to Marks; useful contingency RB, ROS sources disagree."
+        },
+        {
+          "player_id": 4373626,
+          "name": "Tyler Allgeier",
+          "position": "RB",
+          "rostered": true,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 6.78,
+            "ros_ppr_points": 86.64,
+            "ros_position_rank": "RB46"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 33,
+              "average": 34.1
+            },
+            "ros": {
+              "rank": 179,
+              "pos": "RB",
+              "position_rank": 46,
+              "average": 180.8
+            }
+          },
+          "assessment": "Preferred drop for Boston: lowest-priority RB stash on this roster."
+        },
+        {
+          "player_id": -16004,
+          "name": "Bengals D/ST",
+          "position": "DST",
+          "rostered": true,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 0.0,
+            "ros_ppr_points": 86.99,
+            "ros_position_rank": "TD11"
+          },
+          "consensus": {
+            "week6": null,
+            "ros": {
+              "rank": 16,
+              "pos": "DST",
+              "position_rank": 16,
+              "average": 16.5
+            }
+          },
+          "assessment": "Bye; replace with Chiefs."
+        },
+        {
+          "player_id": 4870795,
+          "name": "Makai Lemon",
+          "position": "WR",
+          "rostered": true,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 5.59,
+            "ros_ppr_points": 81.39,
+            "ros_position_rank": "WR66"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 48,
+              "average": 49.3
+            },
+            "ros": {
+              "rank": 91,
+              "pos": "WR",
+              "position_rank": 47,
+              "average": 96.8
+            }
+          },
+          "assessment": "Drop for Bernard to solve Week 6 WR shortage; sacrifice some consensus ROS upside."
+        },
+        {
+          "player_id": 3916148,
+          "name": "Tony Pollard",
+          "position": "RB",
+          "rostered": true,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 11.58,
+            "ros_ppr_points": 115.23,
+            "ros_position_rank": "RB24"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 20,
+              "average": 21.1
+            },
+            "ros": {
+              "rank": 95,
+              "pos": "RB",
+              "position_rank": 27,
+              "average": 98.8
+            }
+          },
+          "assessment": "Keep. First RB/FLEX alternative if Hall returns; otherwise bench behind Braelon/Bucky/Skattebo."
+        },
+        {
+          "player_id": 4572680,
+          "name": "Tucker Kraft",
+          "position": "TE",
+          "rostered": true,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 11.76,
+            "ros_ppr_points": 117.42,
+            "ros_position_rank": "TE8"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 8,
+              "average": 8.1
+            },
+            "ros": {
+              "rank": 100,
+              "pos": "TE",
+              "position_rank": 8,
+              "average": 101.8
+            }
+          },
+          "assessment": "Start and keep; no backup TE needed."
+        },
+        {
+          "player_id": 4832800,
+          "name": "Denzel Boston",
+          "position": "WR",
+          "rostered": false,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 12.28,
+            "ros_ppr_points": 134.54,
+            "ros_position_rank": "WR31"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 19,
+              "average": 19.1
+            },
+            "ros": {
+              "rank": 66,
+              "pos": "WR",
+              "position_rank": 33,
+              "average": 65.8
+            }
+          },
+          "assessment": "First claim, drop Allgeier; start at WR."
+        },
+        {
+          "player_id": 4429059,
+          "name": "Woody Marks",
+          "position": "RB",
+          "rostered": false,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 13.05,
+            "ros_ppr_points": 109.42,
+            "ros_position_rank": "RB27"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 21,
+              "average": 22.0
+            },
+            "ros": {
+              "rank": 120,
+              "pos": "RB",
+              "position_rank": 34,
+              "average": 126.5
+            }
+          },
+          "assessment": "Best available RB opportunity; optional third add for Corum after covering WR. Role depends on Montgomery injury."
+        },
+        {
+          "player_id": 4241985,
+          "name": "J.K. Dobbins",
+          "position": "RB",
+          "rostered": false,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 9.29,
+            "ros_ppr_points": 104.38,
+            "ros_position_rank": "RB32"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 28,
+              "average": 28.0
+            },
+            "ros": {
+              "rank": 142,
+              "pos": "RB",
+              "position_rank": 37,
+              "average": 147.0
+            }
+          },
+          "assessment": "Fallback RB upgrade, lower priority than receivers and Marks."
+        },
+        {
+          "player_id": 5082424,
+          "name": "Dominic Zvada",
+          "position": "K",
+          "rostered": false,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 7.08,
+            "ros_ppr_points": 74.45,
+            "ros_position_rank": "PK29"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 16,
+              "average": 16.5
+            },
+            "ros": {
+              "rank": 26,
+              "pos": "K",
+              "position_rank": 26,
+              "average": 25.2
+            }
+          },
+          "assessment": "Lower-priority kicker; do not prefer solely on ESPN projection."
+        },
+        {
+          "player_id": 4249087,
+          "name": "Matt Gay",
+          "position": "K",
+          "rostered": false,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 7.4,
+            "ros_ppr_points": 81.06,
+            "ros_position_rank": "PK23"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 11,
+              "average": 10.5
+            },
+            "ros": {
+              "rank": 24,
+              "pos": "K",
+              "position_rank": 24,
+              "average": 22.3
+            }
+          },
+          "assessment": "Backup kicker claim if Butker unavailable."
+        },
+        {
+          "player_id": 4685261,
+          "name": "Germie Bernard",
+          "position": "WR",
+          "rostered": false,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 11.18,
+            "ros_ppr_points": 88.41,
+            "ros_position_rank": "WR61"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 38,
+              "average": 39.9
+            },
+            "ros": {
+              "rank": 130,
+              "pos": "WR",
+              "position_rank": 60,
+              "average": 137.5
+            }
+          },
+          "assessment": "Second receiver claim, drop Lemon; start if acquired. Keenan is the backup claim."
+        },
+        {
+          "player_id": 4259619,
+          "name": "Blake Grupe",
+          "position": "K",
+          "rostered": false,
+          "status": "ACTIVE",
+          "fbg": null,
+          "consensus": {
+            "week6": {
+              "rank": 19,
+              "average": 17.2
+            },
+            "ros": {
+              "rank": 34,
+              "pos": "K",
+              "position_rank": 34,
+              "average": 33.3
+            }
+          },
+          "assessment": "FBG matching projection unavailable; lower consensus kicker than Butker/Gay."
+        },
+        {
+          "player_id": 3055899,
+          "name": "Harrison Butker",
+          "position": "K",
+          "rostered": false,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 7.91,
+            "ros_ppr_points": 95.05,
+            "ros_position_rank": "PK12"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 7,
+              "average": 7.2
+            },
+            "ros": {
+              "rank": 10,
+              "pos": "K",
+              "position_rank": 10,
+              "average": 10.4
+            }
+          },
+          "assessment": "Replace McPherson; outside weekly and ROS evidence favors him over Gay/Zvada."
+        },
+        {
+          "player_id": 15818,
+          "name": "Keenan Allen",
+          "position": "WR",
+          "rostered": false,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 10.37,
+            "ros_ppr_points": 109.61,
+            "ros_position_rank": "WR45"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 36,
+              "average": 37.6
+            },
+            "ros": {
+              "rank": 124,
+              "pos": "WR",
+              "position_rank": 58,
+              "average": 132.5
+            }
+          },
+          "assessment": "Backup receiver claim; FBG ROS favors him over Bernard, ECR roughly similar; Bernard has greater recent role upside."
+        },
+        {
+          "player_id": -16033,
+          "name": "Ravens D/ST",
+          "position": "DST",
+          "rostered": false,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 9.76,
+            "ros_ppr_points": 95.45,
+            "ros_position_rank": "TD3"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 4,
+              "average": 4.4
+            },
+            "ros": {
+              "rank": 11,
+              "pos": "DST",
+              "position_rank": 11,
+              "average": 10.7
+            }
+          },
+          "assessment": "Defense fallback; FBG ROS much higher than ECR."
+        },
+        {
+          "player_id": -16014,
+          "name": "Rams D/ST",
+          "position": "DST",
+          "rostered": false,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 9.54,
+            "ros_ppr_points": 88.04,
+            "ros_position_rank": "TD8"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 5,
+              "average": 4.4
+            },
+            "ros": {
+              "rank": 5,
+              "pos": "DST",
+              "position_rank": 5,
+              "average": 4.9
+            }
+          },
+          "assessment": "Defense fallback with stronger ECR ROS placement."
+        },
+        {
+          "player_id": -16012,
+          "name": "Chiefs D/ST",
+          "position": "DST",
+          "rostered": false,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 10.59,
+            "ros_ppr_points": 92.05,
+            "ros_position_rank": "TD13"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 1,
+              "average": 1.8
+            },
+            "ros": {
+              "rank": 10,
+              "pos": "DST",
+              "position_rank": 10,
+              "average": 9.9
+            }
+          },
+          "assessment": "Replace Bengals; strongest weekly consensus defense."
+        },
+        {
+          "player_id": 4597500,
+          "name": "Adonai Mitchell",
+          "position": "WR",
+          "rostered": false,
+          "status": "QUESTIONABLE",
+          "fbg": {
+            "week6_ppr_points": 8.55,
+            "ros_ppr_points": 83.29,
+            "ros_position_rank": "WR65"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 88,
+              "average": 85.5
+            },
+            "ros": {
+              "rank": 101,
+              "pos": "WR",
+              "position_rank": 52,
+              "average": 102.0
+            }
+          },
+          "assessment": "ROS upside but questionable finger injury; prefer healthy options for immediate need."
+        },
+        {
+          "player_id": 5083754,
+          "name": "Ryan Flournoy",
+          "position": "WR",
+          "rostered": false,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 9.29,
+            "ros_ppr_points": 116.16,
+            "ros_position_rank": "WR43"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 41,
+              "average": 41.8
+            },
+            "ros": {
+              "rank": 181,
+              "pos": "WR",
+              "position_rank": 74,
+              "average": 182.8
+            }
+          },
+          "assessment": "Lower-priority WR; short-term value depends on Lamb health."
+        },
+        {
+          "player_id": 3045523,
+          "name": "Kendrick Bourne",
+          "position": "WR",
+          "rostered": false,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 7.91,
+            "ros_ppr_points": 66.24,
+            "ros_position_rank": "WR75"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 35,
+              "average": 37.3
+            },
+            "ros": {
+              "rank": 166,
+              "pos": "WR",
+              "position_rank": 71,
+              "average": 171.8
+            }
+          },
+          "assessment": "Lower-priority WR fallback; recent role expansion needs monitoring."
+        },
+        {
+          "player_id": 4360238,
+          "name": "Dameon Pierce",
+          "position": "RB",
+          "rostered": false,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 11.88,
+            "ros_ppr_points": 35.95,
+            "ros_position_rank": "RB76"
+          },
+          "consensus": {
+            "week6": {
+              "rank": 35,
+              "average": 35.5
+            },
+            "ros": null
+          },
+          "assessment": "Emergency RB opportunity only; no priority over your healthy RBs."
+        },
+        {
+          "player_id": 4569603,
+          "name": "Malik Washington",
+          "position": "WR",
+          "rostered": false,
+          "status": "ACTIVE",
+          "fbg": {
+            "week6_ppr_points": 0.0,
+            "ros_ppr_points": 119.44,
+            "ros_position_rank": "WR39"
+          },
+          "consensus": {
+            "week6": null,
+            "ros": {
+              "rank": 90,
+              "pos": "WR",
+              "position_rank": 46,
+              "average": 95.8
+            }
+          },
+          "assessment": "Better future WR stash than many available names, but on bye and cannot solve Week 6."
+        }
+      ],
+      "claim_order": [
+        {
+          "add": 4832800,
+          "drop": 4373626,
+          "priority": 1
+        },
+        {
+          "add": 4685261,
+          "drop": 4870795,
+          "priority": 2,
+          "fallback_add": 15818
+        },
+        {
+          "add": 4429059,
+          "drop": 4429096,
+          "priority": 3,
+          "optional": true
+        },
+        {
+          "add": -16012,
+          "drop": -16004,
+          "priority": 4,
+          "fallback_adds": [
+            -16033,
+            -16014
+          ]
+        },
+        {
+          "add": 3055899,
+          "drop": 4360234,
+          "priority": 5,
+          "fallback_add": 4249087
+        }
+      ],
+      "lineup_conditions": {
+        "hall_out": "Josh Allen; Bucky Irving and Braelon Allen at RB; Cam Skattebo at FLEX; Boston and Bernard at WR if claims succeed; Tucker Kraft; Butker; Chiefs.",
+        "hall_normal_workload": "Replace Braelon with Pollard among the three RB/FLEX starters.",
+        "receiver_claim_failure": "Use Keenan Allen as claim backup. Do not start Concepcion without concussion clearance; Lemon is only fallback if retained, active and no stronger receiver added."
+      }
+    }
+  ]
 }

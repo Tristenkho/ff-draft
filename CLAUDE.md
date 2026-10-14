@@ -57,6 +57,41 @@ snapshot by player id, account for source dates and health/role changes, and
 surface disagreement between sources. Public PPR ROS ranks are relative
 evidence, not exact forecasts under this league's first-down scoring.
 
+## Advice research requirements
+These requirements apply whenever the user asks for lineup, waiver, start/sit,
+trade, drop, or player-comparison advice, including short follow-up questions.
+- Never base advice solely on ESPN rankings or projections. ESPN is the
+  authority for league week, ownership, eligibility, availability, submitted
+  lineup and league scoring; its forecast is a secondary comparison only.
+- Check current-week rankings/projections AND rest-of-season evidence from at
+  least two non-ESPN source families before firm recommendations. Prefer
+  Footballguys plus FantasyPros consensus, with current role/injury reporting
+  from NFL/team sites, Draft Sharks, PFF, RotoWire or comparable reporting.
+  LeagueLogs republishes FantasyPros ECR: those are one source family, not two.
+  Note shared experts when relevant; multiple URLs do not prove independence.
+- Read `season/research/ros_rankings_2026.json`, including dated reviews. Verify
+  each source's season, scoring format, week and actual update time; a new file
+  timestamp does not make its older imports current. Recheck stale rankings
+  and recent injuries/role changes online for every advice request.
+- For a full roster or waiver review, cover every rostered player (including IR,
+  K and D/ST) on both horizons, then join candidate adds to the latest ESPN
+  snapshot by player id. Check the whole available pool, not just old watchlists.
+- Keep numeric projections, positional ranks, ROS totals and trade values
+  distinct. Label source/scoring/date, missing or gated evidence, source
+  disagreement, and assumptions. Public PPR numbers omit this league's exact
+  half-PPR and first-down scoring: do not present them as league-scored points.
+- For every consequential start, drop or add, explain current role/health,
+  roster fit, the alternative, and what news would change the recommendation.
+  Never recommend dropping an emerging high-volume injury replacement just
+  because ESPN or an older ROS table still values him as a backup. Verify the
+  starter's return status and distinguish this week's opportunity from ROS.
+- When outside evidence is unavailable, say the comparison is incomplete and
+  make advice explicitly provisional; never silently substitute ESPN alone.
+  A projection optimizer output is a baseline, not researched advice.
+- Save dated research evidence separately from ESPN's append-only snapshots.
+  Research stays a manual import; refresh does not automatically create advice.
+  The user executes all ESPN moves.
+
 ## Delivery automation
 - After completing and validating requested code or site changes, automatically
   stage only the files owned by that task, create a focused commit, and push it.
