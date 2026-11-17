@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "season": 2026,
-  "updated_on": "2026-10-13",
+  "updated_on": "2026-11-17",
   "purpose": "External rest-of-season research for waiver and trade decisions. This is a relative market layer, not a replacement for the league-scored weekly forecast.",
   "league_context": {
     "format": "12-team redraft, 1QB",
@@ -5490,6 +5490,101 @@
         "hall_normal_workload": "Replace Braelon with Pollard among the three RB/FLEX starters.",
         "receiver_claim_failure": "Use Keenan Allen as claim backup. Do not start Concepcion without concussion clearance; Lemon is only fallback if retained, active and no stronger receiver added."
       }
+    },
+    {
+      "season": 2026,
+      "week": 11,
+      "checked_on": "2026-11-17",
+      "snapshot_id": "31f6b0c39d507be8",
+      "question": "Trade: Skattebo + Corum + Kraft to Josh for Jaylen Warren + Colston Loveland",
+      "sources": [
+        {
+          "id": "fantasypros_ros_halfppr_w11",
+          "publisher": "FantasyPros ECR",
+          "family": "fantasypros_ecr",
+          "format": "Half PPR ROS, projected points weeks 11-17 incl. byes",
+          "urls": [
+            "https://www.fantasypros.com/nfl/rankings/ros-half-point-ppr-rb.php",
+            "https://www.fantasypros.com/nfl/rankings/ros-half-point-ppr-te.php"
+          ],
+          "checked_on": "2026-11-17"
+        },
+        {
+          "id": "rsj_trade_values_w11",
+          "publisher": "Roto Street Journal",
+          "family": "rotostreetjournal",
+          "format": "Full PPR 12-team 1QB trade values",
+          "published_on": "2026-11-17",
+          "urls": [
+            "https://www.rotostreetjournal.com/2026/11/17/2026-fantasy-football-week-11-trade-value-chart-running-backs/",
+            "https://www.rotostreetjournal.com/2026/11/17/2026-fantasy-football-week-11-trade-value-chart-tight-ends/"
+          ]
+        },
+        {
+          "id": "role_news_w11",
+          "publisher": "RotoWire / NBC Sports / Fantasy Life / CBS",
+          "urls": [
+            "https://www.rotowire.com/football/headlines/kyren-williams-news-comfortably-outpaced-by-corum-and-rivers-648079",
+            "https://www.nbcsports.com/fantasy/football/player-news/2026-11-11/skattebo-hamstring-good-to-go-for-week-10",
+            "https://fantasylife.com/articles/fantasy/week-11-fantasy-football-utilization-report-key-takeaways",
+            "https://www.nbcsports.com/fantasy/football/player-news/2026-11-15/kraft-catches-just-one-pass-in-loss-to-vikings"
+          ],
+          "checked_on": "2026-11-17"
+        }
+      ],
+      "players": [
+        {
+          "player_id": 4569987,
+          "name": "Jaylen Warren",
+          "fp_ros_rb": 11,
+          "fp_ros_pts": 108.8,
+          "rsj_rb": 10,
+          "rsj_value": 2266,
+          "note": "Dowdle healthy; Wk10 snaps ~38% vs Dowdle ~48%. Easiest FP playoff SOS."
+        },
+        {
+          "player_id": 4429096,
+          "name": "Blake Corum",
+          "fp_ros_rb": 21,
+          "fp_ros_pts": 94.4,
+          "rsj_rb": 16,
+          "rsj_value": 1640,
+          "note": "Wk11 bye. Now 1a over Kyren Williams in neutral situations; 6 straight games 12.8+ league pts."
+        },
+        {
+          "player_id": 4696981,
+          "name": "Cam Skattebo",
+          "fp_ros_rb": 18,
+          "fp_ros_pts": 100.0,
+          "rsj_rb": 15,
+          "rsj_value": 1660,
+          "note": "Hamstring cleared before Wk10 (28.2 league pts)."
+        },
+        {
+          "player_id": 4572680,
+          "name": "Tucker Kraft",
+          "fp_ros_te": 7,
+          "fp_ros_pts": 70.4,
+          "rsj_te": 6,
+          "rsj_value": 1047,
+          "note": "Wk11 bye; one catch in each of Wk9-10."
+        },
+        {
+          "player_id": 4723086,
+          "name": "Colston Loveland",
+          "fp_ros_te": 5,
+          "fp_ros_pts": 74.4,
+          "rsj_te": 5,
+          "rsj_value": 1460,
+          "note": "Bye already used (Wk10)."
+        }
+      ],
+      "answer": "Decline as offered. Per-game FP ROS puts starting RB/FLEX/TE about 5 points LOWER over weeks 11-17 after the trade (Warren replaces Corum as RB3; Loveland ~= Kraft), and RSJ values the outgoing side 4347 vs 3726. A 2-for-2 keeping Corum is a wash (+1). Fix the Wk11 TE bye with a streamer (Okonkwo available).",
+      "limitations": [
+        "Footballguys 2026 W11 ROS page not found; second family is RSJ, not Footballguys.",
+        "Public PPR/half-PPR projections are not league-scored (first-down bonuses omitted).",
+        "FP last-updated time not shown on the rendered page."
+      ]
     }
   ]
 }
