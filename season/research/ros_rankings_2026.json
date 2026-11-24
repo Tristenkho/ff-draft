@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "season": 2026,
-  "updated_on": "2026-11-17",
+  "updated_on": "2026-11-24",
   "purpose": "External rest-of-season research for waiver and trade decisions. This is a relative market layer, not a replacement for the league-scored weekly forecast.",
   "league_context": {
     "format": "12-team redraft, 1QB",
@@ -5584,6 +5584,100 @@
         "Footballguys 2026 W11 ROS page not found; second family is RSJ, not Footballguys.",
         "Public PPR/half-PPR projections are not league-scored (first-down bonuses omitted).",
         "FP last-updated time not shown on the rendered page."
+      ]
+    },
+    {
+      "season": 2026,
+      "week": 12,
+      "checked_on": "2026-11-24",
+      "snapshot_id": "5b1f569a73f9d98a",
+      "snapshot_as_of": "2026-11-24T23:01:54.260480+00:00",
+      "question": "Week 12 waiver claims",
+      "sources": [
+        {
+          "id": "fantasypros_trade_values_w12",
+          "publisher": "FantasyPros",
+          "family": "fantasypros",
+          "url": "https://www.fantasypros.com/2026/11/fantasy-football-trade-value-chart-week-12-2026/",
+          "checked_on": "2026-11-24",
+          "format": "PPR redraft trade value (no half-PPR column)"
+        },
+        {
+          "id": "waiver_consensus_w12",
+          "publisher": "RotoBaller / Yahoo / CBS / SI",
+          "family": "mixed_media",
+          "urls": [
+            "https://www.rotoballer.com/7-must-add-waiver-wire-pickups-for-week-12-fantasy-football-2026/2001893",
+            "https://sports.yahoo.com/fantasy/article/week-12-fantasy-football-waiver-wire-chris-rodriguez-jr-antonio-williams-among-top-pickups-145212487.html",
+            "https://www.cbssports.com/fantasy/football/news/week-12-fantasy-football-waiver-wire-early-week-action-impacts-lineup-setting-and-players-to-add-on-waivers/",
+            "https://www.si.com/fantasy/week-12-running-back-rankings"
+          ],
+          "checked_on": "2026-11-24"
+        },
+        {
+          "id": "role_news_w12",
+          "publisher": "RotoWire / NBC Sports / Pats Pulpit",
+          "family": "news",
+          "urls": [
+            "https://www.rotowire.com/football/headlines/aj-brown-injury-unlikely-for-week-12-per-vrabel-649342",
+            "https://www.nbcsports.com/fantasy/football/player-news/2026-11-23/tuten-reaggravates-ankle-business-as-usual"
+          ],
+          "checked_on": "2026-11-24"
+        }
+      ],
+      "players": [
+        {
+          "player_id": 4575131,
+          "name": "Jacory Croskey-Merritt",
+          "fp_value": 15.4,
+          "fp_change": 9.2,
+          "note": "Standalone role; CBS 'weekly RB2 to close season'; RotoBaller add in all leagues."
+        },
+        {
+          "player_id": 4362619,
+          "name": "Chris Rodriguez Jr.",
+          "fp_value": 16.9,
+          "note": "Contingent on Tuten (ankle, re-aggravated; coach says business as usual). First JAX report Wed."
+        },
+        {
+          "player_id": 5081432,
+          "name": "Antonio Williams",
+          "fp_value": 18.9
+        },
+        {
+          "player_id": 4832800,
+          "name": "Denzel Boston",
+          "fp_value": 23.3,
+          "note": "ESPN questionable."
+        },
+        {
+          "player_id": 4685247,
+          "name": "Braelon Allen",
+          "fp_value": 18.9,
+          "note": "Week 13 bye."
+        },
+        {
+          "player_id": 4688813,
+          "name": "Josh Downs",
+          "fp_value": 22.7
+        },
+        {
+          "player_id": 4870653,
+          "name": "KC Concepcion",
+          "fp_value": 22.8
+        },
+        {
+          "player_id": 4047646,
+          "name": "A.J. Brown",
+          "fp_value": 14.7,
+          "note": "Hamstring; Vrabel doesn't expect him Wk12; multiple weeks reported."
+        }
+      ],
+      "answer": "Drop Chiefs D/ST (@BUF Wk12; Bucs D/ST projects higher Wks12-14) and claim Croskey-Merritt first, Rodriguez second as fallback. Keep all bench skill players; A.J. Brown stays on IR. Waiver priority is 10 of 12, so claims may fail.",
+      "limitations": [
+        "No Footballguys W12 ROS checked; second family is mixed waiver-media consensus, not ROS projections.",
+        "Public PPR values omit league first-down scoring.",
+        "Waiver processing time unverified in ESPN snapshot."
       ]
     }
   ]
