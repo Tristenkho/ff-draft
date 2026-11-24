@@ -5623,6 +5623,14 @@
             "https://www.nbcsports.com/fantasy/football/player-news/2026-11-23/tuten-reaggravates-ankle-business-as-usual"
           ],
           "checked_on": "2026-11-24"
+        },
+        {
+          "id": "dst_playoff_sos_w12",
+          "publisher": "RotoBaller",
+          "family": "rotoballer",
+          "url": "https://www.rotoballer.com/top-fantasy-football-playoff-schedules-strength-of-schedule-for-weeks-15-16-17-week-11-update-2026/1999778",
+          "checked_on": "2026-11-24",
+          "notes": "Chiefs D favorable playoff run (NE Wk15, LAC Wk17); Browns D startable Wks15-17 (NYG, BAL, IND)."
         }
       ],
       "players": [
@@ -5678,7 +5686,12 @@
         "No Footballguys W12 ROS checked; second family is mixed waiver-media consensus, not ROS projections.",
         "Public PPR values omit league first-down scoring.",
         "Waiver processing time unverified in ESPN snapshot."
-      ]
+      ],
+      "revision": {
+        "checked_on": "2026-11-24",
+        "answer": "Superseded: keep both D/STs (Bucs Wks12-13 & Wk15 vs NO; Chiefs playoff schedule NE/LAC). No free drop remains. Neither JCM nor Rodriguez starts over Warren while the RB room is healthy, so the only bench value is a path into the lineup: Rodriguez has one (Tuten out), JCM barely does. Swap Braelon Allen for Rodriguez only if Tuten is ruled out or trending to miss; otherwise hold. Browns D/ST (FA) is the playoff fallback if a defense gets hurt or claimed.",
+        "bucs_schedule": "vs LAC, @BAL, vs NO, @ATL, vs LAR (Wks13-17)"
+      }
     }
   ]
 }
